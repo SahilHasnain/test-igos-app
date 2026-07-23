@@ -55,7 +55,6 @@ export const breachIntakeSchema = common.extend({
   containmentActions: z.string().trim().min(3).max(10_000),
   ongoing: z.boolean(),
 }).superRefine((value, context) => {
-  if (new Date(value.detectedAt) < new Date(value.receivedAt)) context.addIssue({ code: "custom", path: ["detectedAt"], message: "Detection cannot pre-date receipt of the incident report" });
   if (value.occurredAt && new Date(value.occurredAt) > new Date(value.detectedAt)) context.addIssue({ code: "custom", path: ["occurredAt"], message: "Occurrence cannot be later than detection" });
 });
 
