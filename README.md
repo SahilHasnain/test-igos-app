@@ -47,3 +47,4 @@ Microsoft 365 remains optional and is disabled by default.
 - [Security model](docs/security-model.md)
 - [Appwrite activation](docs/appwrite-setup.md)
 - [Appwrite resource schema](infra/appwrite/schema.json)
+- [Deployment and Dev handover](docs/dev-handover.md)
