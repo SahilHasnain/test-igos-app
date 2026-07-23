@@ -20,6 +20,7 @@ export interface NotificationCommand extends IntegrationContext {
 
 export interface NotificationReceipt {
   id: string;
+  matId: string;
   provider: string;
   externalId: string;
   purpose: NotificationPurpose;
@@ -48,6 +49,7 @@ export class NotificationService {
     const result = await this.adapter.send(command, message);
     return this.receipts.save({
       id: randomUUID(),
+      matId: command.matId,
       provider: this.adapter.provider,
       externalId: result.externalId,
       purpose: command.purpose,
@@ -62,7 +64,7 @@ export class NotificationService {
 export class InMemoryNotificationReceiptStore implements NotificationReceiptStore {
   private readonly records: NotificationReceipt[] = [];
   async findByIdempotencyKey(matId: string, idempotencyKey: string) {
-    return this.records.find((record) => record.idempotencyKey === idempotencyKey && record.id.startsWith("") && matId.length > 0) ?? null;
+    return this.records.find((record) => record.matId === matId && record.idempotencyKey === idempotencyKey) ?? null;
   }
   async save(receipt: NotificationReceipt) { this.records.push(receipt); return receipt; }
   list() { return [...this.records]; }
