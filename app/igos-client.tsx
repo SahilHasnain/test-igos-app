@@ -4,6 +4,8 @@ import { FormEvent, useMemo, useState } from "react";
 import { academies, DemoMatter, initialMatters, MatterType, workflowStages } from "../src/demo/ui-data";
 
 type View = "Overview" | MatterType | "Actions" | "Audit";
+type DemoRole = "DPO" | "MAT administrator" | "Case manager" | "Academy lead" | "Auditor" | "Read only";
+const demoRoles: DemoRole[] = ["DPO", "MAT administrator", "Case manager", "Academy lead", "Auditor", "Read only"];
 const moduleLabels: Record<MatterType, string> = { SAR: "SARs", FOI: "FOI", Breach: "Breaches", DPIA: "DPIAs" };
 const icons: Record<string, string> = { Overview: "⌂", SAR: "◫", FOI: "◎", Breach: "△", DPIA: "◇", Actions: "✓", Audit: "≡" };
 
@@ -18,6 +20,7 @@ function daysUntil(due: string) {
 
 export default function IgosClient() {
   const [view, setView] = useState<View>("Overview");
+  const [role, setRole] = useState<DemoRole>("DPO");
   const [academy, setAcademy] = useState(academies[0]);
   const [query, setQuery] = useState("");
   const [matters, setMatters] = useState(initialMatters);
@@ -65,6 +68,10 @@ export default function IgosClient() {
     setSelected(matter);
   }
 
+  const canCreate = !["Auditor", "Read only"].includes(role);
+  const canAdvance = ["DPO", "MAT administrator", "Case manager"].includes(role);
+  const canViewAudit = ["DPO", "MAT administrator", "Auditor"].includes(role);
+  const availableViews = (["Overview", "SAR", "FOI", "Breach", "DPIA", "Actions", "Audit"] as View[]).filter((item) => item !== "Audit" || canViewAudit);
   const active = filtered.filter((item) => item.stage !== "Closed");
   const urgent = [...active].sort((a, b) => daysUntil(a.due) - daysUntil(b.due)).slice(0, 5);
   const metrics = [
@@ -74,19 +81,19 @@ export default function IgosClient() {
     ["High-risk matters", filtered.filter((x) => x.risk === "High").length, "Require attention"],
   ];
 
-  return <div className="app-shell">
+  return <div className="app-shell"><a className="skip-link" href="#main-content">Skip to main content</a>
     <aside className="sidebar">
       <div className="brand"><span className="brand-mark">I</span><div><strong>IGOS</strong><small>Information governance</small></div></div>
-      <nav>
-        {(["Overview", "SAR", "FOI", "Breach", "DPIA", "Actions", "Audit"] as View[]).map((item) => <button key={item} className={view === item ? "active" : ""} onClick={() => setView(item)}><span>{icons[item]}</span>{item === "SAR" ? "SARs" : item === "Breach" ? "Breaches" : item === "DPIA" ? "DPIAs" : item}</button>)}
+      <nav aria-label="Primary navigation">
+        {availableViews.map((item) => <button key={item} className={view === item ? "active" : ""} onClick={() => setView(item)}><span>{icons[item]}</span>{item === "SAR" ? "SARs" : item === "Breach" ? "Breaches" : item === "DPIA" ? "DPIAs" : item}</button>)}
       </nav>
       <div className="sidebar-foot"><div className="mode-dot" /> Demo workspace<br/><small>Appwrite-ready · M365 optional</small></div>
     </aside>
 
-    <main>
+    <main id="main-content" tabIndex={-1}>
       <header className="topbar">
         <div><p className="eyebrow">Federation operations centre</p><h1>{view === "Overview" ? "Information governance overview" : view === "Actions" ? "Open actions" : view === "Audit" ? "Audit and assurance" : `${moduleLabels[view as MatterType]} register`}</h1></div>
-        <div className="top-actions"><label className="search"><span>⌕</span><input aria-label="Search matters" placeholder="Search cases…" value={query} onChange={(e) => setQuery(e.target.value)} /></label><select aria-label="Academy filter" value={academy} onChange={(e) => setAcademy(e.target.value)}>{academies.map((item) => <option key={item}>{item}</option>)}</select><button className="primary" onClick={() => setShowCreate(true)}>＋ New matter</button><span className="avatar">DL</span></div>
+        <div className="top-actions"><label className="search"><span>⌕</span><input aria-label="Search matters" placeholder="Search cases…" value={query} onChange={(e) => setQuery(e.target.value)} /></label><select aria-label="Active role" value={role} onChange={(e) => { const nextRole = e.target.value as DemoRole; setRole(nextRole); if (view === "Audit" && !["DPO", "MAT administrator", "Auditor"].includes(nextRole)) setView("Overview"); }}>{demoRoles.map((item) => <option key={item}>{item}</option>)}</select><select aria-label="Academy filter" value={academy} onChange={(e) => setAcademy(e.target.value)}>{academies.map((item) => <option key={item}>{item}</option>)}</select>{canCreate && <button className="primary" onClick={() => setShowCreate(true)}>＋ New matter</button>}<span className="avatar" title={role} aria-label={`Current role: ${role}`}>{role.split(" ").map((word) => word[0]).join("").slice(0, 2)}</span></div>
       </header>
 
       <section className="content">
@@ -106,9 +113,9 @@ export default function IgosClient() {
       </section>
     </main>
 
-    {selected && <div className="drawer-backdrop" onMouseDown={() => setSelected(null)}><aside className="drawer" onMouseDown={(e) => e.stopPropagation()}><button className="close" onClick={() => setSelected(null)}>×</button><p className="eyebrow">{selected.type} matter</p><h2>{selected.title}</h2><div className="drawer-meta"><code>{selected.id}</code><RiskBadge risk={selected.risk}/><span>{selected.academy}</span></div><div className="progress-label"><span>{selected.stage}</span><b>{selected.progress}%</b></div><div className="progress"><i style={{width: `${selected.progress}%`}} /></div><div className="tabs">{(["Summary", "Tasks", "Documents", "Audit"] as const).map((name) => <button key={name} className={tab === name ? "active" : ""} onClick={() => setTab(name)}>{name}</button>)}</div><div className="tab-body">{tab === "Summary" && <><h3>Case summary</h3><p>{selected.summary}</p><dl><div><dt>Case owner</dt><dd>{selected.owner}</dd></div><div><dt>Statutory / target date</dt><dd>{selected.due}</dd></div><div><dt>Current workflow stage</dt><dd>{selected.stage}</dd></div></dl></>}{tab === "Tasks" && <><h3>Outstanding tasks</h3>{selected.tasks.map((task) => <label className="task" key={task}><input type="checkbox" />{task}</label>)}</>}{tab === "Documents" && <div className="empty"><b>▣</b><h3>Evidence repository</h3><p>Documents will appear here when Appwrite Storage or an optional Microsoft 365 provider is connected.</p><button>Upload document</button></div>}{tab === "Audit" && <div className="timeline large">{selected.activity.map((event, index) => <div className="audit-row" key={event}><span>{index + 1}</span><div><strong>{event}</strong><small>Recorded by IGOS · {index ? "Yesterday" : "Today"}</small></div></div>)}</div>}</div><footer><button className="secondary">Add note</button><button className="primary" disabled={selected.stage === "Closed"} onClick={() => advance(selected)}>Advance workflow →</button></footer></aside></div>}
+    {selected && <div className="drawer-backdrop" role="presentation" onMouseDown={() => setSelected(null)}><aside className="drawer" role="dialog" aria-modal="true" aria-labelledby="matter-title" onMouseDown={(e) => e.stopPropagation()}><button className="close" aria-label="Close matter details" onClick={() => setSelected(null)}>×</button><p className="eyebrow">{selected.type} matter</p><h2 id="matter-title">{selected.title}</h2><div className="drawer-meta"><code>{selected.id}</code><RiskBadge risk={selected.risk}/><span>{selected.academy}</span></div><div className="progress-label"><span>{selected.stage}</span><b>{selected.progress}%</b></div><div className="progress"><i style={{width: `${selected.progress}%`}} /></div><div className="tabs">{(["Summary", "Tasks", "Documents", "Audit"] as const).map((name) => <button key={name} className={tab === name ? "active" : ""} onClick={() => setTab(name)}>{name}</button>)}</div><div className="tab-body">{tab === "Summary" && <><h3>Case summary</h3><p>{selected.summary}</p><dl><div><dt>Case owner</dt><dd>{selected.owner}</dd></div><div><dt>Statutory / target date</dt><dd>{selected.due}</dd></div><div><dt>Current workflow stage</dt><dd>{selected.stage}</dd></div></dl></>}{tab === "Tasks" && <><h3>Outstanding tasks</h3>{selected.tasks.map((task) => <label className="task" key={task}><input type="checkbox" />{task}</label>)}</>}{tab === "Documents" && <div className="empty"><b>▣</b><h3>Evidence repository</h3><p>Documents will appear here when Appwrite Storage or an optional Microsoft 365 provider is connected.</p><button>Upload document</button></div>}{tab === "Audit" && <div className="timeline large">{selected.activity.map((event, index) => <div className="audit-row" key={event}><span>{index + 1}</span><div><strong>{event}</strong><small>Recorded by IGOS · {index ? "Yesterday" : "Today"}</small></div></div>)}</div>}</div><footer><button className="secondary">Add note</button><button className="primary" disabled={selected.stage === "Closed" || !canAdvance} title={!canAdvance ? "Your current role cannot advance workflows" : undefined} onClick={() => advance(selected)}>Advance workflow →</button></footer></aside></div>}
 
-    {showCreate && <div className="modal-backdrop"><form className="modal" onSubmit={createMatter}><button type="button" className="close" onClick={() => setShowCreate(false)}>×</button><p className="eyebrow">Intake</p><h2>Create governance matter</h2><label>Module<select name="type" defaultValue="SAR">{Object.keys(moduleLabels).map((type) => <option key={type} value={type}>{moduleLabels[type as MatterType]}</option>)}</select></label><label>Title<input required name="title" placeholder="Name or short description" /></label><label>Academy<select name="academy">{academies.slice(1).map((item) => <option key={item}>{item}</option>)}</select></label><label>Initial summary<textarea name="summary" rows={4} placeholder="What has been requested or reported?" /></label><div className="modal-actions"><button type="button" className="secondary" onClick={() => setShowCreate(false)}>Cancel</button><button className="primary">Create matter</button></div></form></div>}
+    {showCreate && <div className="modal-backdrop" role="presentation"><form className="modal" role="dialog" aria-modal="true" aria-labelledby="create-title" onSubmit={createMatter}><button type="button" className="close" aria-label="Close new matter form" onClick={() => setShowCreate(false)}>×</button><p className="eyebrow">Intake</p><h2 id="create-title">Create governance matter</h2><label>Module<select name="type" defaultValue="SAR">{Object.keys(moduleLabels).map((type) => <option key={type} value={type}>{moduleLabels[type as MatterType]}</option>)}</select></label><label>Title<input required name="title" placeholder="Name or short description" /></label><label>Academy<select name="academy">{academies.slice(1).map((item) => <option key={item}>{item}</option>)}</select></label><label>Initial summary<textarea name="summary" rows={4} placeholder="What has been requested or reported?" /></label><div className="modal-actions"><button type="button" className="secondary" onClick={() => setShowCreate(false)}>Cancel</button><button className="primary">Create matter</button></div></form></div>}
   </div>;
 }
 
