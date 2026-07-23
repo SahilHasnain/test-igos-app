@@ -28,7 +28,7 @@ export interface GovernanceReminder {
 export function scanGovernanceReviews(items: readonly GovernanceReviewItem[], now = new Date()): GovernanceReminder[] {
   return items.filter((item) => !item.completedAt).map((item) => {
     const daysRemaining = Math.ceil((new Date(item.dueAt).getTime() - now.getTime()) / DAY_MS);
-    const severity = daysRemaining < -7 ? "critical" : daysRemaining < 0 ? "overdue" : daysRemaining <= 7 ? "due-soon" : "upcoming";
+    const severity: GovernanceReminder["severity"] = daysRemaining < -7 ? "critical" : daysRemaining < 0 ? "overdue" : daysRemaining <= 7 ? "due-soon" : "upcoming";
     return { itemId: item.id, matId: item.matId, academyId: item.academyId, type: item.type, ownerUserId: item.ownerUserId, dueAt: item.dueAt, severity, daysRemaining, idempotencyKey: `${item.matId}:${item.type}:${item.id}:${item.dueAt.slice(0, 10)}` };
   }).filter((reminder) => reminder.daysRemaining <= 30).sort((a, b) => a.daysRemaining - b.daysRemaining);
 }
