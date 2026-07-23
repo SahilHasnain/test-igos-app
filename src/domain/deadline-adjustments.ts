@@ -1,4 +1,5 @@
 import type { MatterType } from "./model";
+import { addCalendarMonth } from "./deadlines";
 
 const HOUR_MS = 3_600_000;
 const DAY_MS = 86_400_000;
@@ -59,8 +60,7 @@ export function validateDeadlineAdjustment(type: MatterType, adjustment: Deadlin
   if (adjustment.reason === "sar-complexity-extension") {
     if (type !== "sar") throw new Error("A complexity extension applies only to SAR matters");
     if (!adjustment.approvedByUserId) throw new Error("A SAR complexity extension requires approval");
-    const maximum = new Date(adjustment.originalDueAt);
-    maximum.setUTCMonth(maximum.getUTCMonth() + 2);
+    const maximum = addCalendarMonth(addCalendarMonth(new Date(adjustment.originalDueAt)));
     if (new Date(adjustment.revisedDueAt) > maximum) throw new Error("A SAR complexity extension cannot exceed two additional months");
   }
 
