@@ -1,6 +1,6 @@
 {
   "$schema": "./schema.schema.json",
-  "version": 3,
+  "version": 4,
   "database": {
     "id": "igos-core",
     "name": "IGOS Core"
@@ -241,6 +241,49 @@
         "expiresAt:datetime:required:index",
         "approvedByUserId:string:36:optional",
         "approvedAt:datetime:optional"
+      ]
+    },
+    {
+      "id": "supplier-assessments",
+      "name": "Supplier Assessments",
+      "permissions": "tenant-scoped",
+      "columns": [
+        "matId:string:36:required:index",
+        "supplierName:string:512:required:index",
+        "serviceDescription:string:10000:required",
+        "relationship:string:64:required:index",
+        "ownerUserId:string:36:required:index",
+        "securityQuestionnaireStatus:string:64:required:index",
+        "contractStatus:string:64:required:index",
+        "dataProtectionTermsConfirmed:boolean:required",
+        "breachNotificationHours:integer:optional",
+        "subprocessors:string[]:required",
+        "certifications:string[]:required",
+        "internationalTransfers:boolean:required",
+        "transferAssessmentId:string:36:optional",
+        "riskRating:string:32:required:index",
+        "residualRisksAcceptedByUserId:string:36:optional",
+        "residualRiskRationale:string:10000:optional",
+        "reviewDueAt:datetime:required:index",
+        "status:string:32:required:index"
+      ]
+    },
+    {
+      "id": "transfer-assessments",
+      "name": "Transfer Assessments",
+      "permissions": "tenant-scoped",
+      "columns": [
+        "matId:string:36:required:index",
+        "supplierId:string:36:required:index",
+        "destinationCountries:string[]:required",
+        "transferMechanism:string:64:required:index",
+        "dataCategories:string[]:required",
+        "supplementaryMeasures:string[]:required",
+        "localLawAssessment:string:20000:required",
+        "residualRisk:string:32:required:index",
+        "approvedByUserId:string:36:optional",
+        "approvalRationale:string:10000:optional",
+        "reviewDueAt:datetime:required:index"
       ]
     }
   ],
