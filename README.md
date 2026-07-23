@@ -23,6 +23,10 @@ The current branch provides:
 - statutory deadline calculation and escalation scanning;
 - automated type, service, workflow and production-build validation.
 
+## Stage 2 governance foundation
+
+The stacked Stage 2 branch adds multi-party DPIA controls, Article 30 ROPA validation and policy lifecycle governance. See [Stage 2 governance](docs/stage-2-governance.md).
+
 ## Run locally
 
 The default `demo` mode needs no external services:
@@ -48,3 +52,4 @@ Microsoft 365 remains optional and is disabled by default.
 - [Appwrite activation](docs/appwrite-setup.md)
 - [Appwrite resource schema](infra/appwrite/schema.json)
 - [Deployment and Dev handover](docs/dev-handover.md)
+- [Stage 2 governance](docs/stage-2-governance.md)
