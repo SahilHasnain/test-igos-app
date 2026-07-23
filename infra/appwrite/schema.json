@@ -1,6 +1,6 @@
 {
   "$schema": "./schema.schema.json",
-  "version": 2,
+  "version": 3,
   "database": {
     "id": "igos-core",
     "name": "IGOS Core"
@@ -124,6 +124,123 @@
         "recipients:string[]:required",
         "sentAt:datetime:required:index",
         "idempotencyKey:string:256:required:index"
+      ]
+    },
+    {
+      "id": "dpia-sections",
+      "name": "DPIA Sections",
+      "permissions": "tenant-and-academy-scoped",
+      "columns": [
+        "matId:string:36:required:index",
+        "academyId:string:36:optional:index",
+        "matterId:string:36:required:index",
+        "sectionKey:string:64:required:index",
+        "assignedRole:enum(requester,supplier,compliance,dpo):required:index",
+        "assignedUserId:string:36:optional:index",
+        "status:enum(not-started,in-progress,submitted,accepted,changes-requested):required:index",
+        "answers:json:required",
+        "submittedAt:datetime:optional",
+        "acceptedAt:datetime:optional",
+        "version:integer:required"
+      ]
+    },
+    {
+      "id": "dpia-risks",
+      "name": "DPIA Risks",
+      "permissions": "tenant-and-academy-scoped",
+      "columns": [
+        "matId:string:36:required:index",
+        "academyId:string:36:optional:index",
+        "matterId:string:36:required:index",
+        "description:string:10000:required",
+        "affectedPeople:string[]:required",
+        "likelihood:integer:required",
+        "impact:integer:required",
+        "controlEffectiveness:integer:required",
+        "mitigations:string[]:required",
+        "ownerUserId:string:36:required:index",
+        "dueAt:datetime:optional:index",
+        "acceptedByUserId:string:36:optional",
+        "acceptanceRationale:string:10000:optional"
+      ]
+    },
+    {
+      "id": "processing-activities",
+      "name": "Processing Activities",
+      "permissions": "tenant-and-academy-scoped",
+      "columns": [
+        "matId:string:36:required:index",
+        "academyIds:string[]:required",
+        "name:string:512:required:index",
+        "ownerUserId:string:36:required:index",
+        "purpose:string:10000:required",
+        "dataSubjectCategories:string[]:required",
+        "personalDataCategories:string[]:required",
+        "specialCategoryData:boolean:required",
+        "criminalOffenceData:boolean:required",
+        "lawfulBasis:string:64:required:index",
+        "specialCategoryCondition:string:128:optional",
+        "recipients:string[]:required",
+        "processors:string[]:required",
+        "internationalTransfers:json:required",
+        "retentionRule:string:2000:required",
+        "securityMeasures:string[]:required",
+        "sourceSystems:string[]:required",
+        "destinationSystems:string[]:required",
+        "status:enum(draft,active,under-review,retired):required:index",
+        "lastReviewedAt:datetime:optional",
+        "nextReviewAt:datetime:required:index",
+        "version:integer:required"
+      ]
+    },
+    {
+      "id": "policies",
+      "name": "Policies",
+      "permissions": "tenant-and-academy-scoped",
+      "columns": [
+        "matId:string:36:required:index",
+        "academyIds:string[]:required",
+        "title:string:512:required:index",
+        "ownerUserId:string:36:required:index",
+        "versionLabel:string:32:required",
+        "status:enum(draft,in-review,approved,published,retired):required:index",
+        "reviewDueAt:datetime:required:index",
+        "documentId:string:36:required",
+        "approvedByUserId:string:36:optional",
+        "approvedAt:datetime:optional",
+        "publishedAt:datetime:optional",
+        "supersedesPolicyId:string:36:optional"
+      ]
+    },
+    {
+      "id": "policy-acknowledgements",
+      "name": "Policy Acknowledgements",
+      "permissions": "tenant-scoped",
+      "columns": [
+        "matId:string:36:required:index",
+        "policyId:string:36:required:index",
+        "policyVersion:string:32:required",
+        "userId:string:36:required:index",
+        "assignedAt:datetime:required",
+        "dueAt:datetime:required:index",
+        "acknowledgedAt:datetime:optional",
+        "exceptionId:string:36:optional"
+      ]
+    },
+    {
+      "id": "policy-exceptions",
+      "name": "Policy Exceptions",
+      "permissions": "tenant-and-academy-scoped",
+      "columns": [
+        "matId:string:36:required:index",
+        "academyId:string:36:optional:index",
+        "policyId:string:36:required:index",
+        "requestedByUserId:string:36:required",
+        "rationale:string:10000:required",
+        "compensatingControls:string[]:required",
+        "expiresAt:datetime:required:index",
+        "approvedByUserId:string:36:optional",
+        "approvedAt:datetime:optional"
       ]
     }
   ],
