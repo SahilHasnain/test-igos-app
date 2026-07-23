@@ -1,46 +1,140 @@
 {
   "$schema": "./schema.schema.json",
-  "version": 1,
-  "database": { "id": "igos-core", "name": "IGOS Core" },
+  "version": 2,
+  "database": {
+    "id": "igos-core",
+    "name": "IGOS Core"
+  },
   "tables": [
     {
       "id": "mats",
       "name": "Multi-Academy Trusts",
       "permissions": "server-only",
-      "columns": ["name:string:256:required", "slug:string:64:required:unique", "status:enum(active,suspended):required", "settings:json:optional"]
+      "columns": [
+        "name:string:256:required",
+        "slug:string:64:required:unique",
+        "status:enum(active,suspended):required",
+        "settings:json:optional"
+      ]
     },
     {
       "id": "academies",
       "name": "Academies",
       "permissions": "tenant-scoped",
-      "columns": ["matId:string:36:required:index", "name:string:256:required", "urn:string:16:optional", "status:enum(active,inactive):required"]
+      "columns": [
+        "matId:string:36:required:index",
+        "name:string:256:required",
+        "urn:string:16:optional",
+        "status:enum(active,inactive):required"
+      ]
     },
     {
       "id": "memberships",
       "name": "Memberships",
       "permissions": "tenant-scoped",
-      "columns": ["matId:string:36:required:index", "userId:string:36:required:index", "academyIds:string[]:optional", "roles:string[]:required", "status:enum(invited,active,suspended):required"]
+      "columns": [
+        "matId:string:36:required:index",
+        "userId:string:36:required:index",
+        "academyIds:string[]:optional",
+        "roles:string[]:required",
+        "status:enum(invited,active,suspended):required"
+      ]
     },
     {
       "id": "matters",
       "name": "Matters",
       "permissions": "tenant-and-academy-scoped",
-      "columns": ["matId:string:36:required:index", "academyId:string:36:optional:index", "reference:string:64:required:unique", "type:enum(sar,foi,breach,dpia):required:index", "status:enum(draft,open,awaiting-information,review,approved,closed):required:index", "title:string:512:required", "ownerUserId:string:36:required:index", "statutoryDueAt:datetime:optional:index", "version:integer:required"]
+      "columns": [
+        "matId:string:36:required:index",
+        "academyId:string:36:optional:index",
+        "reference:string:64:required:unique",
+        "type:enum(sar,foi,breach,dpia):required:index",
+        "status:enum(draft,open,awaiting-information,review,approved,closed):required:index",
+        "title:string:512:required",
+        "ownerUserId:string:36:required:index",
+        "statutoryDueAt:datetime:optional:index",
+        "version:integer:required"
+      ]
     },
     {
       "id": "audit-events",
       "name": "Audit Events",
       "permissions": "append-only-server",
-      "columns": ["matId:string:36:required:index", "academyId:string:36:optional:index", "matterId:string:36:optional:index", "actorUserId:string:36:required", "action:string:128:required:index", "occurredAt:datetime:required:index", "correlationId:string:64:required:index", "previousHash:string:64:optional", "payloadHash:string:64:required", "metadata:json:required"]
+      "columns": [
+        "matId:string:36:required:index",
+        "academyId:string:36:optional:index",
+        "matterId:string:36:optional:index",
+        "actorUserId:string:36:required",
+        "action:string:128:required:index",
+        "occurredAt:datetime:required:index",
+        "correlationId:string:64:required:index",
+        "previousHash:string:64:optional",
+        "payloadHash:string:64:required",
+        "metadata:json:required"
+      ]
     },
     {
       "id": "documents",
       "name": "Document Metadata",
       "permissions": "tenant-and-academy-scoped",
-      "columns": ["matId:string:36:required:index", "academyId:string:36:optional:index", "matterId:string:36:required:index", "storageFileId:string:36:required:unique", "name:string:512:required", "mimeType:string:128:required", "size:integer:required", "checksum:string:64:required", "retentionClass:string:64:required", "status:enum(active,quarantined,disposed):required"]
+      "columns": [
+        "matId:string:36:required:index",
+        "academyId:string:36:optional:index",
+        "matterId:string:36:required:index",
+        "storageFileId:string:36:required:unique",
+        "name:string:512:required",
+        "mimeType:string:128:required",
+        "size:integer:required",
+        "checksum:string:64:required",
+        "retentionClass:string:64:required",
+        "status:enum(active,quarantined,disposed):required"
+      ]
+    },
+    {
+      "id": "deadline-adjustments",
+      "name": "Deadline Adjustments",
+      "permissions": "tenant-and-academy-scoped",
+      "columns": [
+        "matId:string:36:required:index",
+        "academyId:string:36:optional:index",
+        "matterId:string:36:required:index",
+        "kind:enum(extension,pause):required:index",
+        "reason:string:64:required:index",
+        "startedAt:datetime:optional",
+        "resumedAt:datetime:optional",
+        "originalDueAt:datetime:optional",
+        "revisedDueAt:datetime:optional",
+        "rationale:string:10000:required",
+        "recordedByUserId:string:36:required",
+        "approvedByUserId:string:36:optional",
+        "createdAt:datetime:required:index"
+      ]
+    },
+    {
+      "id": "notification-receipts",
+      "name": "Notification Receipts",
+      "permissions": "server-only",
+      "columns": [
+        "matId:string:36:required:index",
+        "academyId:string:36:optional:index",
+        "matterId:string:36:optional:index",
+        "provider:string:64:required",
+        "externalId:string:256:required",
+        "purpose:string:64:required:index",
+        "recipients:string[]:required",
+        "sentAt:datetime:required:index",
+        "idempotencyKey:string:256:required:index"
+      ]
     }
   ],
   "buckets": [
-    { "id": "case-documents", "name": "Case Documents", "maximumFileSize": 26214400, "encryption": true, "antivirus": true, "permissions": "tenant-and-academy-scoped" }
+    {
+      "id": "case-documents",
+      "name": "Case Documents",
+      "maximumFileSize": 26214400,
+      "encryption": true,
+      "antivirus": true,
+      "permissions": "tenant-and-academy-scoped"
+    }
   ]
 }
