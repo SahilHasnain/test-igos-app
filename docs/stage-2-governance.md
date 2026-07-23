@@ -34,7 +34,7 @@ This stacked branch extends Stage 1 with the domain and persistence foundation f
 
 ## Appwrite schema
 
-`infra/appwrite/schema.json` version 3 adds:
+`infra/appwrite/schema.json` version 4 adds:
 
 - `dpia-sections`;
 - `dpia-risks`;
@@ -61,3 +61,9 @@ The next slice should add tenant-scoped repositories and APIs for the new record
 - acknowledgements remain tied to the exact policy version;
 - expired policy exceptions appear as overdue actions;
 - every approval, return, acceptance, publication and exception decision creates an audit event.
+
+## Operational completion slice
+
+The branch now includes demo runtime services and API routes for ROPA, policies and multi-party DPIA operations. Supplier and transfer assessment validation, review-reminder scanning and interactive ROPA/policy draft creation are also included.
+
+Before persistent mode is enabled, the Dev must implement Appwrite adapters for every Stage 2 repository and configure an asynchronous notification worker for reminder delivery. API keys remain server-only and browser-supplied role claims are not trusted.
