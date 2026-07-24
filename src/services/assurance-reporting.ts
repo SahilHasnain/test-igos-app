@@ -42,8 +42,8 @@ export interface AcademyAssuranceInput {
   risks: readonly AssuranceRisk[];
 }
 
-export function academyAssuranceScorecard(input: AcademyAssuranceInput) {
-  const overdueCriticalActions = input.actions.filter((action) => action.status !== "complete" && action.priority === "critical" && new Date(action.dueAt) < new Date()).length;
+export function academyAssuranceScorecard(input: AcademyAssuranceInput, now = new Date()) {
+  const overdueCriticalActions = input.actions.filter((action) => action.status !== "complete" && action.priority === "critical" && new Date(action.dueAt) < now).length;
   const openHighFindings = input.findings.filter((finding) => finding.status !== "closed" && (finding.rating === "high" || finding.rating === "critical")).length;
   const highRisks = input.risks.filter((risk) => ["high", "critical"].includes(scoreAssuranceRisk(risk).rating)).length;
   const base = input.statutoryCompliancePercent * 0.4 + input.policyCompliancePercent * 0.3 + input.trainingCompliancePercent * 0.3;
