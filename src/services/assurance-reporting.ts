@@ -22,7 +22,7 @@ export interface EvidencePack {
   manifestHash: string;
 }
 
-const canonical = (items: readonly EvidenceItem[]) => JSON.stringify([...items].sort((a, b) => a.id.localeCompare(b)).map(({ id, checksum, sourceReference }) => ({ id, checksum, sourceReference })));
+const canonical = (items: readonly EvidenceItem[]) => JSON.stringify([...items].sort((a, b) => a.id.localeCompare(b.id)).map(({ id, checksum, sourceReference }) => ({ id, checksum, sourceReference })));
 
 export function buildEvidencePack(input: Omit<EvidencePack, "manifestHash">): EvidencePack {
   if (!input.items.length) throw new Error("An evidence pack must contain at least one evidence item");
