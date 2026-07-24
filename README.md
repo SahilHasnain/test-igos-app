@@ -35,6 +35,10 @@ The stacked Stage 3 branch adds central actions, audit findings, risk treatment,
 
 The stacked Stage 4 branch adds matter-aware SAR/FOI document review, human-controlled redaction decisions and disclosure manifests. See [AI-assisted redaction](docs/ai-redaction.md).
 
+## Stage 4B advanced governance
+
+The final stacked feature branch adds AI governance, information assets, retention and holds, disposal controls and contract obligations. See [Stage 4B advanced governance](docs/stage-4b-advanced-governance.md).
+
 ## Run locally
 
 The default `demo` mode needs no external services:
@@ -63,3 +67,4 @@ Microsoft 365 remains optional and is disabled by default.
 - [Stage 2 governance](docs/stage-2-governance.md)
 - [Stage 3 assurance](docs/stage-3-assurance.md)
 - [AI-assisted redaction](docs/ai-redaction.md)
+- [Stage 4B advanced governance](docs/stage-4b-advanced-governance.md)
