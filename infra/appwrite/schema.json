@@ -1,6 +1,6 @@
 {
   "$schema": "./schema.schema.json",
-  "version": 6,
+  "version": 7,
   "database": {
     "id": "igos-core",
     "name": "IGOS Core"
@@ -458,6 +458,135 @@
         "generatedByUserId:string:36:required",
         "entries:json:required",
         "manifestHash:string:64:required"
+      ]
+    },
+    {
+      "id": "ai-systems",
+      "name": "AI Systems",
+      "permissions": "tenant-scoped",
+      "columns": [
+        "matId:string:36:required:index",
+        "name:string:512:required:index",
+        "purpose:string:10000:required",
+        "ownerUserId:string:36:required:index",
+        "supplierId:string:36:optional:index",
+        "modelProvider:string:256:required",
+        "modelReference:string:256:required",
+        "riskTier:string:32:required:index",
+        "status:string:32:required:index",
+        "personalDataUsed:boolean:required",
+        "specialCategoryDataUsed:boolean:required",
+        "automatedDecisionSignificantEffect:boolean:required",
+        "humanOversightDescription:string:10000:required",
+        "explainabilityDescription:string:10000:required",
+        "trainingDataDescription:string:10000:optional",
+        "dpiaId:string:36:optional",
+        "supplierAssessmentId:string:36:optional",
+        "monitoringMetrics:string[]:required",
+        "reviewDueAt:datetime:required:index",
+        "approvedByUserId:string:36:optional",
+        "approvalRationale:string:10000:optional"
+      ]
+    },
+    {
+      "id": "information-assets",
+      "name": "Information Assets",
+      "permissions": "tenant-and-academy-scoped",
+      "columns": [
+        "matId:string:36:required:index",
+        "academyIds:string[]:required",
+        "name:string:512:required:index",
+        "assetType:string:64:required:index",
+        "ownerUserId:string:36:required:index",
+        "administratorUserId:string:36:optional",
+        "classification:string:32:required:index",
+        "criticality:string:32:required:index",
+        "hostingLocations:string[]:required",
+        "containsPersonalData:boolean:required",
+        "containsSpecialCategoryData:boolean:required",
+        "ropaActivityIds:string[]:required",
+        "dpiaIds:string[]:required",
+        "supplierIds:string[]:required",
+        "retentionRuleIds:string[]:required",
+        "recoveryTimeHours:integer:optional",
+        "recoveryPointHours:integer:optional",
+        "lastReviewedAt:datetime:optional",
+        "nextReviewAt:datetime:required:index",
+        "status:string:32:required:index"
+      ]
+    },
+    {
+      "id": "retention-rules",
+      "name": "Retention Rules",
+      "permissions": "tenant-scoped",
+      "columns": [
+        "matId:string:36:required:index",
+        "name:string:512:required",
+        "recordCategory:string:512:required:index",
+        "trigger:string:64:required",
+        "periodMonths:integer:required",
+        "disposition:string:64:required",
+        "authority:string:2000:required",
+        "approvedByUserId:string:36:required",
+        "effectiveAt:datetime:required:index"
+      ]
+    },
+    {
+      "id": "record-instances",
+      "name": "Record Instances",
+      "permissions": "tenant-and-academy-scoped",
+      "columns": [
+        "matId:string:36:required:index",
+        "academyId:string:36:optional:index",
+        "assetId:string:36:required:index",
+        "retentionRuleId:string:36:required:index",
+        "triggerAt:datetime:required",
+        "dispositionDueAt:datetime:required:index",
+        "status:string:32:required:index",
+        "disposalEvidenceDocumentId:string:36:optional"
+      ]
+    },
+    {
+      "id": "records-holds",
+      "name": "Records Holds",
+      "permissions": "tenant-and-academy-scoped",
+      "columns": [
+        "matId:string:36:required:index",
+        "academyId:string:36:optional:index",
+        "name:string:512:required",
+        "reason:string:32:required:index",
+        "matterId:string:36:optional:index",
+        "recordIds:string[]:required",
+        "assetIds:string[]:required",
+        "imposedByUserId:string:36:required",
+        "imposedAt:datetime:required:index",
+        "releasedByUserId:string:36:optional",
+        "releasedAt:datetime:optional",
+        "releaseRationale:string:10000:optional"
+      ]
+    },
+    {
+      "id": "contract-governance",
+      "name": "Contract Governance",
+      "permissions": "tenant-scoped",
+      "columns": [
+        "matId:string:36:required:index",
+        "supplierId:string:36:required:index",
+        "title:string:512:required",
+        "ownerUserId:string:36:required:index",
+        "startsAt:datetime:required",
+        "expiresAt:datetime:required:index",
+        "renewalNoticeAt:datetime:required:index",
+        "dataProcessingTerms:boolean:required",
+        "confidentialityTerms:boolean:required",
+        "auditRights:boolean:required",
+        "subprocessorApprovalRequired:boolean:required",
+        "breachNotificationHours:integer:optional",
+        "returnOrDeletionTerms:boolean:required",
+        "exitPlanDocumentId:string:36:optional",
+        "status:string:32:required:index",
+        "offboardingCompletedAt:datetime:optional",
+        "deletionEvidenceDocumentId:string:36:optional"
       ]
     }
   ],
