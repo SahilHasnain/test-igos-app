@@ -4,12 +4,13 @@ import { FormEvent, useMemo, useState } from "react";
 import { academies, DemoMatter, initialMatters, MatterType, workflowStages } from "../src/demo/ui-data";
 import { DpiaProgressPanel, PolicyPanel, RopaPanel } from "./governance-panels";
 import { AssuranceOverviewPanel, AuditProgrammePanel, RiskRegisterPanel } from "./assurance-panels";
+import { RedactionWorkspace } from "./redaction-workspace";
 
-type View = "Overview" | MatterType | "ROPA" | "Policies" | "Assurance" | "Risks" | "Audits" | "Actions" | "Audit";
+type View = "Overview" | MatterType | "ROPA" | "Policies" | "Redaction" | "Assurance" | "Risks" | "Audits" | "Actions" | "Audit";
 type DemoRole = "DPO" | "MAT administrator" | "Case manager" | "Academy lead" | "Auditor" | "Read only";
 const demoRoles: DemoRole[] = ["DPO", "MAT administrator", "Case manager", "Academy lead", "Auditor", "Read only"];
 const moduleLabels: Record<MatterType, string> = { SAR: "SARs", FOI: "FOI", Breach: "Breaches", DPIA: "DPIAs" };
-const icons: Record<string, string> = { Overview: "⌂", SAR: "◫", FOI: "◎", Breach: "△", DPIA: "◇", ROPA: "↔", Policies: "§", Assurance: "◉", Risks: "!", Audits: "▤", Actions: "✓", Audit: "≡" };
+const icons: Record<string, string> = { Overview: "⌂", SAR: "◫", FOI: "◎", Breach: "△", DPIA: "◇", ROPA: "↔", Policies: "§", Redaction: "◩", Assurance: "◉", Risks: "!", Audits: "▤", Actions: "✓", Audit: "≡" };
 
 function RiskBadge({ risk }: { risk: DemoMatter["risk"] }) {
   return <span className={`badge risk-${risk.toLowerCase()}`}>{risk}</span>;
@@ -73,7 +74,7 @@ export default function IgosClient() {
   const canCreate = !["Auditor", "Read only"].includes(role);
   const canAdvance = ["DPO", "MAT administrator", "Case manager"].includes(role);
   const canViewAudit = ["DPO", "MAT administrator", "Auditor"].includes(role);
-  const availableViews = (["Overview", "SAR", "FOI", "Breach", "DPIA", "ROPA", "Policies", "Assurance", "Risks", "Audits", "Actions", "Audit"] as View[]).filter((item) => item !== "Audit" || canViewAudit);
+  const availableViews = (["Overview", "SAR", "FOI", "Breach", "DPIA", "ROPA", "Policies", "Redaction", "Assurance", "Risks", "Audits", "Actions", "Audit"] as View[]).filter((item) => item !== "Audit" || canViewAudit);
   const active = filtered.filter((item) => item.stage !== "Closed");
   const urgent = [...active].sort((a, b) => daysUntil(a.due) - daysUntil(b.due)).slice(0, 5);
   const metrics = [
@@ -94,7 +95,7 @@ export default function IgosClient() {
 
     <main id="main-content" tabIndex={-1}>
       <header className="topbar">
-        <div><p className="eyebrow">Federation operations centre</p><h1>{view === "Overview" ? "Information governance overview" : view === "Actions" ? "Open actions" : view === "Audit" ? "Audit and assurance" : view === "ROPA" ? "Records of processing activities" : view === "Policies" ? "Policy management" : view === "Assurance" ? "Assurance overview" : view === "Risks" ? "Information governance risks" : view === "Audits" ? "Audit programme" : `${moduleLabels[view as MatterType]} register`}</h1></div>
+        <div><p className="eyebrow">Federation operations centre</p><h1>{view === "Overview" ? "Information governance overview" : view === "Actions" ? "Open actions" : view === "Audit" ? "Audit and assurance" : view === "ROPA" ? "Records of processing activities" : view === "Policies" ? "Policy management" : view === "Redaction" ? "AI-assisted review and redaction" : view === "Assurance" ? "Assurance overview" : view === "Risks" ? "Information governance risks" : view === "Audits" ? "Audit programme" : `${moduleLabels[view as MatterType]} register`}</h1></div>
         <div className="top-actions"><label className="search"><span>⌕</span><input aria-label="Search matters" placeholder="Search cases…" value={query} onChange={(e) => setQuery(e.target.value)} /></label><select aria-label="Active role" value={role} onChange={(e) => { const nextRole = e.target.value as DemoRole; setRole(nextRole); if (view === "Audit" && !["DPO", "MAT administrator", "Auditor"].includes(nextRole)) setView("Overview"); }}>{demoRoles.map((item) => <option key={item}>{item}</option>)}</select><select aria-label="Academy filter" value={academy} onChange={(e) => setAcademy(e.target.value)}>{academies.map((item) => <option key={item}>{item}</option>)}</select>{canCreate && <button className="primary" onClick={() => setShowCreate(true)}>＋ New matter</button>}<span className="avatar" title={role} aria-label={`Current role: ${role}`}>{role.split(" ").map((word) => word[0]).join("").slice(0, 2)}</span></div>
       </header>
 
@@ -113,6 +114,7 @@ export default function IgosClient() {
         {view === "DPIA" && <DpiaProgressPanel role={role} />}
         {view === "ROPA" && <RopaPanel academy={academy} role={role} />}
         {view === "Policies" && <PolicyPanel role={role} />}
+        {view === "Redaction" && <RedactionWorkspace role={role} />}
         {view === "Assurance" && <AssuranceOverviewPanel role={role} />}
         {view === "Risks" && <RiskRegisterPanel role={role} />}
         {view === "Audits" && <AuditProgrammePanel />}
