@@ -1,6 +1,6 @@
 {
   "$schema": "./schema.schema.json",
-  "version": 5,
+  "version": 6,
   "database": {
     "id": "igos-core",
     "name": "IGOS Core"
@@ -378,6 +378,85 @@
         "generatedAt:datetime:required:index",
         "generatedByUserId:string:36:required",
         "items:json:required",
+        "manifestHash:string:64:required"
+      ]
+    },
+    {
+      "id": "redaction-analysis-runs",
+      "name": "Redaction Analysis Runs",
+      "permissions": "tenant-and-academy-scoped",
+      "columns": [
+        "matId:string:36:required:index",
+        "academyId:string:36:optional:index",
+        "matterId:string:36:required:index",
+        "documentId:string:36:required:index",
+        "documentVersion:integer:required",
+        "provider:string:64:required",
+        "processingLocation:string:128:required",
+        "modelReference:string:128:optional",
+        "startedAt:datetime:required:index",
+        "completedAt:datetime:optional",
+        "status:string:32:required:index",
+        "suggestionCount:integer:required",
+        "inputChecksum:string:64:required"
+      ]
+    },
+    {
+      "id": "redaction-suggestions",
+      "name": "Redaction Suggestions",
+      "permissions": "tenant-and-academy-scoped",
+      "columns": [
+        "matId:string:36:required:index",
+        "academyId:string:36:optional:index",
+        "matterId:string:36:required:index",
+        "documentId:string:36:required:index",
+        "documentVersion:integer:required",
+        "location:json:required",
+        "category:string:64:required:index",
+        "suggestedTreatment:string:32:required",
+        "confidence:double:required",
+        "excerptHash:string:64:required",
+        "explanation:string:10000:required",
+        "legalGround:string:2000:optional",
+        "contextualFactors:string[]:required",
+        "decision:string:32:required:index",
+        "decidedByUserId:string:36:optional",
+        "decidedAt:datetime:optional",
+        "reviewerRationale:string:10000:optional",
+        "finalTreatment:string:32:optional"
+      ]
+    },
+    {
+      "id": "redaction-second-reviews",
+      "name": "Redaction Second Reviews",
+      "permissions": "tenant-and-academy-scoped",
+      "columns": [
+        "matId:string:36:required:index",
+        "academyId:string:36:optional:index",
+        "matterId:string:36:required:index",
+        "suggestionId:string:36:required:index",
+        "reviewerUserId:string:36:required",
+        "decision:string:32:required",
+        "rationale:string:10000:required",
+        "reviewedAt:datetime:required:index"
+      ]
+    },
+    {
+      "id": "redaction-manifests",
+      "name": "Redaction Manifests",
+      "permissions": "tenant-and-academy-scoped",
+      "columns": [
+        "matId:string:36:required:index",
+        "academyId:string:36:optional:index",
+        "matterId:string:36:required:index",
+        "documentId:string:36:required:index",
+        "documentVersion:integer:required",
+        "originalChecksum:string:64:required",
+        "redactedCopyDocumentId:string:36:required",
+        "redactedCopyChecksum:string:64:required",
+        "generatedAt:datetime:required:index",
+        "generatedByUserId:string:36:required",
+        "entries:json:required",
         "manifestHash:string:64:required"
       ]
     }
