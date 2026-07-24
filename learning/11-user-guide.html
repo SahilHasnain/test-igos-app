@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>IGOS — User Guide (Roman Urdu)</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+tailwind.config={theme:{extend:{colors:{brand:'#6366f1',dark:'#0f172a',card:'#1e293b'}}}}
+</script>
+</head>
+<body class="bg-dark text-slate-200 min-h-screen font-sans">
+
+<nav class="fixed top-0 inset-x-0 z-50 bg-dark/80 backdrop-blur border-b border-slate-700 px-6 py-3 flex items-center justify-between">
+  <span class="font-bold text-brand text-lg">IGOS Learning</span>
+  <div class="flex gap-3 text-sm">
+    <a href="11-user-guide.html" class="text-brand font-bold border-b border-brand">11 User Guide</a>
+  </div>
+</nav>
+
+<main class="max-w-5xl mx-auto px-6 pt-24 pb-20 space-y-16">
+
+<section class="text-center space-y-4">
+  <h1 class="text-4xl font-extrabold text-white">IGOS <span class="text-brand">User Guide</span></h1>
+  <p class="text-lg text-slate-400">User kya dekhta hai aur kya karta hai — developer nahi, asal user.</p>
+</section>
+
+<!-- KAUN USE KARTA HAI -->
+<section class="space-y-6">
+  <h2 class="text-2xl font-bold text-white border-l-4 border-brand pl-4">IGOS Kaun Use Karta Hai?</h2>
+  <div class="grid md:grid-cols-3 gap-4">
+    <div class="bg-card rounded-xl p-5 border border-slate-700 space-y-2">
+      <div class="text-3xl">👩‍💼</div>
+      <h3 class="font-bold text-white">DPO (Data Protection Officer)</h3>
+      <p class="text-xs text-slate-400">Saari data protection ki dekh-bhaal karta hai. DPIAs approve karta hai, breaches review karta hai, policies sign off karta hai. Sab academies ka data dekh sakta hai.</p>
+    </div>
+    <div class="bg-card rounded-xl p-5 border border-slate-700 space-y-2">
+      <div class="text-3xl">👩‍💻</div>
+      <h3 class="font-bold text-white">Case Manager</h3>
+      <p class="text-xs text-slate-400">Roz ka kaam karta hai — SARs kholti hai, FOIs ka jawab deti hai, breaches handle karti hai. Cases ko workflow mein aage badhati hai.</p>
+    </div>
+    <div class="bg-card rounded-xl p-5 border border-slate-700 space-y-2">
+      <div class="text-3xl">🏫</div>
+      <h3 class="font-bold text-white">Academy Lead</h3>
+      <p class="text-xs text-slate-400">Sirf apni academy ke cases dekhta hai. Doosri academy ka data nahi dekh sakta. Approve ya close nahi kar sakta — sirf trust office kar sakta hai.</p>
+    </div>
+  </div>
+</section>
+
+<!-- DASHBOARD -->
+<section class="space-y-6">
+  <h2 class="text-2xl font-bold text-white border-l-4 border-brand pl-4">Dashboard (Overview)</h2>
+  <p class="text-slate-400 text-sm">Login karne ke baad <strong class="text-white">Federation Operations Centre</strong> dikhta hai. Yeh aapka home screen hai.</p>
+  <div class="bg-card rounded-xl p-6 border border-slate-700 space-y-4">
+    <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-3">
+      <div class="bg-dark rounded-lg p-4 text-center space-y-1">
+        <p class="text-2xl font-bold text-brand">3</p>
+        <p class="text-xs text-white font-bold">Open SARs</p>
+        <p class="text-xs text-slate-400">Statutory requests</p>
+      </div>
+      <div class="bg-dark rounded-lg p-4 text-center space-y-1">
+        <p class="text-2xl font-bold text-blue-400">2</p>
+        <p class="text-xs text-white font-bold">Open FOIs</p>
+        <p class="text-xs text-slate-400">Information requests</p>
+      </div>
+      <div class="bg-dark rounded-lg p-4 text-center space-y-1">
+        <p class="text-2xl font-bold text-purple-400">1</p>
+        <p class="text-xs text-white font-bold">Active DPIAs</p>
+        <p class="text-xs text-slate-400">Assessments chal rahe hain</p>
+      </div>
+      <div class="bg-dark rounded-lg p-4 text-center space-y-1">
+        <p class="text-2xl font-bold text-red-400">3</p>
+        <p class="text-xs text-white font-bold">High-risk matters</p>
+        <p class="text-xs text-slate-400">Dhyan chahiye</p>
+      </div>
+    </div>
+    <div class="grid md:grid-cols-2 gap-4">
+      <div class="bg-dark rounded-lg p-4 space-y-2">
+        <h4 class="text-xs font-bold text-yellow-400">Priority Matters (Deadline Control)</h4>
+        <p class="text-xs text-slate-400">5 sabse zaroori cases deadline ke hisaab se. Kaunse overdue hain, kaunse jald due hain.</p>
+        <div class="space-y-1">
+          <div class="flex items-center gap-2 text-xs"><span class="text-red-400">●</span> <span class="text-slate-300">SAR-2026-0178 — 1 din baaki</span></div>
+          <div class="flex items-center gap-2 text-xs"><span class="text-yellow-400">●</span> <span class="text-slate-300">BR-2026-0012 — 2 din baaki</span></div>
+          <div class="flex items-center gap-2 text-xs"><span class="text-green-400">●</span> <span class="text-slate-300">FOI-2026-0109 — 5 din baaki</span></div>
+        </div>
+      </div>
+      <div class="bg-dark rounded-lg p-4 space-y-2">
+        <h4 class="text-xs font-bold text-green-400">Academy Health (Scorecards)</h4>
+        <p class="text-xs text-slate-400">Har academy ka compliance score — statutory + policy + training ke basis pe.</p>
+        <div class="space-y-1">
+          <div class="flex items-center gap-2 text-xs"><span class="text-green-400">●</span> <span class="text-slate-300">Greenfield — 91% (On track)</span></div>
+          <div class="flex items-center gap-2 text-xs"><span class="text-yellow-400">●</span> <span class="text-slate-300">Riverside — 82% (Watch)</span></div>
+          <div class="flex items-center gap-2 text-xs"><span class="text-red-400">●</span> <span class="text-slate-300">Hillcrest — 68% (Action required)</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 4 CASE TYPES -->
+<section class="space-y-6">
+  <h2 class="text-2xl font-bold text-white border-l-4 border-brand pl-4">4 Case Types (User Kya Kaam Karta Hai)</h2>
+
+  <!-- SAR -->
+  <div class="bg-card rounded-xl p-6 border border-slate-700 space-y-4">
+    <div class="flex items-center gap-3">
+      <span class="text-2xl">📋</span>
+      <h3 class="font-bold text-white text-lg">SAR — Subject Access Request</h3>
+    </div>
+    <p class="text-sm text-slate-300">Koi parent, pupil, ya staff member puchta hai: <strong class="text-white">"Mere baare mein aapke paas kya data hai?"</strong></p>
+    <div class="bg-dark rounded-lg p-4 space-y-2">
+      <p class="text-xs font-bold text-yellow-400">Kya hota hai:</p>
+      <div class="flex items-center gap-3 text-xs text-slate-300 flex-wrap">
+        <span class="bg-green-900/50 text-green-300 px-2 py-1 rounded">1. Intake</span>
+        <span>→</span>
+        <span class="bg-blue-900/50 text-blue-300 px-2 py-1 rounded">2. Identity check</span>
+        <span>→</span>
+        <span class="bg-purple-900/50 text-purple-300 px-2 py-1 rounded">3. Scope</span>
+        <span>→</span>
+        <span class="bg-yellow-900/50 text-yellow-300 px-2 py-1 rounded">4. Evidence</span>
+        <span>→</span>
+        <span class="bg-pink-900/50 text-pink-300 px-2 py-1 rounded">5. Redaction</span>
+        <span>→</span>
+        <span class="bg-orange-900/50 text-orange-300 px-2 py-1 rounded">6. Exemptions</span>
+        <span>→</span>
+        <span class="bg-red-900/50 text-red-300 px-2 py-1 rounded">7. Approval</span>
+        <span>→</span>
+        <span class="bg-slate-700 text-slate-300 px-2 py-1 rounded">8. Disclose</span>
+      </div>
+      <p class="text-xs text-red-400 font-bold mt-2">⏰ Deadline: 1 calendar month (2 aur months se zyada extend nahi ho sakta)</p>
+    </div>
+  </div>
+
+  <!-- FOI -->
+  <div class="bg-card rounded-xl p-6 border border-slate-700 space-y-4">
+    <div class="flex items-center gap-3">
+      <span class="text-2xl">📢</span>
+      <h3 class="font-bold text-white text-lg">FOI — Freedom of Information</h3>
+    </div>
+    <p class="text-sm text-slate-300">Koi aam insaan puchta hai: <strong class="text-white">"Apne kharche, policies, faislon ke baare mein batao."</strong></p>
+    <div class="bg-dark rounded-lg p-4 space-y-2">
+      <p class="text-xs font-bold text-yellow-400">Kya hota hai:</p>
+      <div class="flex items-center gap-3 text-xs text-slate-300 flex-wrap">
+        <span class="bg-green-900/50 text-green-300 px-2 py-1 rounded">1. Intake</span>
+        <span>→</span>
+        <span class="bg-blue-900/50 text-blue-300 px-2 py-1 rounded">2. Validity</span>
+        <span>→</span>
+        <span class="bg-purple-900/50 text-purple-300 px-2 py-1 rounded">3. Gathering</span>
+        <span>→</span>
+        <span class="bg-yellow-900/50 text-yellow-300 px-2 py-1 rounded">4. Exemptions</span>
+        <span>→</span>
+        <span class="bg-pink-900/50 text-pink-300 px-2 py-1 rounded">5. Public interest</span>
+        <span>→</span>
+        <span class="bg-orange-900/50 text-orange-300 px-2 py-1 rounded">6. Approval</span>
+        <span>→</span>
+        <span class="bg-slate-700 text-slate-300 px-2 py-1 rounded">7. Response</span>
+      </div>
+      <p class="text-xs text-red-400 font-bold mt-2">⏰ Deadline: 20 working days</p>
+    </div>
+  </div>
+
+  <!-- BREACH -->
+  <div class="bg-card rounded-xl p-6 border border-slate-700 space-y-4">
+    <div class="flex items-center gap-3">
+      <span class="text-2xl">🚨</span>
+      <h3 class="font-bold text-white text-lg">Data Breach</h3>
+    </div>
+    <p class="text-sm text-slate-300">Kuch galat ho gaya: <strong class="text-white">"Personal data leak ho gayi, kho gayi, ya kisi ne dekh liya jisko nahi dekhni chahiye thi."</strong></p>
+    <div class="bg-dark rounded-lg p-4 space-y-2">
+      <p class="text-xs font-bold text-yellow-400">Kya hota hai:</p>
+      <div class="flex items-center gap-3 text-xs text-slate-300 flex-wrap">
+        <span class="bg-green-900/50 text-green-300 px-2 py-1 rounded">1. Reported</span>
+        <span>→</span>
+        <span class="bg-blue-900/50 text-blue-300 px-2 py-1 rounded">2. Contain</span>
+        <span>→</span>
+        <span class="bg-purple-900/50 text-purple-300 px-2 py-1 rounded">3. Risk assess</span>
+        <span>→</span>
+        <span class="bg-yellow-900/50 text-yellow-300 px-2 py-1 rounded">4. ICO decision</span>
+        <span>→</span>
+        <span class="bg-pink-900/50 text-pink-300 px-2 py-1 rounded">5. Investigate</span>
+        <span>→</span>
+        <span class="bg-orange-900/50 text-orange-300 px-2 py-1 rounded">6. Fix</span>
+        <span>→</span>
+        <span class="bg-slate-700 text-slate-300 px-2 py-1 rounded">7. Lessons</span>
+      </div>
+      <p class="text-xs text-red-400 font-bold mt-2">⏰ Deadline: 72 hours — ICO ko batana hai (rok nahi sakte!)</p>
+    </div>
+  </div>
+
+  <!-- DPIA -->
+  <div class="bg-card rounded-xl p-6 border border-slate-700 space-y-4">
+    <div class="flex items-center gap-3">
+      <span class="text-2xl">🔍</span>
+      <h3 class="font-bold text-white text-lg">DPIA — Data Protection Impact Assessment</h3>
+    </div>
+    <p class="text-sm text-slate-300">Naya data processing shuru karne se pehle: <strong class="text-white">"Kya risks hain aur unhe kaise kam karenge?"</strong></p>
+    <div class="bg-dark rounded-lg p-4 space-y-2">
+      <p class="text-xs font-bold text-yellow-400">Kaun kya bharta hai (multi-party):</p>
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-2 text-xs">
+        <div class="bg-slate-800 rounded p-2 text-center"><p class="font-bold text-blue-300">Requester</p><p class="text-slate-400">Project description</p></div>
+        <div class="bg-slate-800 rounded p-2 text-center"><p class="font-bold text-green-300">Supplier</p><p class="text-slate-400">Security measures</p></div>
+        <div class="bg-slate-800 rounded p-2 text-center"><p class="font-bold text-purple-300">Compliance</p><p class="text-slate-400">Necessity & proportionality</p></div>
+        <div class="bg-slate-800 rounded p-2 text-center"><p class="font-bold text-yellow-300">DPO</p><p class="text-slate-400">Risk approval</p></div>
+      </div>
+      <p class="text-xs text-slate-400 mt-2">Har ek apna section submit karta hai. DPO ko har section accept karna padta hai tabhi DPIA approve ho sakta hai.</p>
+    </div>
+  </div>
+</section>
+
+<!-- SIDEBAR MODULES -->
+<section class="space-y-6">
+  <h2 class="text-2xl font-bold text-white border-l-4 border-brand pl-4">Left Sidebar — Saare Modules</h2>
+  <p class="text-slate-400 text-sm">Yeh left side pe navigation items hain. Har ek alag data dikhata hai.</p>
+  <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
+    <div class="bg-card rounded-lg p-4 border border-slate-700">
+      <h4 class="font-bold text-white text-sm">⌂ Overview</h4>
+      <p class="text-xs text-slate-400">Dashboard — metrics, priority matters, academy health, recent activity</p>
+    </div>
+    <div class="bg-card rounded-lg p-4 border border-slate-700">
+      <h4 class="font-bold text-white text-sm">◫ SARs</h4>
+      <p class="text-xs text-slate-400">Saare Subject Access Request cases — filter ho sakte hain</p>
+    </div>
+    <div class="bg-card rounded-lg p-4 border border-slate-700">
+      <h4 class="font-bold text-white text-sm">◎ FOI</h4>
+      <p class="text-xs text-slate-400">Saare Freedom of Information requests</p>
+    </div>
+    <div class="bg-card rounded-lg p-4 border border-slate-700">
+      <h4 class="font-bold text-white text-sm">△ Breaches</h4>
+      <p class="text-xs text-slate-400">Saare data breach incidents</p>
+    </div>
+    <div class="bg-card rounded-lg p-4 border border-slate-700">
+      <h4 class="font-bold text-white text-sm">◇ DPIAs</h4>
+      <p class="text-xs text-slate-400">Data protection impact assessments</p>
+    </div>
+    <div class="bg-card rounded-lg p-4 border border-slate-700">
+      <h4 class="font-bold text-white text-sm">↔ ROPA</h4>
+      <p class="text-xs text-slate-400">Records of Processing Activities — kya data process karte hain, kyun, lawful basis kya hai</p>
+    </div>
+    <div class="bg-card rounded-lg p-4 border border-slate-700">
+      <h4 class="font-bold text-white text-sm">§ Policies</h4>
+      <p class="text-xs text-slate-400">Policy lifecycle — draft, review, approve, publish, retire. Staff policies ko acknowledge karte hain.</p>
+    </div>
+    <div class="bg-card rounded-lg p-4 border border-slate-700">
+      <h4 class="font-bold text-white text-sm">◩ Redaction</h4>
+      <p class="text-xs text-slate-400">AI-assisted document review — batata hai kya redact karna hai disclosure se pehle</p>
+    </div>
+    <div class="bg-card rounded-lg p-4 border border-slate-700">
+      <h4 class="font-bold text-white text-sm">✦ AI Governance</h4>
+      <p class="text-xs text-slate-400">Trust ke AI systems ka register — risk tier, oversight, DPIA link</p>
+    </div>
+    <div class="bg-card rounded-lg p-4 border border-slate-700">
+      <h4 class="font-bold text-white text-sm">▦ Assets</h4>
+      <p class="text-xs text-slate-400">Information Asset Register — saare systems/datasets, classification, criticality</p>
+    </div>
+    <div class="bg-card rounded-lg p-4 border border-slate-700">
+      <h4 class="font-bold text-white text-sm">▧ Records</h4>
+      <p class="text-xs text-slate-400">Retention & disposal — kaunse records rakhne hain, kab delete karna hai, legal holds</p>
+    </div>
+    <div class="bg-card rounded-lg p-4 border border-slate-700">
+      <h4 class="font-bold text-white text-sm">⌁ Contracts</h4>
+      <p class="text-xs text-slate-400">Supplier contracts — expiry, renewal, IG terms, offboarding</p>
+    </div>
+    <div class="bg-card rounded-lg p-4 border border-slate-700">
+      <h4 class="font-bold text-white text-sm">◉ Assurance</h4>
+      <p class="text-xs text-slate-400">Actions, scorecards, evidence coverage — overall compliance health</p>
+    </div>
+    <div class="bg-card rounded-lg p-4 border border-slate-700">
+      <h4 class="font-bold text-white text-sm">! Risks</h4>
+      <p class="text-xs text-slate-400">IG risk register — inherent/residual scores, treatment progress</p>
+    </div>
+    <div class="bg-card rounded-lg p-4 border border-slate-700">
+      <h4 class="font-bold text-white text-sm">≡ Audit</h4>
+      <p class="text-xs text-slate-400">Audit trail — har action record hota hai timestamp, actor, hash chain ke saath</p>
+    </div>
+  </div>
+</section>
+
+<!-- CASE DETAIL -->
+<section class="space-y-6">
+  <h2 class="text-2xl font-bold text-white border-l-4 border-brand pl-4">Case Detail (Side Panel)</h2>
+  <p class="text-slate-400 text-sm">Koi case click karo toh side panel khulta hai 4 tabs ke saath:</p>
+  <div class="bg-card rounded-xl p-6 border border-slate-700 space-y-4">
+    <div class="grid md:grid-cols-2 gap-4">
+      <div class="bg-dark rounded-lg p-4 space-y-2">
+        <h4 class="text-sm font-bold text-brand">Tab 1: Summary</h4>
+        <ul class="text-xs text-slate-300 space-y-1 list-disc list-inside">
+          <li>Case ka description</li>
+          <li>Case ka owner</li>
+          <li>Statutory deadline</li>
+          <li>Current workflow stage</li>
+          <li>Progress bar</li>
+        </ul>
+      </div>
+      <div class="bg-dark rounded-lg p-4 space-y-2">
+        <h4 class="text-sm font-bold text-brand">Tab 2: Tasks</h4>
+        <ul class="text-xs text-slate-300 space-y-1 list-disc list-inside">
+          <li>Baaki kaam ki checklist</li>
+          <li>Checkbox lagao — complete mark karo</li>
+          <li>jaise "Complete contextual redaction review"</li>
+        </ul>
+      </div>
+      <div class="bg-dark rounded-lg p-4 space-y-2">
+        <h4 class="text-sm font-bold text-brand">Tab 3: Documents</h4>
+        <ul class="text-xs text-slate-300 space-y-1 list-disc list-inside">
+          <li>Upload kiye hue evidence files</li>
+          <li>Upload button</li>
+          <li>Files Appwrite Storage mein store hoti hain</li>
+        </ul>
+      </div>
+      <div class="bg-dark rounded-lg p-4 space-y-2">
+        <h4 class="text-sm font-bold text-brand">Tab 4: Audit</h4>
+        <ul class="text-xs text-slate-300 space-y-1 list-disc list-inside">
+          <li>Is case pe har action ki timeline</li>
+          <li>Kisne kya kiya, kab kiya</li>
+          <li>Immutable — edit ya delete nahi ho sakta</li>
+        </ul>
+      </div>
+    </div>
+    <div class="bg-yellow-900/20 border border-yellow-500/30 rounded-lg p-4 text-sm text-yellow-200">
+      <strong>Important buttons:</strong> "Advance" case ko next workflow stage pe le jata hai. "Add note" comment add karta hai. Kuch transitions ko approval chahiye (jaise disclosure).
+    </div>
+  </div>
+</section>
+
+<!-- USER KYA KARTA HAI -->
+<section class="space-y-6">
+  <h2 class="text-2xl font-bold text-white border-l-4 border-brand pl-4">User Roz Kya Karta Hai</h2>
+  <div class="space-y-3">
+    <div class="bg-card rounded-lg p-4 border border-slate-700 flex items-start gap-4">
+      <span class="text-2xl">1️⃣</span>
+      <div>
+        <p class="text-sm text-white font-bold">Login karo</p>
+        <p class="text-xs text-slate-400">Email + password. System ko pata hota hai tumhara role kya hai aur kaunsi academies access kar sakte ho.</p>
+      </div>
+    </div>
+    <div class="bg-card rounded-lg p-4 border border-slate-700 flex items-start gap-4">
+      <span class="text-2xl">2️⃣</span>
+      <div>
+        <p class="text-sm text-white font-bold">Dashboard dekho</p>
+        <p class="text-xs text-slate-400">Dekho kya zaroori hai. Kaunse cases overdue hain? Kaunsi academies ko attention chahiye?</p>
+      </div>
+    </div>
+    <div class="bg-card rounded-lg p-4 border border-slate-700 flex items-start gap-4">
+      <span class="text-2xl">3️⃣</span>
+      <div>
+        <p class="text-sm text-white font-bold">Naya case khlo</p>
+        <p class="text-xs text-slate-400">"+ New matter" pe click karo. Type chuno (SAR/FOI/Breach/DPIA), details bharo, academy assign karo.</p>
+      </div>
+    </div>
+    <div class="bg-card rounded-lg p-4 border border-slate-700 flex items-start gap-4">
+      <span class="text-2xl">4️⃣</span>
+      <div>
+        <p class="text-sm text-white font-bold">Case pe kaam karo</p>
+        <p class="text-xs text-slate-400">Evidence upload karo, notes add karo, tasks complete karo, workflow stages mein aage badho.</p>
+      </div>
+    </div>
+    <div class="bg-card rounded-lg p-4 border border-slate-700 flex items-start gap-4">
+      <span class="text-2xl">5️⃣</span>
+      <div>
+        <p class="text-sm text-white font-bold">Approve / Close</p>
+        <p class="text-xs text-slate-400">DPO ya MAT admin approve karta hai. Case disclose/close hota hai. Audit trail complete hota hai.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- REAL EXAMPLES -->
+<section class="space-y-6">
+  <h2 class="text-2xl font-bold text-white border-l-4 border-brand pl-4">Asal Duniya Ke Examples</h2>
+  <div class="grid md:grid-cols-2 gap-4">
+    <div class="bg-card rounded-xl p-5 border border-slate-700 space-y-2">
+      <h4 class="font-bold text-white text-sm">Example 1: Parent Ki SAR</h4>
+      <p class="text-xs text-slate-400">Paula Leigh ka bachcha Riverside Academy mein padhta hai. Woh saari education aur safeguarding records maangti hai. Case manager SAR kholti hai, identity verify karti hai, 128 documents gather karti hai, AI redaction review pe bhejti hai, DPO approve karta hai, records disclose hote hain. <strong class="text-yellow-300">Deadline: 1 month.</strong></p>
+    </div>
+    <div class="bg-card rounded-xl p-5 border border-slate-700 space-y-2">
+      <h4 class="font-bold text-white text-sm">Example 2: Galat Envelope Mein Letters</h4>
+      <p class="text-xs text-slate-400">Hillcrest Academy mein 12 bachchon ki letters galat envelope mein daal di gayin. Breach report hota hai. Case manager incident contain karta hai, risk assess karta hai, decide karta hai ICO notification zaroori nahi (low risk), corrective actions record karta hai. <strong class="text-red-300">Deadline: 72 hours ICO decision ke liye.</strong></p>
+    </div>
+    <div class="bg-card rounded-xl p-5 border border-slate-700 space-y-2">
+      <h4 class="font-bold text-white text-sm">Example 3: AI Safeguarding DPIA</h4>
+      <p class="text-xs text-slate-400">Riverside ek AI triage tool pilot karna chahta hai safeguarding ke liye. Use karne se pehle DPIA chahiye. Requester project description bharta hai, supplier security measures bharta hai, compliance necessity review karta hai, DPO risk approve karta hai. <strong class="text-purple-300">Multi-party: 4 logon ko submit karna padta hai tabhi approve hota hai.</strong></p>
+    </div>
+    <div class="bg-card rounded-xl p-5 border border-slate-700 space-y-2">
+      <h4 class="font-bold text-white text-sm">Example 4: FOI — Salary Data</h4>
+      <p class="text-xs text-slate-400">Koi senior staff ki salary bands maangta hai. Case manager request validate karta hai, Finance se figures gather karta hai, Section 43 exemption consider karta hai (commercial interests), public interest test karta hai, DPO approval leta hai, aur respond karta hai. <strong class="text-blue-300">Deadline: 20 working days.</strong></p>
+    </div>
+  </div>
+</section>
+
+<!-- USER KYA NAHI KAR SAKTA -->
+<section class="space-y-6">
+  <h2 class="text-2xl font-bold text-red-400 border-l-4 border-red-500 pl-4">User KYA NAHI Kar Sakta</h2>
+  <div class="bg-card rounded-xl p-6 border border-red-500/30 space-y-3 text-sm text-slate-300">
+    <div class="flex items-start gap-2"><span class="text-red-400">✗</span> Academy lead doosri academy ke cases nahi dekh sakta</div>
+    <div class="flex items-start gap-2"><span class="text-red-400">✗</span> Auditor case create ya advance nahi kar sakta</div>
+    <div class="flex items-start gap-2"><span class="text-red-400">✗</span> Read-only user kuch nahi kar sakta — sirf dekh sakta hai</div>
+    <div class="flex items-start gap-2"><span class="text-red-400">✗</span> Case manager approve nahi kar sakta — sirf DPO/MAT admin kar sakta hai</div>
+    <div class="flex items-start gap-2"><span class="text-red-400">✗</span> Koi bhi audit event edit ya delete nahi kar sakta</div>
+    <div class="flex items-start gap-2"><span class="text-red-400">✗</span> MAT A ka user MAT B ka data access nahi kar sakta</div>
+    <div class="flex items-start gap-2"><span class="text-red-400">✗</span> Breach cases ko rok nahi sakte (72h rule strict hai)</div>
+  </div>
+</section>
+
+<section class="flex justify-between">
+  <a href="01-project-overview.html" class="inline-block bg-slate-700 hover:bg-slate-600 text-white font-bold px-6 py-3 rounded-xl transition">← Developer View</a>
+  <a href="01-project-overview.html" class="inline-block bg-brand hover:bg-indigo-600 text-white font-bold px-6 py-3 rounded-xl transition">Shuruat pe Wapas →</a>
+</section>
+
+</main>
+</body>
+</html>

@@ -25,6 +25,18 @@ export default function LoginPage() {
 
   const isAppwrite = process.env.NEXT_PUBLIC_APPWRITE_ENDPOINT && process.env.NEXT_PUBLIC_APPWRITE_PROJECT_ID;
 
+  async function withRetry<T>(fn: () => Promise<T>, attempts = 3, delayMs = 500): Promise<T> {
+    for (let i = 0; i < attempts; i++) {
+      try {
+        return await fn();
+      } catch (err) {
+        if (i === attempts - 1) throw err;
+        await new Promise((r) => setTimeout(r, delayMs * (i + 1)));
+      }
+    }
+    throw new Error("unreachable");
+  }
+
   async function handleLogin(e: FormEvent) {
     e.preventDefault();
     setError("");
@@ -35,9 +47,9 @@ export default function LoginPage() {
         const client = createAppwriteClient();
         const account = new Account(client);
 
-        await account.createEmailPasswordSession(email, password);
-        const user = await account.get();
-        const jwtResult = await account.createJWT();
+        await withRetry(() => account.createEmailPasswordSession(email, password));
+        const user = await withRetry(() => account.get());
+        const jwtResult = await withRetry(() => account.createJWT());
 
         const memberships = await fetch("/api/memberships/current", {
           headers: { Authorization: `Bearer ${jwtResult.jwt}` },
