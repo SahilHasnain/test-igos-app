@@ -1,6 +1,6 @@
 {
   "$schema": "./schema.schema.json",
-  "version": 4,
+  "version": 5,
   "database": {
     "id": "igos-core",
     "name": "IGOS Core"
@@ -284,6 +284,101 @@
         "approvedByUserId:string:36:optional",
         "approvalRationale:string:10000:optional",
         "reviewDueAt:datetime:required:index"
+      ]
+    },
+    {
+      "id": "assurance-actions",
+      "name": "Assurance Actions",
+      "permissions": "tenant-and-academy-scoped",
+      "columns": [
+        "matId:string:36:required:index",
+        "academyId:string:36:optional:index",
+        "sourceType:string:64:required:index",
+        "sourceId:string:36:optional:index",
+        "title:string:512:required",
+        "description:string:10000:required",
+        "ownerUserId:string:36:required:index",
+        "priority:string:32:required:index",
+        "status:string:32:required:index",
+        "dueAt:datetime:required:index",
+        "evidenceDocumentIds:string[]:required",
+        "completedAt:datetime:optional",
+        "completedByUserId:string:36:optional",
+        "closureRationale:string:10000:optional"
+      ]
+    },
+    {
+      "id": "audit-programmes",
+      "name": "Audit Programmes",
+      "permissions": "tenant-scoped",
+      "columns": [
+        "matId:string:36:required:index",
+        "title:string:512:required",
+        "scope:string:10000:required",
+        "academyIds:string[]:required",
+        "leadAuditorUserId:string:36:required:index",
+        "plannedStartAt:datetime:required:index",
+        "plannedEndAt:datetime:required:index",
+        "status:string:32:required:index"
+      ]
+    },
+    {
+      "id": "audit-findings",
+      "name": "Audit Findings",
+      "permissions": "tenant-and-academy-scoped",
+      "columns": [
+        "matId:string:36:required:index",
+        "academyId:string:36:optional:index",
+        "auditProgrammeId:string:36:required:index",
+        "title:string:512:required",
+        "description:string:10000:required",
+        "rating:string:32:required:index",
+        "rootCause:string:10000:required",
+        "recommendation:string:10000:required",
+        "managementResponse:string:10000:optional",
+        "ownerUserId:string:36:required:index",
+        "dueAt:datetime:required:index",
+        "status:string:32:required:index",
+        "verifiedByUserId:string:36:optional",
+        "verifiedAt:datetime:optional",
+        "evidenceDocumentIds:string[]:required"
+      ]
+    },
+    {
+      "id": "assurance-risks",
+      "name": "Assurance Risks",
+      "permissions": "tenant-and-academy-scoped",
+      "columns": [
+        "matId:string:36:required:index",
+        "academyId:string:36:optional:index",
+        "title:string:512:required",
+        "description:string:10000:required",
+        "category:string:64:required:index",
+        "ownerUserId:string:36:required:index",
+        "likelihood:integer:required",
+        "impact:integer:required",
+        "controlEffectiveness:integer:required",
+        "controls:string[]:required",
+        "treatments:string[]:required",
+        "appetite:string:32:required",
+        "reviewDueAt:datetime:required:index",
+        "status:string:32:required:index",
+        "acceptedByUserId:string:36:optional",
+        "acceptanceRationale:string:10000:optional"
+      ]
+    },
+    {
+      "id": "evidence-packs",
+      "name": "Evidence Packs",
+      "permissions": "tenant-and-academy-scoped",
+      "columns": [
+        "matId:string:36:required:index",
+        "academyId:string:36:optional:index",
+        "title:string:512:required",
+        "generatedAt:datetime:required:index",
+        "generatedByUserId:string:36:required",
+        "items:json:required",
+        "manifestHash:string:64:required"
       ]
     }
   ],
