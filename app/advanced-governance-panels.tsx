@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 
 type Role = "DPO" | "MAT administrator" | "Case manager" | "Academy lead" | "Auditor" | "Read only";
 const aiSystems = [
@@ -33,5 +33,5 @@ export function RecordsManagementPanel({ role }: { role: Role }) { const [items,
 
 export function ContractGovernancePanel() { return <Register title="Information governance contracts" eyebrow="Obligations, expiry and offboarding"><table><thead><tr><th>Reference</th><th>Contract</th><th>Supplier</th><th>Owner</th><th>Expiry</th><th>Notice date</th><th>IG terms</th><th>Status</th></tr></thead><tbody>{contracts.map((item) => <tr key={item.id}><td><code>{item.id}</code></td><td><strong>{item.title}</strong></td><td>{item.supplier}</td><td>{item.owner}</td><td>{item.expiry}</td><td>{item.notice}</td><td><Progress value={item.compliance} /></td><td><span className={`badge ${item.status === "Expiring" ? "risk-high" : item.status === "Review" ? "risk-medium" : "risk-low"}`}>{item.status}</span></td></tr>)}</tbody></table></Register>; }
 
-function Register({ title, eyebrow, action, actionLabel, children }: { title: string; eyebrow: string; action?: () => void; actionLabel?: string; children: React.ReactNode }) { return <section className="panel register advanced-register"><div className="register-toolbar"><div><p className="eyebrow">{eyebrow}</p><h2>{title}</h2></div>{action && <button className="primary" onClick={action}>＋ {actionLabel}</button>}</div><div className="table-wrap">{children}</div></section>; }
+function Register({ title, eyebrow, action, actionLabel, children }: { title: string; eyebrow: string; action?: () => void; actionLabel?: string; children: ReactNode }) { return <section className="panel register advanced-register"><div className="register-toolbar"><div><p className="eyebrow">{eyebrow}</p><h2>{title}</h2></div>{action && <button className="primary" onClick={action}>＋ {actionLabel}</button>}</div><div className="table-wrap">{children}</div></section>; }
 function Progress({ value }: { value: number }) { return <div className="mini-progress"><div className="bar"><i style={{ width: `${value}%` }} /></div><b>{value}%</b></div>; }
