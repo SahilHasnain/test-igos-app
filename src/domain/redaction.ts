@@ -77,7 +77,7 @@ export function decideRedactionSuggestion(suggestion: RedactionSuggestion, input
   if (!input.rationale.trim()) throw new Error("A redaction decision requires a reviewer rationale");
   if (input.decision === "modified" && !input.finalTreatment) throw new Error("A modified redaction decision requires a final treatment");
   if (input.decision === "accepted" && input.finalTreatment && input.finalTreatment !== suggestion.suggestedTreatment) throw new Error("Use a modified decision when changing the suggested treatment");
-  return { ...suggestion, decision: input.decision, decidedByUserId: input.reviewerUserId, decidedAt: input.occurredAt ?? new Date().toISOString(), reviewerRationale: input.rationale, finalTreatment: input.finalTreatment ?? suggestion.suggestedTreatment };
+  return { ...suggestion, decision: input.decision, decidedByUserId: input.reviewerUserId, decidedAt: input.occurredAt ?? new Date().toISOString(), reviewerRationale: input.rationale, finalTreatment: input.finalTreatment ?? (input.decision === "rejected" ? "disclose" : input.decision === "escalated" ? undefined : suggestion.suggestedTreatment) };
 }
 
 export function assertDocumentReadyForDisclosure(suggestions: readonly RedactionSuggestion[], secondReviewCompletedIds: readonly string[]) {
