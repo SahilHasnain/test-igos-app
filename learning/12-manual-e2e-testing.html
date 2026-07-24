@@ -1,0 +1,536 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>IGOS — Manual E2E Testing Checklist</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+tailwind.config={theme:{extend:{colors:{brand:'#6366f1',dark:'#0f172a',card:'#1e293b'}}}}
+</script>
+<style>
+  .check{width:18px;height:18px;border:2px solid #475569;border-radius:4px;display:inline-block;vertical-align:middle;margin-right:8px;cursor:pointer;transition:all .15s}
+  .check:hover{border-color:#6366f1}
+  input[type=checkbox]{display:none}
+  input[type=checkbox]:checked+.check{background:#22c55e;border-color:#22c55e;position:relative}
+  input[type=checkbox]:checked+.check::after{content:"✓";color:#fff;font-size:12px;font-weight:700;position:absolute;top:-1px;left:2px}
+  .section-pass{border-left-color:#22c55e}
+  .section-fail{border-left-color:#ef4444}
+  .section-partial{border-left-color:#eab308}
+  .progress-bar{height:6px;background:#1e293b;border-radius:3px;overflow:hidden}
+  .progress-fill{height:100%;background:linear-gradient(90deg,#22c55e,#6366f1);border-radius:3px;transition:width .3s}
+  @media print{
+    .no-print{display:none!important}
+    body{background:#fff!important;color:#000!important}
+    .bg-card{background:#f8fafc!important;border:1px solid #e2e8f0!important}
+    .check{border:1px solid #94a3b8}
+  }
+</style>
+</head>
+<body class="bg-dark text-slate-200 min-h-screen font-sans">
+
+<nav class="fixed top-0 inset-x-0 z-50 bg-dark/80 backdrop-blur border-b border-slate-700 px-6 py-3 flex items-center justify-between no-print">
+  <span class="font-bold text-brand text-lg">IGOS Learning</span>
+  <div class="flex gap-3 text-sm">
+    <a href="09-how-to-test.html" class="hover:text-white text-slate-400">09 Testing</a>
+    <a href="11-acceptance-testing.html" class="hover:text-white text-slate-400">11 Accept</a>
+    <a href="12-manual-e2e-testing.html" class="text-brand font-bold border-b border-brand">12 E2E</a>
+  </div>
+</nav>
+
+<main class="max-w-5xl mx-auto px-6 pt-24 pb-20 space-y-16">
+
+<!-- HEADER -->
+<section class="text-center space-y-4">
+  <h1 class="text-4xl font-extrabold text-white">Manual E2E <span class="text-brand">Testing</span></h1>
+  <p class="text-lg text-slate-400">Complete checklist — tick every box before delivery.</p>
+</section>
+
+<!-- PROGRESS TRACKER -->
+<section class="no-print">
+  <div class="bg-card rounded-xl p-5 border border-slate-700 space-y-3">
+    <div class="flex items-center justify-between text-sm">
+      <span class="text-slate-400">Progress</span>
+      <span id="progress-text" class="font-bold text-brand">0 / 0 checked</span>
+    </div>
+    <div class="progress-bar"><div id="progress-fill" class="progress-fill" style="width:0%"></div></div>
+    <div class="flex gap-3 text-xs text-slate-500">
+      <button onclick="resetAll()" class="hover:text-red-400 transition">Reset all</button>
+      <button onclick="window.print()" class="hover:text-brand transition">Print checklist</button>
+    </div>
+  </div>
+</section>
+
+<!-- AUTOMATED TESTS SUMMARY -->
+<section class="space-y-6">
+  <h2 class="text-2xl font-bold text-green-400 border-l-4 border-green-500 pl-4">Part A — Automated Tests (Already Passing)</h2>
+
+  <div class="bg-card rounded-xl p-6 border border-slate-700 space-y-4">
+    <p class="text-xs text-slate-400">These tests run automatically and have all passed. Run them to confirm before manual testing.</p>
+    <div class="grid md:grid-cols-3 gap-4">
+      <div class="bg-dark rounded-lg p-4 border border-green-500/30 space-y-2">
+        <div class="flex items-center gap-2"><span class="text-green-400 font-bold text-sm">121</span><span class="text-xs text-slate-400">unit tests</span></div>
+        <code class="block text-xs text-green-300">npm test</code>
+        <p class="text-xs text-slate-500">~5 seconds</p>
+      </div>
+      <div class="bg-dark rounded-lg p-4 border border-green-500/30 space-y-2">
+        <div class="flex items-center gap-2"><span class="text-green-400 font-bold text-sm">79</span><span class="text-xs text-slate-400">E2E demo tests</span></div>
+        <code class="block text-xs text-green-300">npm run test:e2e:demo</code>
+        <p class="text-xs text-slate-500">~1.5 minutes</p>
+      </div>
+      <div class="bg-dark rounded-lg p-4 border border-green-500/30 space-y-2">
+        <div class="flex items-center gap-2"><span class="text-green-400 font-bold text-sm">10</span><span class="text-xs text-slate-400">E2E Appwrite tests</span></div>
+        <code class="block text-xs text-green-300">npm run test:e2e:appwrite</code>
+        <p class="text-xs text-slate-500">~1 minute</p>
+      </div>
+    </div>
+    <div class="bg-dark rounded-lg p-4 border border-slate-700 text-xs text-slate-400">
+      <strong class="text-white">Quick commands to run first:</strong>
+      <pre class="mt-2 font-mono text-green-300">npm test && npm run typecheck && npm run build</pre>
+      <p class="mt-1">All 3 must pass green before manual testing.</p>
+    </div>
+  </div>
+</section>
+
+<!-- B: DEMO MODE -->
+<section class="space-y-6">
+  <h2 class="text-2xl font-bold text-yellow-400 border-l-4 border-yellow-500 pl-4">Part B — Manual Testing: Demo Mode</h2>
+
+  <div class="bg-card rounded-xl p-6 border border-slate-700 space-y-4">
+    <h3 class="font-bold text-white text-sm">Setup</h3>
+    <pre class="text-xs font-mono text-green-300 bg-dark rounded p-3">cd D:/Projects/IGOS-App && npm run dev
+<span class="text-slate-500"># Open http://localhost:3000 — redirects to /login</span></pre>
+  </div>
+
+  <!-- B1: LOGIN -->
+  <div class="bg-card rounded-xl p-6 border border-slate-700 space-y-4" id="sec-login">
+    <h3 class="font-bold text-yellow-400 text-sm">B1 — Login Page</h3>
+    <div class="grid md:grid-cols-2 gap-6">
+      <div class="space-y-2">
+        <div class="text-xs text-slate-300 space-y-2">
+          <label class="flex items-center"><input type="checkbox" onchange="updateProgress()"><span class="check"></span>Redirected from <code>/</code> to <code>/login</code> automatically</label>
+          <label class="flex items-center"><input type="checkbox" onchange="updateProgress()"><span class="check"></span>Blue "Demo mode — records stay in this browser session" banner visible</label>
+          <label class="flex items-center"><input type="checkbox" onchange="updateProgress()"><span class="check"></span>Role dropdown has 6 options: DPO, MAT administrator, Case manager, Academy lead, Auditor, Read only</label>
+          <label class="flex items-center"><input type="checkbox" onchange="updateProgress()"><span class="check"></span>Default selection is "DPO"</label>
+          <label class="flex items-center"><input type="checkbox" onchange="updateProgress()"><span class="check"></span>Button says "Enter workspace"</label>
+        </div>
+      </div>
+      <div class="space-y-2">
+        <div class="text-xs text-slate-300 space-y-2">
+          <label class="flex items-center"><input type="checkbox" onchange="updateProgress()"><span class="check"></span>Click "Enter workspace" — lands on Overview page</label>
+          <label class="flex items-center"><input type="checkbox" onchange="updateProgress()"><span class="check"></span>H1 says "Information governance overview"</label>
+          <label class="flex items-center"><input type="checkbox" onchange="updateProgress()"><span class="check"></span>Sidebar footer shows "DPO"</label>
+          <label class="flex items-center"><input type="checkbox" onchange="updateProgress()"><span class="check"></span>"↩" sign-out button visible in top-right corner</label>
+          <label class="flex items-center"><input type="checkbox" onchange="updateProgress()"><span class="check"></span>Click sign-out → returns to /login page</label>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- B2: SIDEBAR NAVIGATION -->
+  <div class="bg-card rounded-xl p-6 border border-slate-700 space-y-4" id="sec-sidebar">
+    <h3 class="font-bold text-yellow-400 text-sm">B2 — Sidebar Navigation (click every view as DPO)</h3>
+    <p class="text-xs text-slate-500">Login as DPO. Click each sidebar button. Verify the H1 title renders with content.</p>
+    <div class="grid md:grid-cols-2 gap-6">
+      <div class="space-y-1">
+        <div class="text-xs text-slate-300 space-y-2">
+          <label class="flex items-center"><input type="checkbox" onchange="updateProgress()"><span class="check"></span><strong>Overview</strong> — 4 metric cards + priority matters table</label>
+          <label class="flex items-center"><input type="checkbox" onchange="updateProgress()"><span class="check"></span><strong>SARs</strong> — table with Reference, Matter, Risk columns</label>
+          <label class="flex items-center"><input type="checkbox" onchange="updateProgress()"><span class="check"></span><strong>FOI</strong> — filtered to FOI type matters</label>
+          <label class="flex items-center"><input type="checkbox" onchange="updateProgress()"><span class="check"></span><strong>Breaches</strong> — filtered to Breach type matters</label>
+          <label class="flex items-center"><input type="checkbox" onchange="updateProgress()"><span class="check"></span><strong>DPIAs</strong> — DPIA progress panel with sections</label>
+          <label class="flex items-center"><input type="checkbox" onchange="updateProgress()"><span class="check"></span><strong>ROPA</strong> — processing activities table</label>
+          <label class="flex items-center"><input type="checkbox" onchange="updateProgress()"><span class="check"></span><strong>Policies</strong> — policy cards with transitions (H1: "Policy management")</label>
+        </div>
+      </div>
+      <div class="space-y-1">
+        <div class="text-xs text-slate-300 space-y-2">
+          <label class="flex items-center"><input type="checkbox" onchange="updateProgress()"><span class="check"></span><strong>Redaction</strong> — workspace with analysis/suggestions (H1: "AI-assisted review and redaction")</label>
+          <label class="flex items-center"><input type="checkbox" onchange="updateProgress()"><span class="check"></span><strong>AI</strong> — AI systems register (H1: "AI governance")</label>
+          <label class="flex items-center"><input type="checkbox" onchange="updateProgress()"><span class="check"></span><strong>Assets</strong> — information asset register (H1: "Information Asset Register")</label>
+          <label class="flex items-center"><input type="checkbox" onchange="updateProgress()"><span class="check"></span><strong>Records</strong> — retention rules + holds (H1: "Records management")</label>
+          <label class="flex items-center"><input type="checkbox" onchange="updateProgress()"><span class="check"></span><strong>Contracts</strong> — contract governance (H1: "Contract governance")</label>
+          <label class="flex items-center"><input type="checkbox" onchange="updateProgress()"><span class="check"></span><strong>Assurance</strong> — programme overview (H1: "Assurance overview")</label>
+          <label class="flex items-center"><input type="checkbox" onchange="updateProgress()"><span class="check"></span><strong>Risks</strong> — risk register (H1: "Information governance risks")</label>
+        </div>
+      </div>
+    </div>
+    <div class="grid md:grid-cols-2 gap-6 mt-2">
+      <div class="text-xs text-slate-300 space-y-2">
+        <label class="flex items-center"><input type="checkbox" onchange="updateProgress()"><span class="check"></span><strong>Audits</strong> — audit programme (H1: "Audit programme")</label>
+        <label class="flex items-center"><input type="checkbox" onchange="updateProgress()"><span class="check"></span><strong>Actions</strong> — open actions list (H1: "Open actions")</label>
+        <label class="flex items-center"><input type="checkbox" onchange="updateProgress()"><span class="check"></span><strong>≡ Audit</strong> (bottom nav) — audit and assurance view (H1: "Audit and assurance")</label>
+      </div>
+      <div class="bg-dark rounded-lg p-3 border border-slate-700 text-xs text-slate-400">
+        <strong class="text-white">Expected:</strong> Every click renders a non-empty H1 heading. No blank screens, no console errors. The sidebar has 16 navigation buttons + the Audit bottom-nav button.
+      </div>
+    </div>
+  </div>
+
+  <!-- B3: SEARCH & FILTER -->
+  <div class="bg-card rounded-xl p-6 border border-slate-700 space-y-4" id="sec-search">
+    <h3 class="font-bold text-yellow-400 text-sm">B3 — Search & Academy Filter (on Overview)</h3>
+    <div class="grid md:grid-cols-2 gap-6">
+      <div class="text-xs text-slate-300 space-y-2">
+        <label class="flex items-center"><input type="checkbox" onchange="updateProgress()"><span class="check"></span>Search input visible (aria-label "Search matters")</label>
+        <label class="flex items-center"><input type="checkbox" onchange="updateProgress()"><span class="check"></span>Type "SAR" in search — table filters, fewer rows than before</label>
+        <label class="flex items-center"><input type="checkbox" onchange="updateProgress()"><span class="check"></span>Table still shows at least 1 row</label>
+        <label class="flex items-center"><input type="checkbox" onchange="updateProgress()"><span class="check"></span>Type "zzz_nonexistent_xyz" — shows "No matching matters" message</label>
+      </div>
+      <div class="text-xs text-slate-300 space-y-2">
+        <label class="flex items-center"><input type="checkbox" onchange="updateProgress()"><span class="check"></span>Clear search (empty string) — all rows restore</label>
+        <label class="flex items-center"><input type="checkbox" onchange="updateProgress()"><span class="check"></span>Academy filter dropdown visible with 5+ academies + "All"</label>
+        <label class="flex items-center"><input type="checkbox" onchange="updateProgress()"><span class="check"></span>Select a specific academy — table filters (fewer or equal rows)</label>
+        <label class="flex items-center"><input type="checkbox" onchange="updateProgress()"><span class="check"></span>Search + academy filter together — both work simultaneously</label>
+      </div>
+    </div>
+  </div>
+
+  <!-- B4: MATTER LIFECYCLE -->
+  <div class="bg-card rounded-xl p-6 border border-slate-700 space-y-4" id="sec-lifecycle">
+    <h3 class="font-bold text-yellow-400 text-sm">B4 — Matter Lifecycle (Create → View → Advance → Close)</h3>
+    <div class="grid md:grid-cols-2 gap-6">
+      <div class="text-xs text-slate-300 space-y-2">
+        <label class="flex items-center"><input type="checkbox" onchange="updateProgress()"><span class="check"></span>"＋ New matter" button visible for DPO</label>
+        <label class="flex items-center"><input type="checkbox" onchange="updateProgress()"><span class="check"></span>Click "＋ New matter" — modal opens with form</label>
+        <label class="flex items-center"><input type="checkbox" onchange="updateProgress()"><span class="check"></span>Modal has: type dropdown, title input, academy dropdown, summary textarea</label>
+        <label class="flex items-center"><input type="checkbox" onchange="updateProgress()"><span class="check"></span>Type dropdown has: SARs, FOI, Breaches, DPIAs</label>
+        <label class="flex items-center"><input type="checkbox" onchange="updateProgress()"><span class="check"></span>Click "Cancel" — modal closes</label>
+        <label class="flex items-center"><input type="checkbox" onchange="updateProgress()"><span class="check"></span>Create a matter: type=SARs, title="Manual Test SAR", pick academy, click "Create matter"</label>
+      </div>
+      <div class="text-xs text-slate-300 space-y-2">
+        <label class="flex items-center"><input type="checkbox" onchange="updateProgress()"><span class="check"></span>Detail drawer opens on right side after creation</label>
+        <label class="flex items-center"><input type="checkbox" onchange="updateProgress()"><span class="check"></span>Drawer title shows "Manual Test SAR"</label>
+        <label class="flex items-center"><input type="checkbox" onchange="updateProgress()"><span class="check"></span>Drawer has 4 tabs: Summary, Tasks, Documents, Audit</label>
+        <label class="flex items-center"><input type="checkbox" onchange="updateProgress()"><span class="check"></span>Click Summary tab → shows "Case summary"</label>
+        <label class="flex items-center"><input type="checkbox" onchange="updateProgress()"><span class="check"></span>Click Tasks tab → shows "Outstanding tasks"</label>
+        <label class="flex items-center"><input type="checkbox" onchange="updateProgress()"><span class="check"></span>Click Documents tab → shows "Evidence repository"</label>
+      </div>
+    </div>
+    <div class="grid md:grid-cols-2 gap-6 mt-2">
+      <div class="text-xs text-slate-300 space-y-2">
+        <label class="flex items-center"><input type="checkbox" onchange="updateProgress()"><span class="check"></span>Click Audit tab → shows activity timeline (audit rows visible)</label>
+        <label class="flex items-center"><input type="checkbox" onchange="updateProgress()"><span class="check"></span>"Advance workflow →" button visible and enabled for DPO</label>
+        <label class="flex items-center"><input type="checkbox" onchange="updateProgress()"><span class="check"></span>Click "Advance workflow →" — stage advances (progress bar moves)</label>
+      </div>
+      <div class="text-xs text-slate-300 space-y-2">
+        <label class="flex items-center"><input type="checkbox" onchange="updateProgress()"><span class="check"></span>Close drawer with "×" button → drawer disappears</label>
+        <label class="flex items-center"><input type="checkbox" onchange="updateProgress()"><span class="check"></span>New matter appears in the overview table</label>
+        <label class="flex items-center"><input type="checkbox" onchange="updateProgress()"><span class="check"></span>Click existing row in table → drawer opens with matching matter ID</label>
+      </div>
+    </div>
+  </div>
+
+  <!-- B5: ROLE ACCESS -->
+  <div class="bg-card rounded-xl p-6 border border-slate-700 space-y-4" id="sec-roles">
+    <h3 class="font-bold text-yellow-400 text-sm">B5 — Role-Based Access (switch roles, verify UI changes)</h3>
+    <p class="text-xs text-slate-500">For each role below, sign out → re-login with that role → check the expectations.</p>
+
+    <div class="space-y-4">
+      <!-- DPO -->
+      <div class="bg-dark rounded-lg p-4 border border-slate-700 space-y-2">
+        <h4 class="text-xs font-bold text-green-400">DPO (full access)</h4>
+        <div class="grid md:grid-cols-2 gap-4 text-xs text-slate-300">
+          <div class="space-y-2">
+            <label class="flex items-center"><input type="checkbox" onchange="updateProgress()"><span class="check"></span>Sidebar shows "DPO" in footer</label>
+            <label class="flex items-center"><input type="checkbox" onchange="updateProgress()"><span class="check"></span>"＋ New matter" button VISIBLE</label>
+            <label class="flex items-center"><input type="checkbox" onchange="updateProgress()"><span class="check"></span>"≡ Audit" nav button VISIBLE</label>
+          </div>
+          <div class="space-y-2">
+            <label class="flex items-center"><input type="checkbox" onchange="updateProgress()"><span class="check"></span>Click table row → "Advance workflow →" ENABLED</label>
+            <label class="flex items-center"><input type="checkbox" onchange="updateProgress()"><span class="check"></span>All 16 sidebar views accessible</label>
+          </div>
+        </div>
+      </div>
+
+      <!-- MAT administrator -->
+      <div class="bg-dark rounded-lg p-4 border border-slate-700 space-y-2">
+        <h4 class="text-xs font-bold text-green-400">MAT administrator (full access)</h4>
+        <div class="grid md:grid-cols-2 gap-4 text-xs text-slate-300">
+          <div class="space-y-2">
+            <label class="flex items-center"><input type="checkbox" onchange="updateProgress()"><span class="check"></span>Sidebar footer shows "MAT administrator"</label>
+            <label class="flex items-center"><input type="checkbox" onchange="updateProgress()"><span class="check"></span>"＋ New matter" button VISIBLE</label>
+            <label class="flex items-center"><input type="checkbox" onchange="updateProgress()"><span class="check"></span>"≡ Audit" nav button VISIBLE</label>
+          </div>
+          <div class="space-y-2">
+            <label class="flex items-center"><input type="checkbox" onchange="updateProgress()"><span class="check"></span>Advance workflow ENABLED in drawer</label>
+          </div>
+        </div>
+      </div>
+
+      <!-- Case manager -->
+      <div class="bg-dark rounded-lg p-4 border border-slate-700 space-y-2">
+        <h4 class="text-xs font-bold text-yellow-400">Case manager (create yes, audit no)</h4>
+        <div class="grid md:grid-cols-2 gap-4 text-xs text-slate-300">
+          <div class="space-y-2">
+            <label class="flex items-center"><input type="checkbox" onchange="updateProgress()"><span class="check"></span>Sidebar footer shows "Case manager"</label>
+            <label class="flex items-center"><input type="checkbox" onchange="updateProgress()"><span class="check"></span>"＋ New matter" button VISIBLE</label>
+            <label class="flex items-center"><input type="checkbox" onchange="updateProgress()"><span class="check"></span>"≡ Audit" nav button NOT visible</label>
+          </div>
+          <div class="space-y-2">
+            <label class="flex items-center"><input type="checkbox" onchange="updateProgress()"><span class="check"></span>Advance workflow ENABLED in drawer</label>
+          </div>
+        </div>
+      </div>
+
+      <!-- Auditor -->
+      <div class="bg-dark rounded-lg p-4 border border-slate-700 space-y-2">
+        <h4 class="text-xs font-bold text-yellow-400">Auditor (read + audit, no create)</h4>
+        <div class="grid md:grid-cols-2 gap-4 text-xs text-slate-300">
+          <div class="space-y-2">
+            <label class="flex items-center"><input type="checkbox" onchange="updateProgress()"><span class="check"></span>Sidebar footer shows "Auditor"</label>
+            <label class="flex items-center"><input type="checkbox" onchange="updateProgress()"><span class="check"></span>"＋ New matter" button NOT visible</label>
+            <label class="flex items-center"><input type="checkbox" onchange="updateProgress()"><span class="check"></span>"≡ Audit" nav button VISIBLE</label>
+          </div>
+          <div class="space-y-2">
+            <label class="flex items-center"><input type="checkbox" onchange="updateProgress()"><span class="check"></span>Advance workflow DISABLED in drawer</label>
+          </div>
+        </div>
+      </div>
+
+      <!-- Academy lead -->
+      <div class="bg-dark rounded-lg p-4 border border-slate-700 space-y-2">
+        <h4 class="text-xs font-bold text-yellow-400">Academy lead (scoped, no audit)</h4>
+        <div class="grid md:grid-cols-2 gap-4 text-xs text-slate-300">
+          <div class="space-y-2">
+            <label class="flex items-center"><input type="checkbox" onchange="updateProgress()"><span class="check"></span>Sidebar footer shows "Academy lead"</label>
+            <label class="flex items-center"><input type="checkbox" onchange="updateProgress()"><span class="check"></span>"≡ Audit" nav button NOT visible</label>
+          </div>
+          <div class="space-y-2">
+            <label class="flex items-center"><input type="checkbox" onchange="updateProgress()"><span class="check"></span>Academy filter shows assigned academy</label>
+          </div>
+        </div>
+      </div>
+
+      <!-- Read only -->
+      <div class="bg-dark rounded-lg p-4 border border-slate-700 space-y-2">
+        <h4 class="text-xs font-bold text-red-400">Read only (minimal access)</h4>
+        <div class="grid md:grid-cols-2 gap-4 text-xs text-slate-300">
+          <div class="space-y-2">
+            <label class="flex items-center"><input type="checkbox" onchange="updateProgress()"><span class="check"></span>Sidebar footer shows "Read only"</label>
+            <label class="flex items-center"><input type="checkbox" onchange="updateProgress()"><span class="check"></span>"＋ New matter" button NOT visible</label>
+            <label class="flex items-center"><input type="checkbox" onchange="updateProgress()"><span class="check"></span>"≡ Audit" nav button NOT visible</label>
+          </div>
+          <div class="space-y-2">
+            <label class="flex items-center"><input type="checkbox" onchange="updateProgress()"><span class="check"></span>Advance workflow DISABLED in drawer</label>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- C: APPWRITE MODE -->
+<section class="space-y-6">
+  <h2 class="text-2xl font-bold text-purple-400 border-l-4 border-purple-500 pl-4">Part C — Manual Testing: Appwrite Mode</h2>
+
+  <div class="bg-card rounded-xl p-6 border border-slate-700 space-y-4">
+    <h3 class="font-bold text-white text-sm">Setup (Appwrite already provisioned + seeded)</h3>
+    <pre class="text-xs font-mono text-green-300 bg-dark rounded p-3"><span class="text-slate-500"># Ensure .env.local has IGOS_DATA_MODE=appwrite and all NEXT_PUBLIC_APPWRITE_* vars</span>
+cd D:/Projects/IGOS-App && npm run dev
+<span class="text-slate-500"># Open http://localhost:3000 — redirects to /login</span>
+<span class="text-slate-500"># Login: admin@rosa-federation.igos.local / Change-Me-2026!</span></pre>
+  </div>
+
+  <!-- C1: APPWRITE LOGIN -->
+  <div class="bg-card rounded-xl p-6 border border-slate-700 space-y-4" id="sec-appwrite-login">
+    <h3 class="font-bold text-purple-400 text-sm">C1 — Appwrite Login</h3>
+    <div class="grid md:grid-cols-2 gap-6">
+      <div class="text-xs text-slate-300 space-y-2">
+        <label class="flex items-center"><input type="checkbox" onchange="updateProgress()"><span class="check"></span>No "Demo mode" banner (it's hidden in Appwrite mode)</label>
+        <label class="flex items-center"><input type="checkbox" onchange="updateProgress()"><span class="check"></span>Email field visible (type="email", placeholder "admin@rosa-federation.igos.local")</label>
+        <label class="flex items-center"><input type="checkbox" onchange="updateProgress()"><span class="check"></span>Password field visible (type="password")</label>
+        <label class="flex items-center"><input type="checkbox" onchange="updateProgress()"><span class="check"></span>Button says "Sign in" (not "Enter workspace")</label>
+      </div>
+      <div class="text-xs text-slate-300 space-y-2">
+        <label class="flex items-center"><input type="checkbox" onchange="updateProgress()"><span class="check"></span>Enter correct credentials → lands on Overview</label>
+        <label class="flex items-center"><input type="checkbox" onchange="updateProgress()"><span class="check"></span>H1 says "Information governance overview"</label>
+        <label class="flex items-center"><input type="checkbox" onchange="updateProgress()"><span class="check"></span>Click "↩" sign-out → returns to /login</label>
+        <label class="flex items-center"><input type="checkbox" onchange="updateProgress()"><span class="check"></span>Enter wrong password → error message shown</label>
+      </div>
+    </div>
+  </div>
+
+  <!-- C2: APPWRITE PERSISTENCE -->
+  <div class="bg-card rounded-xl p-6 border border-slate-700 space-y-4" id="sec-appwrite-persist">
+    <h3 class="font-bold text-purple-400 text-sm">C2 — Data Persistence (Appwrite-specific)</h3>
+    <div class="grid md:grid-cols-2 gap-6">
+      <div class="text-xs text-slate-300 space-y-2">
+        <label class="flex items-center"><input type="checkbox" onchange="updateProgress()"><span class="check"></span>Login → Overview table has rows (data loaded from Appwrite DB)</label>
+        <label class="flex items-center"><input type="checkbox" onchange="updateProgress()"><span class="check"></span>Press F5 (page reload) → table still has same number of rows</label>
+        <label class="flex items-center"><input type="checkbox" onchange="updateProgress()"><span class="check"></span>First row's matter ID (code element) is same before and after reload</label>
+      </div>
+      <div class="text-xs text-slate-300 space-y-2">
+        <label class="flex items-center"><input type="checkbox" onchange="updateProgress()"><span class="check"></span>Type first matter's title in search → finds it (at least 1 row)</label>
+        <label class="flex items-center"><input type="checkbox" onchange="updateProgress()"><span class="check"></span>Change academy filter → table filters (fewer or equal rows)</label>
+        <label class="flex items-center"><input type="checkbox" onchange="updateProgress()"><span class="check"></span>Create a new matter → it persists after reload</label>
+      </div>
+    </div>
+  </div>
+
+  <!-- C3: APPWRITE ROLES -->
+  <div class="bg-card rounded-xl p-6 border border-slate-700 space-y-4" id="sec-appwrite-roles">
+    <h3 class="font-bold text-purple-400 text-sm">C3 — Appwrite Role Users (login with each test account)</h3>
+    <p class="text-xs text-slate-500">Password for all: <code>Change-Me-2026!</code></p>
+    <div class="overflow-x-auto">
+      <table class="w-full text-xs border-collapse">
+        <thead><tr class="border-b border-slate-700 bg-slate-800/50">
+          <th class="text-left py-2 px-3 text-slate-400">Role</th>
+          <th class="text-left py-2 px-3 text-slate-400">Email</th>
+          <th class="text-left py-2 px-3 text-slate-400">Expectations</th>
+          <th class="text-left py-2 px-3 text-slate-400">✓</th>
+        </tr></thead>
+        <tbody class="divide-y divide-slate-800">
+          <tr>
+            <td class="py-2 px-3 text-green-400 font-bold">DPO</td>
+            <td class="py-2 px-3 font-mono text-slate-300">dpo@rosa-federation.igos.local</td>
+            <td class="py-2 px-3 text-slate-400">Full access, New matter visible, Audit visible, Advance enabled</td>
+            <td class="py-2 px-3"><label class="flex items-center"><input type="checkbox" onchange="updateProgress()"><span class="check"></span></label></td>
+          </tr>
+          <tr>
+            <td class="py-2 px-3 text-green-400 font-bold">MAT admin</td>
+            <td class="py-2 px-3 font-mono text-slate-300">mat-admin@rosa-federation.igos.local</td>
+            <td class="py-2 px-3 text-slate-400">Full access, New matter visible, Audit visible, Advance enabled</td>
+            <td class="py-2 px-3"><label class="flex items-center"><input type="checkbox" onchange="updateProgress()"><span class="check"></span></label></td>
+          </tr>
+          <tr>
+            <td class="py-2 px-3 text-yellow-400 font-bold">Case manager</td>
+            <td class="py-2 px-3 font-mono text-slate-300">case-manager@rosa-federation.igos.local</td>
+            <td class="py-2 px-3 text-slate-400">New matter visible, Audit NOT visible, Advance enabled</td>
+            <td class="py-2 px-3"><label class="flex items-center"><input type="checkbox" onchange="updateProgress()"><span class="check"></span></label></td>
+          </tr>
+          <tr>
+            <td class="py-2 px-3 text-yellow-400 font-bold">Academy lead</td>
+            <td class="py-2 px-3 font-mono text-slate-300">academy-lead@rosa-federation.igos.local</td>
+            <td class="py-2 px-3 text-slate-400">Academy-scoped, Audit NOT visible</td>
+            <td class="py-2 px-3"><label class="flex items-center"><input type="checkbox" onchange="updateProgress()"><span class="check"></span></label></td>
+          </tr>
+          <tr>
+            <td class="py-2 px-3 text-yellow-400 font-bold">Auditor</td>
+            <td class="py-2 px-3 font-mono text-slate-300">auditor@rosa-federation.igos.local</td>
+            <td class="py-2 px-3 text-slate-400">New matter NOT visible, Audit VISIBLE, Advance disabled</td>
+            <td class="py-2 px-3"><label class="flex items-center"><input type="checkbox" onchange="updateProgress()"><span class="check"></span></label></td>
+          </tr>
+          <tr>
+            <td class="py-2 px-3 text-red-400 font-bold">Read only</td>
+            <td class="py-2 px-3 font-mono text-slate-300">readonly@rosa-federation.igos.local</td>
+            <td class="py-2 px-3 text-slate-400">New matter NOT visible, Audit NOT visible, Advance disabled</td>
+            <td class="py-2 px-3"><label class="flex items-center"><input type="checkbox" onchange="updateProgress()"><span class="check"></span></label></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- D: CODE QUALITY -->
+<section class="space-y-6">
+  <h2 class="text-2xl font-bold text-blue-400 border-l-4 border-blue-500 pl-4">Part D — Code Quality Gates</h2>
+
+  <div class="bg-card rounded-xl p-6 border border-slate-700 space-y-4" id="sec-quality">
+    <h3 class="font-bold text-blue-400 text-sm">Run these commands — all must pass green</h3>
+    <div class="grid md:grid-cols-2 gap-6">
+      <div class="space-y-3">
+        <div class="bg-dark rounded-lg p-4 border border-slate-700 space-y-2">
+          <label class="flex items-center text-xs text-slate-300"><input type="checkbox" onchange="updateProgress()"><span class="check"></span><strong>Unit tests:</strong> <code class="text-green-300 ml-2">npm test</code></label>
+          <p class="text-xs text-slate-500 ml-7">Expected: 121 passed, 0 failed (20 test files)</p>
+        </div>
+        <div class="bg-dark rounded-lg p-4 border border-slate-700 space-y-2">
+          <label class="flex items-center text-xs text-slate-300"><input type="checkbox" onchange="updateProgress()"><span class="check"></span><strong>Type check:</strong> <code class="text-green-300 ml-2">npm run typecheck</code></label>
+          <p class="text-xs text-slate-500 ml-7">Expected: clean exit, no errors</p>
+        </div>
+        <div class="bg-dark rounded-lg p-4 border border-slate-700 space-y-2">
+          <label class="flex items-center text-xs text-slate-300"><input type="checkbox" onchange="updateProgress()"><span class="check"></span><strong>Production build:</strong> <code class="text-green-300 ml-2">npm run build</code></label>
+          <p class="text-xs text-slate-500 ml-7">Expected: builds without errors</p>
+        </div>
+      </div>
+      <div class="space-y-3">
+        <div class="bg-dark rounded-lg p-4 border border-slate-700 space-y-2">
+          <label class="flex items-center text-xs text-slate-300"><input type="checkbox" onchange="updateProgress()"><span class="check"></span><strong>E2E demo:</strong> <code class="text-green-300 ml-2">npm run test:e2e:demo</code></label>
+          <p class="text-xs text-slate-500 ml-7">Expected: 79 passed, 5 skipped, 0 failed</p>
+        </div>
+        <div class="bg-dark rounded-lg p-4 border border-slate-700 space-y-2">
+          <label class="flex items-center text-xs text-slate-300"><input type="checkbox" onchange="updateProgress()"><span class="check"></span><strong>E2E Appwrite:</strong> <code class="text-green-300 ml-2">npm run test:e2e:appwrite</code></label>
+          <p class="text-xs text-slate-500 ml-7">Expected: 10 passed, 74 skipped, 0 failed</p>
+        </div>
+        <div class="bg-dark rounded-lg p-4 border border-slate-700 space-y-2">
+          <label class="flex items-center text-xs text-slate-300"><input type="checkbox" onchange="updateProgress()"><span class="check"></span><strong>Security audit:</strong> <code class="text-green-300 ml-2">npm audit --audit-level=high</code></label>
+          <p class="text-xs text-slate-500 ml-7">Expected: 0 high/critical findings</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- E: FINAL SIGN-OFF -->
+<section class="space-y-6">
+  <h2 class="text-2xl font-bold text-white border-l-4 border-brand pl-4">Part E — Final Sign-Off</h2>
+
+  <div class="bg-card rounded-xl p-6 border border-slate-700 space-y-4" id="sec-signoff">
+    <div class="grid md:grid-cols-2 gap-6">
+      <div class="text-xs text-slate-300 space-y-2">
+        <h4 class="font-bold text-white text-sm">Non-functional requirements</h4>
+        <label class="flex items-center"><input type="checkbox" onchange="updateProgress()"><span class="check"></span>No console errors in browser DevTools (F12 → Console tab)</label>
+        <label class="flex items-center"><input type="checkbox" onchange="updateProgress()"><span class="check"></span>No React error boundaries triggered</label>
+        <label class="flex items-center"><input type="checkbox" onchange="updateProgress()"><span class="check"></span>Mobile viewport: sidebar collapses, content readable</label>
+        <label class="flex items-center"><input type="checkbox" onchange="updateProgress()"><span class="check"></span>Microsoft 365 disabled doesn't break anything</label>
+        <label class="flex items-center"><input type="checkbox" onchange="updateProgress()"><span class="check"></span>Package-lock.json committed</label>
+        <label class="flex items-center"><input type="checkbox" onchange="updateProgress()"><span class="check"></span>No secrets/keys in committed code</label>
+      </div>
+      <div class="text-xs text-slate-300 space-y-2">
+        <h4 class="font-bold text-white text-sm">Acceptance criteria</h4>
+        <label class="flex items-center"><input type="checkbox" onchange="updateProgress()"><span class="check"></span>IGOS_DATA_MODE=demo works (in-memory, no Appwrite)</label>
+        <label class="flex items-center"><input type="checkbox" onchange="updateProgress()"><span class="check"></span>IGOS_DATA_MODE=appwrite works (persistent, real auth)</label>
+        <label class="flex items-center"><input type="checkbox" onchange="updateProgress()"><span class="check"></span>7 demo users with different access levels</label>
+        <label class="flex items-center"><input type="checkbox" onchange="updateProgress()"><span class="check"></span>33 Appwrite tables provisioned correctly</label>
+        <label class="flex items-center"><input type="checkbox" onchange="updateProgress()"><span class="check"></span>Data persists across browser refresh in Appwrite mode</label>
+        <label class="flex items-center"><input type="checkbox" onchange="updateProgress()"><span class="check"></span>All 5 PRs ready for sequential merge to Appsuite</label>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- TOTAL SUMMARY -->
+<section>
+  <div class="bg-card rounded-xl p-5 border border-brand/50 text-center space-y-2">
+    <div class="text-2xl font-extrabold text-white"><span id="total-checked">0</span> / <span id="total-items">0</span> checks complete</div>
+    <p class="text-xs text-slate-400">Tick every box above. When all are checked, you are ready to deliver.</p>
+  </div>
+</section>
+
+<section class="flex justify-between no-print">
+  <a href="11-acceptance-testing.html" class="inline-block bg-slate-700 hover:bg-slate-600 text-white font-bold px-6 py-3 rounded-xl transition">← Acceptance Guide</a>
+  <a href="01-project-overview.html" class="inline-block bg-brand hover:bg-indigo-600 text-white font-bold px-6 py-3 rounded-xl transition">Back to Start →</a>
+</section>
+
+</main>
+
+<script>
+function updateProgress(){
+  const boxes=document.querySelectorAll('input[type=checkbox]');
+  const total=boxes.length;
+  let checked=0;
+  boxes.forEach(b=>{if(b.checked)checked++});
+  document.getElementById('total-checked').textContent=checked;
+  document.getElementById('total-items').textContent=total;
+  document.getElementById('progress-text').textContent=checked+' / '+total+' checked';
+  const pct=total?Math.round(checked/total*100):0;
+  document.getElementById('progress-fill').style.width=pct+'%';
+  try{localStorage.setItem('igos-e2e-progress',JSON.stringify([...boxes].map(b=>b.checked)))}catch(e){}
+}
+function resetAll(){
+  document.querySelectorAll('input[type=checkbox]').forEach(b=>b.checked=false);
+  updateProgress();
+}
+(function(){
+  try{
+    const saved=JSON.parse(localStorage.getItem('igos-e2e-progress'));
+    if(saved){
+      const boxes=document.querySelectorAll('input[type=checkbox]');
+      boxes.forEach((b,i)=>{if(saved[i]!==undefined)b.checked=saved[i]});
+    }
+  }catch(e){}
+  updateProgress();
+})();
+</script>
+</body>
+</html>
