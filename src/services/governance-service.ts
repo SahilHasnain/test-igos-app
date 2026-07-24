@@ -16,6 +16,16 @@ function allowed(context: RequestContext, scope: TenantScope, capability: Parame
 export class DpiaGovernanceService {
   constructor(private readonly repository: DpiaRepository, private readonly audit: AuditService) {}
 
+  async listSections(raw: RequestContext, scope: TenantScope, matterId: string) {
+    const context = requireContext(raw); allowed(context, scope, "report:read");
+    return this.repository.listSections(scope, matterId);
+  }
+
+  async listRisks(raw: RequestContext, scope: TenantScope, matterId: string) {
+    const context = requireContext(raw); allowed(context, scope, "report:read");
+    return this.repository.listRisks(scope, matterId);
+  }
+
   async saveSection(raw: RequestContext, scope: TenantScope, matterId: string, section: DpiaSection) {
     const context = requireContext(raw); allowed(context, scope, "matter:update");
     const existing = (await this.repository.listSections(scope, matterId)).find((item) => item.id === section.id);

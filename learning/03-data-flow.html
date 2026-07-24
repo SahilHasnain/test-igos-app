@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>IGOS — Data Flow</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+tailwind.config={theme:{extend:{colors:{brand:'#6366f1',dark:'#0f172a',card:'#1e293b'}}}}
+</script>
+</head>
+<body class="bg-dark text-slate-200 min-h-screen font-sans">
+
+<nav class="fixed top-0 inset-x-0 z-50 bg-dark/80 backdrop-blur border-b border-slate-700 px-6 py-3 flex items-center justify-between">
+  <span class="font-bold text-brand text-lg">IGOS Learning</span>
+  <div class="flex gap-3 text-sm">
+    <a href="01-project-overview.html" class="hover:text-white text-slate-400">01</a>
+    <a href="02-architecture.html" class="hover:text-white text-slate-400">02</a>
+    <a href="03-data-flow.html" class="text-brand font-bold border-b border-brand">03 Data Flow</a>
+    <a href="04-current-state.html" class="hover:text-white text-slate-400">04</a>
+    <a href="05-database-schema.html" class="hover:text-white text-slate-400">05</a>
+    <a href="06-tenancy-roles.html" class="hover:text-white text-slate-400">06</a>
+    <a href="07-implementation-guide.html" class="hover:text-white text-slate-400">07</a>
+  </div>
+</nav>
+
+<main class="max-w-5xl mx-auto px-6 pt-24 pb-20 space-y-16">
+
+<section class="text-center space-y-4">
+  <h1 class="text-4xl font-extrabold text-white">Data Flow <span class="text-brand">Traced</span></h1>
+  <p class="text-lg text-slate-400">Follow a single request from browser to database and back.</p>
+</section>
+
+<!-- FLOW 1: Browser → Demo -->
+<section class="space-y-6">
+  <h2 class="text-2xl font-bold text-white border-l-4 border-yellow-500 pl-4">Flow 1 — Demo Mode (Current)</h2>
+  <p class="text-slate-400 text-sm">Today the UI runs entirely client-side. <strong class="text-white">No API calls are made.</strong></p>
+  <div class="bg-card rounded-xl p-6 border border-slate-700">
+    <pre class="text-sm font-mono text-slate-300 leading-relaxed">
+Browser (React)
+│
+├─ useState(initialMatters)          <span class="text-yellow-300">← hardcoded array from src/demo/ui-data.ts</span>
+├─ useState("DPO")                  <span class="text-yellow-300">← fake role selector</span>
+├─ useState("Riverside Academy")    <span class="text-yellow-300">← fake academy filter</span>
+│
+└─ Renders dashboard                <span class="text-slate-500">← all data in browser memory</span>
+
+<span class="text-yellow-300">⚠ No server involved. No authentication. Data resets on page refresh.</span>
+    </pre>
+  </div>
+</section>
+
+<!-- FLOW 2: Browser → API → Appwrite -->
+<section class="space-y-6">
+  <h2 class="text-2xl font-bold text-white border-l-4 border-green-500 pl-4">Flow 2 — Appwrite Mode (Target)</h2>
+  <p class="text-slate-400 text-sm">What a real request looks like when fully connected.</p>
+  <div class="bg-card rounded-xl p-6 border border-slate-700">
+    <pre class="text-sm font-mono text-slate-300 leading-relaxed">
+<span class="text-indigo-300">① BROWSER</span>  ─── GET /api/matters?matId=abc&type=sar ───►
+   Request includes: Authorization: Bearer &lt;jwt&gt;
+
+<span class="text-blue-300">② API ROUTE</span>  (app/api/matters/route.ts)
+   │
+   ├─ Extract matId, academyId, type from query params
+   │
+   ├─ resolveRuntimeContext(request, matId)
+   │   │
+   │   ├─ <span class="text-orange-300">Demo mode:</span> reads x-demo-user-id header
+   │   └─ <span class="text-green-300">Appwrite mode:</span> verifies JWT → gets Account → queries memberships table
+   │       │
+   │       └─ Returns: { user, membership: { matId, academyIds, roles }, correlationId }
+   │
+   ├─ createRuntimeMatterService()
+   │   │
+   │   ├─ <span class="text-orange-300">Demo mode:</span> returns MatterService(demoMatters, auditService)
+   │   └─ <span class="text-green-300">Appwrite mode:</span> returns MatterService(AppwriteMatterRepository, AuditService)
+   │
+   └─ service.list(context, { matId, type })
+
+<span class="text-purple-300">③ SERVICE</span>  (src/services/matter-service.ts)
+   │
+   ├─ Authorisation check: does context.membership allow this?
+   │   │
+   │   └─ Checks roles → capabilities → allowed?
+   │
+   └─ repository.list(query)
+
+<span class="text-green-300">④ REPOSITORY</span>  (src/appwrite/matter-repository.ts)
+   │
+   └─ databases.listDocuments(databaseId, collectionId, [
+       Query.equal("matId", "abc"),
+       Query.equal("type", "sar"),
+       Query.limit(100)
+     ])
+
+<span class="text-yellow-300">⑤ APPWRITE DB</span>
+   │
+   └─ Returns filtered documents
+
+   ◄──── Response flows back up the chain ────
+
+<span class="text-indigo-300">① BROWSER</span>  ◄── { matters: [...] } ── Renders table
+    </pre>
+  </div>
+</section>
+
+<!-- FLOW 3: Create Matter -->
+<section class="space-y-6">
+  <h2 class="text-2xl font-bold text-white border-l-4 border-brand pl-4">Flow 3 — Creating a Matter (Write Path)</h2>
+  <div class="bg-card rounded-xl p-6 border border-slate-700">
+    <pre class="text-sm font-mono text-slate-300 leading-relaxed">
+<span class="text-indigo-300">① BROWSER</span>  ─── POST /api/matters ───►
+   Body: { matId, type: "sar", title: "...", ... }
+
+<span class="text-blue-300">② API ROUTE</span>
+   ├─ Zod validates input schema
+   ├─ resolveRuntimeContext(request, matId)     <span class="text-slate-500">← auth</span>
+   └─ service.create(context, input)
+
+<span class="text-purple-300">③ SERVICE</span>  (MatterService.create)
+   │
+   ├─ Authorisation: does user have "matter:create" capability?
+   │
+   ├─ Generates reference: "SAR-2026-0200"
+   ├─ Calculates statutoryDueAt: +1 calendar month
+   │
+   └─ repository.create({ ...input, reference, status: "open", version: 1 })
+
+<span class="text-green-300">④ REPOSITORY</span>  (AppwriteMatterRepository.create)
+   │
+   └─ databases.createDocument(dbId, tableId, ID.unique(), { ... })
+
+<span class="text-purple-300">⑤ SERVICE</span> (continues)
+   │
+   └─ auditService.record(context, "matter.created", matter)
+       │
+       └─ auditRepository.create({ matId, actorUserId, action, payloadHash, ... })
+
+<span class="text-indigo-300">① BROWSER</span>  ◄── { matter: { id, reference, ... } } ── 201 Created
+    </pre>
+  </div>
+</section>
+
+<!-- FLOW 4: Auth -->
+<section class="space-y-6">
+  <h2 class="text-2xl font-bold text-white border-l-4 border-red-500 pl-4">Flow 4 — Authentication</h2>
+  <div class="bg-card rounded-xl p-6 border border-slate-700">
+    <pre class="text-sm font-mono text-slate-300 leading-relaxed">
+<span class="text-slate-500">src/auth/appwrite-context.ts</span>
+
+Request arrives with: Authorization: Bearer &lt;jwt&gt;
+
+<span class="text-purple-400">Step 1:</span> Create Appwrite Client with JWT
+  new Client()
+    .setEndpoint(env.NEXT_PUBLIC_APPWRITE_ENDPOINT)
+    .setProject(env.NEXT_PUBLIC_APPWRITE_PROJECT_ID)
+    .setJWT(jwt)
+
+<span class="text-purple-400">Step 2:</span> Get account from JWT
+  account = await new Account(client).get()
+  <span class="text-slate-500">→ returns { $id, email, name }</span>
+
+<span class="text-purple-400">Step 3:</span> Find MAT membership (server-side, using admin client)
+  admin.databases.listDocuments(dbId, "memberships", [
+    Query.equal("matId", matId),
+    Query.equal("userId", account.$id),
+    Query.equal("status", "active")
+  ])
+  <span class="text-slate-500">→ returns { academyIds: [...], roles: [...] }</span>
+
+<span class="text-purple-400">Step 4:</span> Build RequestContext
+  { user: { id, email, name },
+    membership: { matId, academyIds, roles },
+    correlationId: "..." }
+
+<span class="text-green-300">This context is passed to EVERY service call.</span>
+    </pre>
+  </div>
+</section>
+
+<!-- AUDIT FLOW -->
+<section class="space-y-6">
+  <h2 class="text-2xl font-bold text-white border-l-4 border-brand pl-4">Audit Trail — Append-Only + Hash Chain</h2>
+  <div class="bg-card rounded-xl p-6 border border-slate-700">
+    <pre class="text-sm font-mono text-slate-300 leading-relaxed">
+Every material action creates an audit event:
+
+AuditEvent {
+  matId:         "abc"                    <span class="text-slate-500">← which trust</span>
+  academyId:     "def"                    <span class="text-slate-500">← which academy (optional)</span>
+  matterId:      "ghi"                    <span class="text-slate-500">← which case (optional)</span>
+  actorUserId:   "user-123"               <span class="text-slate-500">← who did it</span>
+  action:        "matter.created"         <span class="text-slate-500">← what happened</span>
+  occurredAt:    "2026-07-24T10:00:00Z"   <span class="text-slate-500">← when</span>
+  correlationId: "req-uuid"               <span class="text-slate-500">← links to request</span>
+  previousHash:  "sha256-of-prev"         <span class="text-slate-500">← chain link</span>
+  payloadHash:   "sha256-of-data"         <span class="text-slate-500">← integrity check</span>
+  metadata:      { ... }                  <span class="text-slate-500">← details</span>
+}
+
+<span class="text-red-400">⚠ NEVER deleted or modified. Read-only for DPO, admins, auditors.</span>
+    </pre>
+  </div>
+</section>
+
+<section class="flex justify-between">
+  <a href="02-architecture.html" class="inline-block bg-slate-700 hover:bg-slate-600 text-white font-bold px-6 py-3 rounded-xl transition">← Architecture</a>
+  <a href="04-current-state.html" class="inline-block bg-brand hover:bg-indigo-600 text-white font-bold px-6 py-3 rounded-xl transition">Next: Current State →</a>
+</section>
+
+</main>
+</body>
+</html>

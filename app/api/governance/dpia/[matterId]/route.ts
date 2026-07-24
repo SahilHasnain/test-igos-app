@@ -9,6 +9,23 @@ const sectionSchema = z.object({ id: z.string().min(1), title: z.string().min(2)
 const riskSchema = z.object({ id: z.string().min(1), description: z.string().min(3), affectedPeople: z.array(z.string()).min(1), likelihood: z.union([z.literal(1), z.literal(2), z.literal(3), z.literal(4), z.literal(5)]), impact: z.union([z.literal(1), z.literal(2), z.literal(3), z.literal(4), z.literal(5)]), controlEffectiveness: z.number().min(0).max(100), mitigations: z.array(z.string()), ownerUserId: z.string().min(1), dueAt: z.string().datetime({ offset: true }).optional(), acceptedByUserId: z.string().optional(), acceptanceRationale: z.string().optional() });
 const commandSchema = z.discriminatedUnion("action", [z.object({ action: z.literal("save-section"), section: sectionSchema }), z.object({ action: z.literal("save-risk"), risk: riskSchema }), z.object({ action: z.literal("approve") })]);
 
+export async function GET(request: Request, { params }: { params: Promise<{ matterId: string }> }) {
+  try {
+    const url = new URL(request.url);
+    const scope = scopeSchema.parse({ matId: url.searchParams.get("matId"), academyId: url.searchParams.get("academyId") ?? undefined });
+    const { matterId } = await params;
+    const context = await resolveRuntimeContext(request, scope.matId);
+    const runtime = governanceRuntime();
+    const [sections, risks] = await Promise.all([
+      runtime.dpia.listSections(context, scope, matterId) as Promise<readonly DpiaSection[]>,
+      runtime.dpia.listRisks(context, scope, matterId) as Promise<readonly DpiaRisk[]>,
+    ]);
+    return NextResponse.json({ sections, risks });
+  } catch (cause) {
+    return NextResponse.json({ error: cause instanceof Error ? cause.message : "Unexpected error" }, { status: 400 });
+  }
+}
+
 export async function POST(request: Request, { params }: { params: Promise<{ matterId: string }> }) {
   try {
     const url = new URL(request.url);

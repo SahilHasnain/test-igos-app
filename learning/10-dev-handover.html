@@ -1,0 +1,509 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>IGOS — Dev Handover Explained</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+tailwind.config={theme:{extend:{colors:{brand:'#6366f1',dark:'#0f172a',card:'#1e293b'}}}}
+</script>
+</head>
+<body class="bg-dark text-slate-200 min-h-screen font-sans">
+
+<nav class="fixed top-0 inset-x-0 z-50 bg-dark/80 backdrop-blur border-b border-slate-700 px-6 py-3 flex items-center justify-between">
+  <span class="font-bold text-brand text-lg">IGOS Learning</span>
+  <div class="flex gap-3 text-sm">
+    <a href="01-project-overview.html" class="hover:text-white text-slate-400">01</a>
+    <a href="02-architecture.html" class="hover:text-white text-slate-400">02</a>
+    <a href="03-data-flow.html" class="hover:text-white text-slate-400">03</a>
+    <a href="04-current-state.html" class="hover:text-white text-slate-400">04</a>
+    <a href="05-database-schema.html" class="hover:text-white text-slate-400">05</a>
+    <a href="06-tenancy-roles.html" class="hover:text-white text-slate-400">06</a>
+    <a href="07-implementation-guide.html" class="hover:text-white text-slate-400">07</a>
+    <a href="08-doubts-cleared.html" class="hover:text-white text-slate-400">08</a>
+    <a href="09-how-to-test.html" class="hover:text-white text-slate-400">09</a>
+    <a href="10-dev-handover.html" class="text-brand font-bold border-b border-brand">10 Handover</a>
+  </div>
+</nav>
+
+<main class="max-w-5xl mx-auto px-6 pt-24 pb-20 space-y-16">
+
+<section class="text-center space-y-4">
+  <h1 class="text-4xl font-extrabold text-white">Dev Handover <span class="text-brand">Explained</span></h1>
+  <p class="text-lg text-slate-400">Line-by-line breakdown of <code class="text-brand">docs/dev-handover.md</code> — the most important file for your work.</p>
+</section>
+
+<!-- WHAT IS THIS FILE -->
+<section class="space-y-6">
+  <h2 class="text-2xl font-bold text-white border-l-4 border-brand pl-4">What is this file?</h2>
+  <div class="bg-card rounded-xl p-6 border border-slate-700 space-y-3">
+    <p class="text-sm text-slate-300"><code class="text-brand">dev-handover.md</code> is a <strong class="text-white">handoff document</strong> from the person who built the code to <strong class="text-white">you</strong> — the developer who will connect it to the real database and deploy it.</p>
+    <p class="text-sm text-slate-300">It's written like a checklist. Every section tells you exactly what to do, in order. If you follow it step by step, you'll have a working production-ready system.</p>
+    <div class="bg-yellow-900/20 border border-yellow-500/30 rounded-lg p-4 text-sm text-yellow-200">
+      <strong>Think of it as:</strong> A recipe. The previous chef baked the cake (domain logic + UI). You need to wire the oven (Appwrite), test the temperature (acceptance checks), and serve it (deploy).
+    </div>
+  </div>
+</section>
+
+<!-- SECTION: HANDOVER POSITION -->
+<section class="space-y-6">
+  <h2 class="text-2xl font-bold text-green-400 border-l-4 border-green-500 pl-4">Section: Handover Position</h2>
+  <div class="bg-card rounded-xl p-6 border border-green-500/30 space-y-4">
+    <pre class="text-xs font-mono text-slate-300 bg-dark rounded p-3">
+Branch: agent/igos-core-foundation
+Target: Appsuite
+Pull request: #1 (keep as draft)
+    </pre>
+    <div class="space-y-3">
+      <div class="flex items-start gap-3">
+        <span class="text-green-400 text-sm mt-0.5">→</span>
+        <div>
+          <p class="text-sm text-white font-bold">Branch: <code class="text-green-300">agent/igos-core-foundation</code></p>
+          <p class="text-xs text-slate-400">This is where all the code lives. You'll work on this branch (or a branch based on it).</p>
+        </div>
+      </div>
+      <div class="flex items-start gap-3">
+        <span class="text-green-400 text-sm mt-0.5">→</span>
+        <div>
+          <p class="text-sm text-white font-bold">Target: <code class="text-green-300">Appsuite</code></p>
+          <p class="text-xs text-slate-400">This is the main branch. PR #1 wants to merge into this branch.</p>
+        </div>
+      </div>
+      <div class="flex items-start gap-3">
+        <span class="text-green-400 text-sm mt-0.5">→</span>
+        <div>
+          <p class="text-sm text-white font-bold">Keep as draft</p>
+          <p class="text-xs text-slate-400">Don't merge yet! The PR stays as a draft until you complete all acceptance checks.</p>
+        </div>
+      </div>
+      <div class="flex items-start gap-3">
+        <span class="text-green-400 text-sm mt-0.5">→</span>
+        <div>
+          <p class="text-sm text-white font-bold">Two modes</p>
+          <p class="text-xs text-slate-400"><code class="text-yellow-300">IGOS_DATA_MODE=demo</code> = safe, no database needed. <code class="text-yellow-300">IGOS_DATA_MODE=appwrite</code> = real database, persistent data.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- SECTION: WHAT IS IMPLEMENTED -->
+<section class="space-y-6">
+  <h2 class="text-2xl font-bold text-green-400 border-l-4 border-green-500 pl-4">Section: What Is Implemented</h2>
+  <p class="text-slate-400 text-sm">This lists everything the previous developer already built. You don't need to build these — they're done.</p>
+  <div class="grid md:grid-cols-2 gap-4">
+    <div class="bg-card rounded-xl p-5 border border-green-500/30 space-y-3">
+      <h3 class="font-bold text-green-400 text-sm">UI & Features ✅</h3>
+      <ul class="text-xs text-slate-300 space-y-1 list-disc list-inside">
+        <li>Operations dashboard (responsive)</li>
+        <li>SAR, FOI, Breach, DPIA registers</li>
+        <li>SAR/FOI/Breach workflows</li>
+        <li>Role-aware demo controls</li>
+        <li>Accessibility foundations</li>
+      </ul>
+    </div>
+    <div class="bg-card rounded-xl p-5 border border-green-500/30 space-y-3">
+      <h3 class="font-bold text-green-400 text-sm">Domain Logic ✅</h3>
+      <ul class="text-xs text-slate-300 space-y-1 list-disc list-inside">
+        <li>MAT & academy-scoped authorisation</li>
+        <li>SAR calendar-month deadlines</li>
+        <li>FOI working-day deadlines</li>
+        <li>Breach 72-hour deadlines</li>
+        <li>Deadline extensions & pauses</li>
+        <li>Validated intake schemas</li>
+      </ul>
+    </div>
+    <div class="bg-card rounded-xl p-5 border border-green-500/30 space-y-3">
+      <h3 class="font-bold text-green-400 text-sm">Backend ✅</h3>
+      <ul class="text-xs text-slate-300 space-y-1 list-disc list-inside">
+        <li>Append-only, hash-linked audit events</li>
+        <li>Notification service with idempotency</li>
+        <li>Appwrite repository boundaries</li>
+        <li>Storage boundaries</li>
+      </ul>
+    </div>
+    <div class="bg-card rounded-xl p-5 border border-green-500/30 space-y-3">
+      <h3 class="font-bold text-green-400 text-sm">Testing ✅</h3>
+      <ul class="text-xs text-slate-300 space-y-1 list-disc list-inside">
+        <li>Domain tests (19 files)</li>
+        <li>Service tests</li>
+        <li>Authorisation tests</li>
+        <li>Audit tests</li>
+        <li>Workflow tests</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- SECTION 1: PREPARE DEV ENV -->
+<section class="space-y-6">
+  <h2 class="text-2xl font-bold text-blue-400 border-l-4 border-blue-500 pl-4">Action 1: Prepare Development Environment</h2>
+  <div class="bg-card rounded-xl p-6 border border-blue-500/30 space-y-4">
+    <pre class="text-sm font-mono text-slate-300 bg-dark rounded p-4">
+<span class="text-slate-500"># What the doc says:</span>
+- Use Node.js 24 or later
+- Copy .env.example to .env.local
+- Keep IGOS_DATA_MODE=demo initially
+- Run npm install --ignore-scripts, typecheck, test, build
+    </pre>
+    <div class="space-y-3">
+      <div class="flex items-start gap-3">
+        <span class="bg-blue-900/50 text-blue-300 text-xs px-2 py-1 rounded mt-0.5 min-w-[180px] text-center">Why Node 24?</span>
+        <p class="text-xs text-slate-300">package.json says <code class="text-yellow-300">"engines": {"node": ">=24.0.0"}</code>. The project uses Node 24+ features. Run <code class="text-yellow-300">node -v</code> to check.</p>
+      </div>
+      <div class="flex items-start gap-3">
+        <span class="bg-blue-900/50 text-blue-300 text-xs px-2 py-1 rounded mt-0.5 min-w-[180px] text-center">Why --ignore-scripts?</span>
+        <p class="text-xs text-slate-300">Some npm packages run post-install scripts that may fail on Windows or need native compilation. <code class="text-yellow-300">--ignore-scripts</code> skips them safely.</p>
+      </div>
+      <div class="flex items-start gap-3">
+        <span class="bg-blue-900/50 text-blue-300 text-xs px-2 py-1 rounded mt-0.5 min-w-[180px] text-center">Why start with demo?</span>
+        <p class="text-xs text-slate-300">Verify the code works first without any external service. Then switch to Appwrite later.</p>
+      </div>
+    </div>
+    <div class="bg-dark rounded-lg p-4 space-y-1">
+      <p class="text-xs text-slate-400 mb-2">Exact commands:</p>
+      <code class="block text-xs text-green-300">node -v                           <span class="text-slate-500"># must be v24+</span></code>
+      <code class="block text-xs text-green-300">cp .env.example .env.local        <span class="text-slate-500"># or copy on Windows</span></code>
+      <code class="block text-xs text-green-300">npm install --ignore-scripts      <span class="text-slate-500"># install deps</span></code>
+      <code class="block text-xs text-green-300">npm run typecheck                 <span class="text-slate-500"># must pass</span></code>
+      <code class="block text-xs text-green-300">npm test                          <span class="text-slate-500"># must pass</span></code>
+      <code class="block text-xs text-green-300">npm run build                     <span class="text-slate-500"># must pass</span></code>
+    </div>
+  </div>
+</section>
+
+<!-- SECTION 2: PROVISION APPWRITE -->
+<section class="space-y-6">
+  <h2 class="text-2xl font-bold text-yellow-400 border-l-4 border-yellow-500 pl-4">Action 2: Provision Appwrite</h2>
+  <div class="bg-card rounded-xl p-6 border border-yellow-500/30 space-y-4">
+    <pre class="text-sm font-mono text-slate-300 bg-dark rounded p-4">
+<span class="text-slate-500"># What the doc says:</span>
+Follow docs/appwrite-setup.md and infra/appwrite/schema.json version 2.
+Create every table, column, index and the encrypted document bucket
+with the exact declared identifiers.
+    </pre>
+    <div class="space-y-3">
+      <div class="flex items-start gap-3">
+        <span class="text-yellow-400 text-lg">⚠</span>
+        <div>
+          <p class="text-sm text-white font-bold">"Exact declared identifiers" is critical</p>
+          <p class="text-xs text-slate-400">The code uses hardcoded table IDs like <code class="text-yellow-300">"matters"</code>, <code class="text-yellow-300">"audit-events"</code>, <code class="text-yellow-300">"memberships"</code>. If you name a table differently in Appwrite, the code will fail.</p>
+        </div>
+      </div>
+      <div class="flex items-start gap-3">
+        <span class="text-red-400 text-lg">🔒</span>
+        <div>
+          <p class="text-sm text-white font-bold">API key security</p>
+          <p class="text-xs text-slate-400"><code class="text-yellow-300">APPWRITE_API_KEY</code> goes in your <strong class="text-white">secret store</strong> only. NEVER in <code class="text-yellow-300">NEXT_PUBLIC_</code> variables. NEVER in Git. The browser must never see it.</p>
+        </div>
+      </div>
+    </div>
+    <div class="bg-dark rounded-lg p-4 space-y-1">
+      <p class="text-xs text-slate-400 mb-2">What you need to create in Appwrite:</p>
+      <code class="block text-xs text-green-300">Database: "igos-core"                     <span class="text-slate-500">← exact ID</span></code>
+      <code class="block text-xs text-green-300">Tables: "mats", "academies", "memberships" <span class="text-slate-500">← exact IDs</span></code>
+      <code class="block text-xs text-green-300">        "matters", "audit-events", "documents"</code>
+      <code class="block text-xs text-green-300">        "deadline-adjustments", "notification-receipts"</code>
+      <code class="block text-xs text-green-300">        ... (all 33 tables from schema.json)</code>
+      <code class="block text-xs text-green-300">Bucket: "case-documents"                 <span class="text-slate-500">← 25MB, encrypted, antivirus</span></code>
+    </div>
+  </div>
+</section>
+
+<!-- SECTION 3: ADD PERSISTENCE ADAPTERS -->
+<section class="space-y-6">
+  <h2 class="text-2xl font-bold text-purple-400 border-l-4 border-purple-500 pl-4">Action 3: Add Missing Persistence Adapters</h2>
+  <div class="bg-card rounded-xl p-6 border border-purple-500/30 space-y-4">
+    <pre class="text-sm font-mono text-slate-300 bg-dark rounded p-4">
+<span class="text-slate-500"># What the doc says:</span>
+Implement Appwrite repositories for:
+- deadline-adjustments
+- notification-receipts
+    </pre>
+    <div class="space-y-3">
+      <p class="text-sm text-slate-300">Most Appwrite adapters already exist (25 files in <code class="text-brand">src/appwrite/</code>). But two are specifically called out:</p>
+      <div class="grid md:grid-cols-2 gap-4">
+        <div class="bg-dark rounded-lg p-4 space-y-2">
+          <h4 class="text-sm font-bold text-purple-300">deadline-adjustments</h4>
+          <p class="text-xs text-slate-400">Stores SAR extensions and FOI pauses. Needs <code class="text-yellow-300">matId</code> + <code class="text-yellow-300">academyId</code> scoping.</p>
+          <code class="block text-xs text-slate-300">src/appwrite/deadline-adjustment-repository.ts</code>
+        </div>
+        <div class="bg-dark rounded-lg p-4 space-y-2">
+          <h4 class="text-sm font-bold text-purple-300">notification-receipts</h4>
+          <p class="text-xs text-slate-400">Logs sent notifications. Lookup by <code class="text-yellow-300">matId</code> + <code class="text-yellow-300">idempotencyKey</code> prevents cross-MAT suppression.</p>
+          <code class="block text-xs text-slate-300">src/appwrite/notification-receipt-repository.ts</code>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- SECTION 4: CONNECT THE INTERFACE -->
+<section class="space-y-6">
+  <h2 class="text-2xl font-bold text-pink-400 border-l-4 border-pink-500 pl-4">Action 4: Connect the Interface</h2>
+  <div class="bg-card rounded-xl p-6 border border-pink-500/30 space-y-4">
+    <pre class="text-sm font-mono text-slate-300 bg-dark rounded p-4">
+<span class="text-slate-500"># What the doc says:</span>
+Replace browser-session demonstration mutations with the existing
+matter and workflow APIs. Keep optimistic version checks.
+
+The visible role selector is demonstration-only. In persistent mode,
+derive roles from the authenticated Appwrite membership.
+    </pre>
+    <div class="space-y-3">
+      <p class="text-sm text-slate-300">This is the <strong class="text-white">biggest task</strong>. The UI currently uses <code class="text-yellow-300">useState</code> with hardcoded data. You need to make it call the API instead.</p>
+      <div class="grid md:grid-cols-2 gap-4">
+        <div class="bg-dark rounded-lg p-4 space-y-2">
+          <h4 class="text-sm font-bold text-red-400">Current (Demo)</h4>
+          <code class="block text-xs text-slate-300">
+<span class="text-red-300">// UI writes to local state</span>
+setMatters(items => [...items, newMatter])
+
+<span class="text-red-300">// Role is a dropdown</span>
+&lt;select value={role}&gt;...&lt;/select&gt;
+          </code>
+        </div>
+        <div class="bg-dark rounded-lg p-4 space-y-2">
+          <h4 class="text-sm font-bold text-green-400">Target (Appwrite)</h4>
+          <code class="block text-xs text-slate-300">
+<span class="text-green-300">// UI calls the API</span>
+await fetch("/api/matters", { method: "POST", ... })
+
+<span class="text-green-300">// Role comes from JWT membership</span>
+const role = context.membership.roles
+          </code>
+        </div>
+      </div>
+      <div class="bg-pink-900/20 border border-pink-500/30 rounded-lg p-4 text-sm text-pink-200">
+        <strong>Key constraint:</strong> "Never trust a role supplied by the browser." The role dropdown is for demo only. In production, roles come from the Appwrite membership table, verified server-side.
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- SECTION 5: CONFIGURE NOTIFICATIONS -->
+<section class="space-y-6">
+  <h2 class="text-2xl font-bold text-orange-400 border-l-4 border-orange-500 pl-4">Action 5: Configure Notifications</h2>
+  <div class="bg-card rounded-xl p-6 border border-orange-500/30 space-y-4">
+    <pre class="text-sm font-mono text-slate-300 bg-dark rounded p-4">
+<span class="text-slate-500"># What the doc says:</span>
+Choose one adapter per environment. SMTP can be the initial provider.
+Microsoft 365 may be added later but must remain optional.
+
+Add retry and dead-letter processing. Preserve idempotency keys.
+Do not include special-category data in email bodies.
+    </pre>
+    <div class="space-y-3">
+      <div class="flex items-start gap-3">
+        <span class="text-orange-400 text-sm mt-0.5">→</span>
+        <div>
+          <p class="text-sm text-white font-bold">Adapter pattern</p>
+          <p class="text-xs text-slate-400">The notification system uses the same repository pattern. <code class="text-yellow-300">DemoNotificationAdapter</code> exists. You need to create <code class="text-yellow-300">SmtpNotificationAdapter</code> (or similar).</p>
+        </div>
+      </div>
+      <div class="flex items-start gap-3">
+        <span class="text-orange-400 text-sm mt-0.5">→</span>
+        <div>
+          <p class="text-sm text-white font-bold">No sensitive data in emails</p>
+          <p class="text-xs text-slate-400">Email body should contain a <strong class="text-white">secure link</strong> to the case, not the actual case data. Special category data (safeguarding, health) must never appear in email.</p>
+        </div>
+      </div>
+      <div class="flex items-start gap-3">
+        <span class="text-orange-400 text-sm mt-0.5">→</span>
+        <div>
+          <p class="text-sm text-white font-bold">Idempotency</p>
+          <p class="text-xs text-slate-400">If the same notification is sent twice (retry), only one email should go out. The <code class="text-yellow-300">idempotencyKey</code> in <code class="text-yellow-300">notification-receipts</code> table prevents duplicates.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- SECTION 6: ACCEPTANCE CHECKS -->
+<section class="space-y-6">
+  <h2 class="text-2xl font-bold text-red-400 border-l-4 border-red-500 pl-4">Action 6: Environment Acceptance (14 Checks)</h2>
+  <p class="text-slate-400 text-sm">These are the <strong class="text-white">mandatory gates</strong> before you can merge PR #1. Every single one must pass.</p>
+
+  <div class="space-y-3">
+    <!-- Auth & Tenancy -->
+    <div class="bg-card rounded-lg p-4 border border-slate-700">
+      <h4 class="text-xs font-bold text-red-400 mb-2">Auth & Tenancy (5 checks)</h4>
+      <div class="space-y-2 text-xs text-slate-300">
+        <label class="flex items-start gap-2 cursor-pointer"><input type="checkbox" class="mt-0.5 accent-green-500"> DPO and MAT admin can see Federation-wide records</label>
+        <label class="flex items-start gap-2 cursor-pointer"><input type="checkbox" class="mt-0.5 accent-green-500"> Academy lead sees ONLY assigned academy records</label>
+        <label class="flex items-start gap-2 cursor-pointer"><input type="checkbox" class="mt-0.5 accent-green-500"> Auditor cannot create or advance a matter</label>
+        <label class="flex items-start gap-2 cursor-pointer"><input type="checkbox" class="mt-0.5 accent-green-500"> Read-only user cannot mutate data</label>
+        <label class="flex items-start gap-2 cursor-pointer"><input type="checkbox" class="mt-0.5 accent-green-500"> Cross-MAT reads and writes fail</label>
+      </div>
+    </div>
+
+    <!-- Workflows & Deadlines -->
+    <div class="bg-card rounded-lg p-4 border border-slate-700">
+      <h4 class="text-xs font-bold text-red-400 mb-2">Workflows & Deadlines (4 checks)</h4>
+      <div class="space-y-2 text-xs text-slate-300">
+        <label class="flex items-start gap-2 cursor-pointer"><input type="checkbox" class="mt-0.5 accent-green-500"> SAR month-end deadlines clamp correctly (31 Jan → 28 Feb)</label>
+        <label class="flex items-start gap-2 cursor-pointer"><input type="checkbox" class="mt-0.5 accent-green-500"> Breach deadlines cannot be paused</label>
+        <label class="flex items-start gap-2 cursor-pointer"><input type="checkbox" class="mt-0.5 accent-green-500"> SAR extensions require approval record, max +2 months</label>
+        <label class="flex items-start gap-2 cursor-pointer"><input type="checkbox" class="mt-0.5 accent-green-500"> FOI clarification pauses record start/resumption/rationale</label>
+      </div>
+    </div>
+
+    <!-- Audit & Documents -->
+    <div class="bg-card rounded-lg p-4 border border-slate-700">
+      <h4 class="text-xs font-bold text-red-400 mb-2">Audit & Documents (3 checks)</h4>
+      <div class="space-y-2 text-xs text-slate-300">
+        <label class="flex items-start gap-2 cursor-pointer"><input type="checkbox" class="mt-0.5 accent-green-500"> Audit events link to preceding event (hash chain)</label>
+        <label class="flex items-start gap-2 cursor-pointer"><input type="checkbox" class="mt-0.5 accent-green-500"> Document upload stores file + checksum metadata</label>
+        <label class="flex items-start gap-2 cursor-pointer"><input type="checkbox" class="mt-0.5 accent-green-500"> Failed metadata write removes the uploaded file (compensating cleanup)</label>
+      </div>
+    </div>
+
+    <!-- Infrastructure -->
+    <div class="bg-card rounded-lg p-4 border border-slate-700">
+      <h4 class="text-xs font-bold text-red-400 mb-2">Infrastructure (2 checks)</h4>
+      <div class="space-y-2 text-xs text-slate-300">
+        <label class="flex items-start gap-2 cursor-pointer"><input type="checkbox" class="mt-0.5 accent-green-500"> Microsoft 365 disabled does NOT affect login/cases/docs/reports</label>
+        <label class="flex items-start gap-2 cursor-pointer"><input type="checkbox" class="mt-0.5 accent-green-500"> Backup restoration tested in non-production environment</label>
+      </div>
+    </div>
+  </div>
+
+  <div class="bg-red-900/20 border border-red-500/30 rounded-lg p-4 text-sm text-red-200">
+    <strong>These are AND conditions.</strong> All 14 must pass. If even one fails, the PR stays as draft and cannot be merged.
+  </div>
+</section>
+
+<!-- SECTION 7: SECURITY ACCEPTANCE -->
+<section class="space-y-6">
+  <h2 class="text-2xl font-bold text-red-400 border-l-4 border-red-500 pl-4">Action 7: Security & Operational Acceptance (7 items)</h2>
+  <p class="text-slate-400 text-sm">These are for <strong class="text-white">production</strong> — before live personal data is used. You may not need all of these for the dev environment, but you should be aware.</p>
+  <div class="bg-card rounded-xl p-6 border border-red-500/30 space-y-2 text-xs text-slate-300">
+    <div class="flex items-start gap-2"><span class="text-red-400">☐</span> Penetration testing and dependency review</div>
+    <div class="flex items-start gap-2"><span class="text-red-400">☐</span> Retention schedule and disposal-job approval</div>
+    <div class="flex items-start gap-2"><span class="text-red-400">☐</span> Privacy notice and acceptable-use review</div>
+    <div class="flex items-start gap-2"><span class="text-red-400">☐</span> DPO approval of permissions and notification templates</div>
+    <div class="flex items-start gap-2"><span class="text-red-400">☐</span> Backup, restoration and incident-response exercises</div>
+    <div class="flex items-start gap-2"><span class="text-red-400">☐</span> Production monitoring, alerting and audit-log retention</div>
+    <div class="flex items-start gap-2"><span class="text-red-400">☐</span> DPIA for IGOS itself</div>
+  </div>
+</section>
+
+<!-- SECTION: MERGE DECISION -->
+<section class="space-y-6">
+  <h2 class="text-2xl font-bold text-white border-l-4 border-brand pl-4">Merge Decision</h2>
+  <div class="bg-card rounded-xl p-6 border border-slate-700 space-y-4">
+    <pre class="text-sm font-mono text-slate-300 bg-dark rounded p-4">
+<span class="text-slate-500"># What the doc says:</span>
+Merge PR #1 only after:
+  1. CI is green
+  2. Development deployment is accessible
+  3. Acceptance checks are evidenced
+  4. Material findings are resolved
+
+Then: Create a separate branch for Stage 2 modules.
+Do not mix deployment secrets into source control.
+    </pre>
+    <div class="space-y-3">
+      <div class="flex items-start gap-3">
+        <span class="bg-green-600 text-white text-xs font-bold px-2 py-1 rounded mt-0.5">✓</span>
+        <p class="text-sm text-slate-300"><strong class="text-white">CI is green</strong> — typecheck + test + build + audit all pass on GitHub.</p>
+      </div>
+      <div class="flex items-start gap-3">
+        <span class="bg-green-600 text-white text-xs font-bold px-2 py-1 rounded mt-0.5">✓</span>
+        <p class="text-sm text-slate-300"><strong class="text-white">Deployment accessible</strong> — the app is running somewhere (Coolify, Appwrite site, etc.) and you can open it.</p>
+      </div>
+      <div class="flex items-start gap-3">
+        <span class="bg-green-600 text-white text-xs font-bold px-2 py-1 rounded mt-0.5">✓</span>
+        <p class="text-sm text-slate-300"><strong class="text-white">Acceptance checks evidenced</strong> — you've run through all 14 checks and can show proof (screenshots, test results, etc.).</p>
+      </div>
+      <div class="flex items-start gap-3">
+        <span class="bg-green-600 text-white text-xs font-bold px-2 py-1 rounded mt-0.5">✓</span>
+        <p class="text-sm text-slate-300"><strong class="text-white">Findings resolved</strong> — any bugs or issues found during testing are fixed.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- RELEASE CONSOLIDATION -->
+<section class="space-y-6">
+  <h2 class="text-2xl font-bold text-brand border-l-4 border-brand pl-4">Bonus: Release Consolidation (for all 5 PRs)</h2>
+  <p class="text-slate-400 text-sm">From <code class="text-brand">docs/release-consolidation.md</code> — this is the big-picture view of all 5 PRs.</p>
+  <div class="bg-card rounded-xl p-6 border border-slate-700 space-y-4">
+    <h3 class="font-bold text-white text-sm">Merge Prerequisites (all 5 PRs)</h3>
+    <div class="space-y-2 text-xs text-slate-300">
+      <div class="flex items-start gap-2"><span class="text-yellow-300">☐</span> Appwrite dev project provisioned from schema v7</div>
+      <div class="flex items-start gap-2"><span class="text-yellow-300">☐</span> Persistent repository adapters exist for every schema resource</div>
+      <div class="flex items-start gap-2"><span class="text-yellow-300">☐</span> MAT & academy isolation tests pass against Appwrite</div>
+      <div class="flex items-start gap-2"><span class="text-yellow-300">☐</span> Backup & restoration rehearsal succeeds</div>
+      <div class="flex items-start gap-2"><span class="text-yellow-300">☐</span> Dependency audit, typecheck, tests, production build pass</div>
+      <div class="flex items-start gap-2"><span class="text-yellow-300">☐</span> App deployed to protected dev hostname</div>
+      <div class="flex items-start gap-2"><span class="text-yellow-300">☐</span> DPO, security, product acceptance recorded</div>
+    </div>
+  </div>
+
+  <div class="bg-card rounded-xl p-6 border border-slate-700 space-y-4">
+    <h3 class="font-bold text-white text-sm">Deployment Sequence</h3>
+    <pre class="text-xs font-mono text-slate-300 bg-dark rounded p-4 leading-relaxed">
+<span class="text-yellow-300">Step 1:</span>  Database snapshot + rollback point
+<span class="text-yellow-300">Step 2:</span>  Deploy with IGOS_DATA_MODE=demo (safe start)
+<span class="text-yellow-300">Step 3:</span>  Health check + navigation + security checks
+<span class="text-yellow-300">Step 4:</span>  Configure Appwrite secrets in secret store
+<span class="text-yellow-300">Step 5:</span>  Schema + permission validation
+<span class="text-yellow-300">Step 6:</span>  Switch to IGOS_DATA_MODE=appwrite
+<span class="text-yellow-300">Step 7:</span>  Smoke tests: auth, cases, workflows, docs, audit
+<span class="text-yellow-300">Step 8:</span>  Test every role + academy boundary
+<span class="text-yellow-300">Step 9:</span>  Backup restoration test
+<span class="text-yellow-300">Step 10:</span> Obtain acceptance → ready for staging/production
+    </pre>
+  </div>
+</section>
+
+<!-- QUICK SUMMARY -->
+<section class="space-y-6">
+  <h2 class="text-2xl font-bold text-white border-l-4 border-brand pl-4">Quick Summary — Your To-Do List</h2>
+  <div class="bg-card rounded-xl p-6 border border-slate-700">
+    <div class="space-y-3">
+      <div class="flex items-center gap-4">
+        <span class="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center text-white text-sm font-bold">1</span>
+        <p class="text-sm text-white">Set up Node 24, install deps, run typecheck + test + build</p>
+      </div>
+      <div class="flex items-center gap-4">
+        <span class="w-8 h-8 bg-yellow-600 rounded-full flex items-center justify-center text-white text-sm font-bold">2</span>
+        <p class="text-sm text-white">Provision Appwrite from schema.json (33 tables + 1 bucket)</p>
+      </div>
+      <div class="flex items-center gap-4">
+        <span class="w-8 h-8 bg-purple-600 rounded-full flex items-center justify-center text-white text-sm font-bold">3</span>
+        <p class="text-sm text-white">Verify deadline-adjustment + notification-receipt adapters work</p>
+      </div>
+      <div class="flex items-center gap-4">
+        <span class="w-8 h-8 bg-pink-600 rounded-full flex items-center justify-center text-white text-sm font-bold">4</span>
+        <p class="text-sm text-white">Connect UI to API routes (replace useState with fetch calls)</p>
+      </div>
+      <div class="flex items-center gap-4">
+        <span class="w-8 h-8 bg-orange-600 rounded-full flex items-center justify-center text-white text-sm font-bold">5</span>
+        <p class="text-sm text-white">Configure notification adapter (SMTP is fine to start)</p>
+      </div>
+      <div class="flex items-center gap-4">
+        <span class="w-8 h-8 bg-red-600 rounded-full flex items-center justify-center text-white text-sm font-bold">6</span>
+        <p class="text-sm text-white">Pass all 14 acceptance checks (auth, workflows, audit, docs)</p>
+      </div>
+      <div class="flex items-center gap-4">
+        <span class="w-8 h-8 bg-red-700 rounded-full flex items-center justify-center text-white text-sm font-bold">7</span>
+        <p class="text-sm text-white">Security & ops acceptance (pen test, backups, DPIA)</p>
+      </div>
+      <div class="flex items-center gap-4">
+        <span class="w-8 h-8 bg-green-600 rounded-full flex items-center justify-center text-white text-sm font-bold">8</span>
+        <p class="text-sm text-white">Merge PR #1 → start PR #2</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="flex justify-between">
+  <a href="09-how-to-test.html" class="inline-block bg-slate-700 hover:bg-slate-600 text-white font-bold px-6 py-3 rounded-xl transition">← How to Test</a>
+  <a href="01-project-overview.html" class="inline-block bg-brand hover:bg-indigo-600 text-white font-bold px-6 py-3 rounded-xl transition">Back to Start →</a>
+</section>
+
+</main>
+</body>
+</html>

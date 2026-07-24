@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>IGOS — Tenancy & Roles</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+tailwind.config={theme:{extend:{colors:{brand:'#6366f1',dark:'#0f172a',card:'#1e293b'}}}}
+</script>
+</head>
+<body class="bg-dark text-slate-200 min-h-screen font-sans">
+
+<nav class="fixed top-0 inset-x-0 z-50 bg-dark/80 backdrop-blur border-b border-slate-700 px-6 py-3 flex items-center justify-between">
+  <span class="font-bold text-brand text-lg">IGOS Learning</span>
+  <div class="flex gap-3 text-sm">
+    <a href="01-project-overview.html" class="hover:text-white text-slate-400">01</a>
+    <a href="02-architecture.html" class="hover:text-white text-slate-400">02</a>
+    <a href="03-data-flow.html" class="hover:text-white text-slate-400">03</a>
+    <a href="04-current-state.html" class="hover:text-white text-slate-400">04</a>
+    <a href="05-database-schema.html" class="hover:text-white text-slate-400">05</a>
+    <a href="06-tenancy-roles.html" class="text-brand font-bold border-b border-brand">06 Tenancy</a>
+    <a href="07-implementation-guide.html" class="hover:text-white text-slate-400">07</a>
+  </div>
+</nav>
+
+<main class="max-w-5xl mx-auto px-6 pt-24 pb-20 space-y-16">
+
+<section class="text-center space-y-4">
+  <h1 class="text-4xl font-extrabold text-white">Multi-Tenancy <span class="text-brand">& Roles</span></h1>
+  <p class="text-lg text-slate-400">How data isolation and access control work.</p>
+</section>
+
+<!-- TENANCY MODEL -->
+<section class="space-y-6">
+  <h2 class="text-2xl font-bold text-white border-l-4 border-brand pl-4">The Tenancy Model</h2>
+  <div class="bg-card rounded-xl p-6 border border-slate-700">
+    <pre class="text-sm font-mono text-slate-300 leading-relaxed">
+<span class="text-brand font-bold">MAT</span> (Multi-Academy Trust) — Top-level tenant
+│   Every row in every table has a <span class="text-yellow-300">matId</span> column.
+│   This is the FIRST isolation boundary.
+│
+├── <span class="text-green-300">Academy A</span> (Riverside Academy)
+│   │   Has academyId = "acad-a"
+│   │
+│   ├── Matters WHERE matId="X" AND academyId="acad-a"
+│   ├── Documents WHERE matId="X" AND academyId="acad-a"
+│   ├── DPIA sections WHERE matId="X" AND academyId="acad-a"
+│   └── Users whose membership has academyId "acad-a" in academyIds[]
+│
+├── <span class="text-green-300">Academy B</span> (Hillcrest Academy)
+│   │   Has academyId = "acad-b"
+│   │
+│   ├── Matters WHERE matId="X" AND academyId="acad-b"
+│   └── ...
+│
+└── <span class="text-purple-300">Federation-wide</span>
+    │   Matters WHERE matId="X" AND academyId IS NULL
+    │   (cross-academy scope)
+    </pre>
+  </div>
+</section>
+
+<!-- ISOLATION RULES -->
+<section class="space-y-6">
+  <h2 class="text-2xl font-bold text-white border-l-4 border-red-500 pl-4">Isolation Rules</h2>
+  <div class="grid md:grid-cols-2 gap-4">
+    <div class="bg-card rounded-xl p-5 border border-red-500/30 space-y-2">
+      <h3 class="font-bold text-red-400">Rule 1: matId Always Required</h3>
+      <p class="text-xs text-slate-300">Every repository query MUST include <code class="text-yellow-300">Query.equal("matId", ...)</code>. This is enforced in every Appwrite adapter.</p>
+    </div>
+    <div class="bg-card rounded-xl p-5 border border-red-500/30 space-y-2">
+      <h3 class="font-bold text-red-400">Rule 2: academyId When Scoped</h3>
+      <p class="text-xs text-slate-300">If the user's membership has academyIds[], queries MUST also filter by <code class="text-yellow-300">Query.equal("academyId", ...)</code>.</p>
+    </div>
+    <div class="bg-card rounded-xl p-5 border border-red-500/30 space-y-2">
+      <h3 class="font-bold text-red-400">Rule 3: Cross-MAT = Blocked</h3>
+      <p class="text-xs text-slate-300">If a user from MAT "X" tries to access a matter from MAT "Y", the repository returns <code class="text-yellow-300">null</code> — no error, no leak.</p>
+    </div>
+    <div class="bg-card rounded-xl p-5 border border-red-500/30 space-y-2">
+      <h3 class="font-bold text-red-400">Rule 4: Server-Side Only</h3>
+      <p class="text-xs text-slate-300">All Appwrite queries run server-side with an admin API key. The browser NEVER talks directly to Appwrite for data.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ROLES -->
+<section class="space-y-6">
+  <h2 class="text-2xl font-bold text-white border-l-4 border-brand pl-4">The 8 Roles</h2>
+  <p class="text-slate-400 text-sm">Defined in <code class="text-brand">src/domain/model.ts</code></p>
+  <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-3">
+    <div class="bg-card rounded-xl p-4 border border-slate-700">
+      <span class="text-xs bg-red-900/50 text-red-300 px-2 py-1 rounded font-mono">platform-admin</span>
+      <p class="text-xs text-slate-400 mt-2">System-wide access across all MATs. Superuser.</p>
+    </div>
+    <div class="bg-card rounded-xl p-4 border border-slate-700">
+      <span class="text-xs bg-orange-900/50 text-orange-300 px-2 py-1 rounded font-mono">mat-admin</span>
+      <p class="text-xs text-slate-400 mt-2">Trust-level admin. Manages all academies in their MAT.</p>
+    </div>
+    <div class="bg-card rounded-xl p-4 border border-slate-700">
+      <span class="text-xs bg-yellow-900/50 text-yellow-300 px-2 py-1 rounded font-mono">dpo</span>
+      <p class="text-xs text-slate-400 mt-2">Data Protection Officer. Can approve, view audit, manage DPIAs.</p>
+    </div>
+    <div class="bg-card rounded-xl p-4 border border-slate-700">
+      <span class="text-xs bg-green-900/50 text-green-300 px-2 py-1 rounded font-mono">case-manager</span>
+      <p class="text-xs text-slate-400 mt-2">Creates and advances cases. Core operational role.</p>
+    </div>
+    <div class="bg-card rounded-xl p-4 border border-slate-700">
+      <span class="text-xs bg-blue-900/50 text-blue-300 px-2 py-1 rounded font-mono">academy-lead</span>
+      <p class="text-xs text-slate-400 mt-2">Academy-scoped admin. Sees only their academy's data.</p>
+    </div>
+    <div class="bg-card rounded-xl p-4 border border-slate-700">
+      <span class="text-xs bg-purple-900/50 text-purple-300 px-2 py-1 rounded font-mono">contributor</span>
+      <p class="text-xs text-slate-400 mt-2">Can contribute to cases (upload docs, add notes).</p>
+    </div>
+    <div class="bg-card rounded-xl p-4 border border-slate-700">
+      <span class="text-xs bg-pink-900/50 text-pink-300 px-2 py-1 rounded font-mono">auditor</span>
+      <p class="text-xs text-slate-400 mt-2">Read-only access to cases and audit trail.</p>
+    </div>
+    <div class="bg-card rounded-xl p-4 border border-slate-700">
+      <span class="text-xs bg-slate-700 text-slate-300 px-2 py-1 rounded font-mono">read-only</span>
+      <p class="text-xs text-slate-400 mt-2">View only. No create, update, or approve.</p>
+    </div>
+  </div>
+</section>
+
+<!-- CAPABILITIES -->
+<section class="space-y-6">
+  <h2 class="text-2xl font-bold text-white border-l-4 border-brand pl-4">The 9 Capabilities</h2>
+  <p class="text-slate-400 text-sm">Roles map to capabilities. Services check capabilities, not roles directly.</p>
+  <div class="grid sm:grid-cols-3 gap-3">
+    <div class="bg-card rounded-lg p-3 border border-slate-700 text-center">
+      <code class="text-brand text-sm font-mono">matter:create</code>
+    </div>
+    <div class="bg-card rounded-lg p-3 border border-slate-700 text-center">
+      <code class="text-brand text-sm font-mono">matter:read</code>
+    </div>
+    <div class="bg-card rounded-lg p-3 border border-slate-700 text-center">
+      <code class="text-brand text-sm font-mono">matter:update</code>
+    </div>
+    <div class="bg-card rounded-lg p-3 border border-slate-700 text-center">
+      <code class="text-brand text-sm font-mono">matter:approve</code>
+    </div>
+    <div class="bg-card rounded-lg p-3 border border-slate-700 text-center">
+      <code class="text-brand text-sm font-mono">matter:close</code>
+    </div>
+    <div class="bg-card rounded-lg p-3 border border-slate-700 text-center">
+      <code class="text-brand text-sm font-mono">document:upload</code>
+    </div>
+    <div class="bg-card rounded-lg p-3 border border-slate-700 text-center">
+      <code class="text-brand text-sm font-mono">audit:read</code>
+    </div>
+    <div class="bg-card rounded-lg p-3 border border-slate-700 text-center">
+      <code class="text-brand text-sm font-mono">report:read</code>
+    </div>
+    <div class="bg-card rounded-lg p-3 border border-slate-700 text-center">
+      <code class="text-brand text-sm font-mono">tenant:admin</code>
+    </div>
+  </div>
+</section>
+
+<!-- ROLE→CAPABILITY MAP -->
+<section class="space-y-6">
+  <h2 class="text-2xl font-bold text-white border-l-4 border-brand pl-4">Role → Capability Mapping</h2>
+  <div class="overflow-x-auto">
+    <table class="w-full text-xs border-collapse">
+      <thead><tr class="border-b border-slate-700 bg-slate-800/50">
+        <th class="text-left py-2 px-2 text-slate-400">Role</th>
+        <th class="text-center py-2 px-2 text-slate-400">create</th>
+        <th class="text-center py-2 px-2 text-slate-400">read</th>
+        <th class="text-center py-2 px-2 text-slate-400">update</th>
+        <th class="text-center py-2 px-2 text-slate-400">approve</th>
+        <th class="text-center py-2 px-2 text-slate-400">close</th>
+        <th class="text-center py-2 px-2 text-slate-400">upload</th>
+        <th class="text-center py-2 px-2 text-slate-400">audit:read</th>
+        <th class="text-center py-2 px-2 text-slate-400">report</th>
+        <th class="text-center py-2 px-2 text-slate-400">admin</th>
+      </tr></thead>
+      <tbody class="divide-y divide-slate-800">
+        <tr><td class="py-2 px-2 font-mono text-red-300">platform-admin</td><td class="text-center">✅</td><td class="text-center">✅</td><td class="text-center">✅</td><td class="text-center">✅</td><td class="text-center">✅</td><td class="text-center">✅</td><td class="text-center">✅</td><td class="text-center">✅</td><td class="text-center">✅</td></tr>
+        <tr><td class="py-2 px-2 font-mono text-orange-300">mat-admin</td><td class="text-center">✅</td><td class="text-center">✅</td><td class="text-center">✅</td><td class="text-center">✅</td><td class="text-center">✅</td><td class="text-center">✅</td><td class="text-center">✅</td><td class="text-center">✅</td><td class="text-center">✅</td></tr>
+        <tr><td class="py-2 px-2 font-mono text-yellow-300">dpo</td><td class="text-center">✅</td><td class="text-center">✅</td><td class="text-center">✅</td><td class="text-center">✅</td><td class="text-center">✅</td><td class="text-center">✅</td><td class="text-center">✅</td><td class="text-center">✅</td><td class="text-center">❌</td></tr>
+        <tr><td class="py-2 px-2 font-mono text-green-300">case-manager</td><td class="text-center">✅</td><td class="text-center">✅</td><td class="text-center">✅</td><td class="text-center">❌</td><td class="text-center">❌</td><td class="text-center">✅</td><td class="text-center">❌</td><td class="text-center">✅</td><td class="text-center">❌</td></tr>
+        <tr><td class="py-2 px-2 font-mono text-blue-300">academy-lead</td><td class="text-center">✅</td><td class="text-center">✅</td><td class="text-center">✅</td><td class="text-center">❌</td><td class="text-center">❌</td><td class="text-center">✅</td><td class="text-center">❌</td><td class="text-center">✅</td><td class="text-center">❌</td></tr>
+        <tr><td class="py-2 px-2 font-mono text-purple-300">contributor</td><td class="text-center">❌</td><td class="text-center">✅</td><td class="text-center">✅</td><td class="text-center">❌</td><td class="text-center">❌</td><td class="text-center">✅</td><td class="text-center">❌</td><td class="text-center">❌</td><td class="text-center">❌</td></tr>
+        <tr><td class="py-2 px-2 font-mono text-pink-300">auditor</td><td class="text-center">❌</td><td class="text-center">✅</td><td class="text-center">❌</td><td class="text-center">❌</td><td class="text-center">❌</td><td class="text-center">❌</td><td class="text-center">✅</td><td class="text-center">✅</td><td class="text-center">❌</td></tr>
+        <tr><td class="py-2 px-2 font-mono text-slate-300">read-only</td><td class="text-center">❌</td><td class="text-center">✅</td><td class="text-center">❌</td><td class="text-center">❌</td><td class="text-center">❌</td><td class="text-center">❌</td><td class="text-center">❌</td><td class="text-center">❌</td><td class="text-center">❌</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- AUTH FLOW -->
+<section class="space-y-6">
+  <h2 class="text-2xl font-bold text-white border-l-4 border-brand pl-4">How Authorisation Works in Code</h2>
+  <div class="bg-card rounded-xl p-6 border border-slate-700">
+    <pre class="text-sm font-mono text-slate-300 leading-relaxed">
+<span class="text-slate-500">// src/domain/authorisation.ts</span>
+
+<span class="text-purple-400">function</span> <span class="text-yellow-300">capabilitiesFor</span>(roles: Role[]): Capability[] {
+  <span class="text-purple-400">const</span> caps = <span class="text-purple-400">new</span> Set&lt;Capability&gt;();
+  <span class="text-purple-400">for</span> (<span class="text-purple-400">const</span> role <span class="text-purple-400">of</span> roles) {
+    <span class="text-purple-400">switch</span> (role) {
+      <span class="text-purple-400">case</span> <span class="text-green-300">"dpo"</span>:
+        caps.add(<span class="text-green-300">"matter:create"</span>);
+        caps.add(<span class="text-green-300">"matter:read"</span>);
+        caps.add(<span class="text-green-300">"matter:approve"</span>);
+        caps.add(<span class="text-green-300">"audit:read"</span>);
+        <span class="text-slate-500">// ...</span>
+      <span class="text-purple-400">case</span> <span class="text-green-300">"case-manager"</span>:
+        caps.add(<span class="text-green-300">"matter:create"</span>);
+        caps.add(<span class="text-green-300">"matter:read"</span>);
+        caps.add(<span class="text-green-300">"matter:update"</span>);
+        <span class="text-slate-500">// ...</span>
+    }
+  }
+  <span class="text-purple-400">return</span> [...caps];
+}
+
+<span class="text-slate-500">// Service checks:</span>
+<span class="text-purple-400">if</span> (!hasCapability(context.membership.roles, <span class="text-green-300">"matter:create"</span>))
+  <span class="text-purple-400">throw new</span> Error(<span class="text-green-300">"Insufficient permissions"</span>);
+    </pre>
+  </div>
+</section>
+
+<!-- SEED DATA -->
+<section class="space-y-6">
+  <h2 class="text-2xl font-bold text-white border-l-4 border-brand pl-4">How to Seed Your First MAT Admin</h2>
+  <div class="bg-card rounded-xl p-6 border border-slate-700 text-sm text-slate-300 space-y-2">
+    <p>From <code class="text-brand">docs/appwrite-setup.md</code>:</p>
+    <ol class="list-decimal list-inside space-y-1">
+      <li>Create an Appwrite user (first admin)</li>
+      <li>Insert a row in <code class="text-yellow-300">mats</code> table with status=active</li>
+      <li>Insert academies in <code class="text-yellow-300">academies</code> table linked to that MAT</li>
+      <li>Insert a row in <code class="text-yellow-300">memberships</code> linking the user → MAT with roles=["mat-admin","dpo"]</li>
+    </ol>
+  </div>
+</section>
+
+<section class="flex justify-between">
+  <a href="05-database-schema.html" class="inline-block bg-slate-700 hover:bg-slate-600 text-white font-bold px-6 py-3 rounded-xl transition">← Schema</a>
+  <a href="07-implementation-guide.html" class="inline-block bg-brand hover:bg-indigo-600 text-white font-bold px-6 py-3 rounded-xl transition">Next: Implementation Guide →</a>
+</section>
+
+</main>
+</body>
+</html>

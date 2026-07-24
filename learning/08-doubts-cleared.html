@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>IGOS — Your Doubts Cleared</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+tailwind.config={theme:{extend:{colors:{brand:'#6366f1',dark:'#0f172a',card:'#1e293b'}}}}
+</script>
+</head>
+<body class="bg-dark text-slate-200 min-h-screen font-sans">
+
+<nav class="fixed top-0 inset-x-0 z-50 bg-dark/80 backdrop-blur border-b border-slate-700 px-6 py-3 flex items-center justify-between">
+  <span class="font-bold text-brand text-lg">IGOS Learning</span>
+  <div class="flex gap-3 text-sm">
+    <a href="01-project-overview.html" class="hover:text-white text-slate-400">01</a>
+    <a href="02-architecture.html" class="hover:text-white text-slate-400">02</a>
+    <a href="03-data-flow.html" class="hover:text-white text-slate-400">03</a>
+    <a href="04-current-state.html" class="hover:text-white text-slate-400">04</a>
+    <a href="05-database-schema.html" class="hover:text-white text-slate-400">05</a>
+    <a href="06-tenancy-roles.html" class="hover:text-white text-slate-400">06</a>
+    <a href="07-implementation-guide.html" class="hover:text-white text-slate-400">07</a>
+    <a href="08-doubts-cleared.html" class="text-brand font-bold border-b border-brand">08 Doubts</a>
+  </div>
+</nav>
+
+<main class="max-w-5xl mx-auto px-6 pt-24 pb-20 space-y-20">
+
+<!-- ============================================================ -->
+<!-- DOUBT 1: WHAT IS DOMAIN, REPOSITORY, MATTER                  -->
+<!-- ============================================================ -->
+<section class="space-y-8">
+  <h1 class="text-3xl font-extrabold text-white">Doubt #1 — <span class="text-brand">Domain, Repository & Matter</span></h1>
+
+  <!-- MATTER -->
+  <div class="space-y-4">
+    <h2 class="text-2xl font-bold text-yellow-400">What is a "Matter"?</h2>
+    <p class="text-slate-400 text-sm">In legal/governance language, a <strong class="text-white">Matter</strong> = a case. That's it.</p>
+    <div class="bg-card rounded-xl p-6 border border-slate-700">
+      <pre class="text-sm font-mono text-slate-300 leading-relaxed">
+<span class="text-slate-500">// src/domain/model.ts</span>
+
+<span class="text-purple-400">interface</span> <span class="text-yellow-300">Matter</span> {
+  id:              string;          <span class="text-slate-500">// unique ID</span>
+  matId:           string;          <span class="text-slate-500">// which trust owns this</span>
+  academyId?:      string;          <span class="text-slate-500">// which academy (or null = federation-wide)</span>
+  reference:       string;          <span class="text-yellow-300">"SAR-2026-0178"</span>  <span class="text-slate-500">// human-readable ID</span>
+  type:            <span class="text-green-300">"sar" | "foi" | "breach" | "dpia"</span>  <span class="text-slate-500">// what kind of case</span>
+  status:          <span class="text-green-300">"draft" | "open" | ... | "closed"</span>  <span class="text-slate-500">// where in lifecycle</span>
+  title:           string;          <span class="text-slate-500">// "Paula Leigh – pupil records"</span>
+  ownerUserId:     string;          <span class="text-slate-500">// who is responsible</span>
+  statutoryDueAt?: string;          <span class="text-slate-500">// deadline (SAR = +1 month, FOI = +20 days)</span>
+  version:         number;          <span class="text-slate-500">// optimistic locking (prevents conflicts)</span>
+}
+      </pre>
+    </div>
+    <div class="bg-yellow-900/20 border border-yellow-500/30 rounded-lg p-4 text-sm text-yellow-200">
+      <strong>Real-world example:</strong> "Paula Leigh" submitted a Subject Access Request asking for all her child's school records. That request becomes a <strong>Matter</strong> with type "sar", a deadline, an assigned case manager, and documents attached to it.
+    </div>
+  </div>
+
+  <!-- DOMAIN -->
+  <div class="space-y-4">
+    <h2 class="text-2xl font-bold text-yellow-400">What is "Domain"?</h2>
+    <p class="text-slate-400 text-sm"><strong class="text-white">Domain</strong> = the business rules. Pure logic. No database. No UI. No framework. Just TypeScript functions that answer business questions.</p>
+
+    <div class="grid md:grid-cols-2 gap-4">
+      <!-- domain/workflow.ts -->
+      <div class="bg-card rounded-xl p-5 border border-slate-700 space-y-3">
+        <h3 class="font-bold text-brand text-sm">domain/workflow.ts</h3>
+        <p class="text-xs text-slate-400">Question it answers:</p>
+        <p class="text-sm text-white font-medium">"Can this case move from 'evidence-gathering' to 'redaction'?"</p>
+        <pre class="text-xs font-mono text-slate-300 bg-dark rounded p-2">
+<span class="text-slate-500">// Defines every valid stage for each case type</span>
+<span class="text-yellow-300">sar:</span> [intake → identity-verification → ... → closed]
+<span class="text-yellow-300">foi:</span> [intake → validity-check → ... → closed]
+<span class="text-yellow-300">breach:</span> [reported → containment → ... → closed]
+
+<span class="text-slate-500">// Defines what transition is allowed</span>
+findTransition(<span class="text-green-300">"sar"</span>, <span class="text-green-300">"evidence-gathering"</span>, <span class="text-green-300">"redaction"</span>)
+<span class="text-slate-500">// → returns { from, to, capability: "matter:update" }</span>
+
+findTransition(<span class="text-green-300">"sar"</span>, <span class="text-green-300">"evidence-gathering"</span>, <span class="text-green-300">"closed"</span>)
+<span class="text-red-300">// → throws Error: "not permitted"</span>
+        </pre>
+      </div>
+
+      <!-- domain/deadlines.ts -->
+      <div class="bg-card rounded-xl p-5 border border-slate-700 space-y-3">
+        <h3 class="font-bold text-brand text-sm">domain/deadlines.ts</h3>
+        <p class="text-xs text-slate-400">Question it answers:</p>
+        <p class="text-sm text-white font-medium">"When is this SAR due? When is this FOI due?"</p>
+        <pre class="text-xs font-mono text-slate-300 bg-dark rounded p-2">
+<span class="text-yellow-300">SAR:</span>   +1 calendar month (clamped to month-end)
+<span class="text-yellow-300">FOI:</span>   +20 working days (skips weekends + holidays)
+<span class="text-yellow-300">Breach:</span> +72 hours (cannot be paused)
+
+<span class="text-slate-500">// Real logic:</span>
+calculateDeadline(
+  <span class="text-green-300">2026-01-31</span>,   <span class="text-slate-500">// received</span>
+  <span class="text-green-300">"sar-calendar-month"</span>
+)
+<span class="text-slate-500">// → 2026-02-28 (not March 3! Clamped to Feb end)</span>
+        </pre>
+      </div>
+
+      <!-- domain/authorisation.ts -->
+      <div class="bg-card rounded-xl p-5 border border-slate-700 space-y-3">
+        <h3 class="font-bold text-brand text-sm">domain/authorisation.ts</h3>
+        <p class="text-xs text-slate-400">Question it answers:</p>
+        <p class="text-sm text-white font-medium">"Is this user allowed to do this?"</p>
+        <pre class="text-xs font-mono text-slate-300 bg-dark rounded p-2">
+can(
+  membership,    <span class="text-slate-500">// { matId, academyIds, roles: ["dpo"] }</span>
+  scope,         <span class="text-slate-500">// { matId: "X", academyId: "A" }</span>
+  <span class="text-green-300">"matter:create"</span>  <span class="text-slate-500">// what they want to do</span>
+)
+<span class="text-slate-500">// → true if dpo role has "matter:create"</span>
+        </pre>
+      </div>
+
+      <!-- domain/intake.ts -->
+      <div class="bg-card rounded-xl p-5 border border-slate-700 space-y-3">
+        <h3 class="font-bold text-brand text-sm">domain/intake.ts</h3>
+        <p class="text-xs text-slate-400">Question it answers:</p>
+        <p class="text-sm text-white font-medium">"Is this SAR request form valid?"</p>
+        <pre class="text-xs font-mono text-slate-300 bg-dark rounded p-2">
+<span class="text-slate-500">// Zod schemas validate inputs</span>
+createSarInput.parse({
+  title: <span class="text-green-300">"Paula Leigh – pupil records"</span>,
+  academyId: <span class="text-green-300">"acad-riverside"</span>,
+  requesterName: <span class="text-green-300">"Paula Leigh"</span>,
+  requesterRelationship: <span class="text-green-300">"parent"</span>,
+})
+<span class="text-slate-500">// → valid: proceeds</span>
+
+createSarInput.parse({
+  title: <span class="text-red-300">""</span>,   <span class="text-slate-500">// too short!</span>
+})
+<span class="text-red-300">// → throws ZodError: "title must be at least 3 chars"</span>
+        </pre>
+      </div>
+    </div>
+
+    <div class="bg-green-900/20 border border-green-500/30 rounded-lg p-4 text-sm text-green-200">
+      <strong>Key point:</strong> Domain code has <strong>zero dependencies</strong> on Appwrite, Next.js, React, or any framework. It's pure TypeScript. That's why it has 19 test files — testing pure functions is trivial.
+    </div>
+  </div>
+
+  <!-- REPOSITORY -->
+  <div class="space-y-4">
+    <h2 class="text-2xl font-bold text-yellow-400">What is a "Repository"?</h2>
+    <p class="text-slate-400 text-sm">A <strong class="text-white">Repository</strong> is a <strong>contract</strong> (interface) that says "here's what data operations I need". It doesn't care WHERE the data lives.</p>
+
+    <div class="bg-card rounded-xl p-6 border border-slate-700">
+      <pre class="text-sm font-mono text-slate-300 leading-relaxed">
+<span class="text-slate-500">// src/repositories/matter-repository.ts — THE CONTRACT</span>
+
+<span class="text-purple-400">interface</span> <span class="text-yellow-300">MatterRepository</span> {
+  create(input): Promise&lt;Matter&gt;;
+  findById(scope, id): Promise&lt;Matter | null&gt;;
+  list(query): Promise&lt;Matter[]&gt;;
+  update(scope, id, version, patch): Promise&lt;Matter&gt;;
+}
+      </pre>
+    </div>
+
+    <p class="text-sm text-slate-300">Then <strong class="text-white">two different teams</strong> implement this contract:</p>
+
+    <div class="grid md:grid-cols-2 gap-4">
+      <div class="bg-card rounded-xl p-5 border border-orange-500/50 space-y-2">
+        <h3 class="font-bold text-orange-400 text-sm">Team Demo</h3>
+        <code class="block text-xs text-slate-300 bg-dark rounded p-2">
+<span class="text-orange-300">class DemoMatterRepository</span><br>
+implements MatterRepository {<br>
+&nbsp;&nbsp;private matters = []  <span class="text-slate-500">// JS array in memory</span><br>
+&nbsp;&nbsp;create(input) { this.matters.push(...) }<br>
+&nbsp;&nbsp;list(q) { return this.matters.filter(...) }<br>
+}
+        </code>
+        <p class="text-xs text-slate-400">Data lives in a JavaScript array. Lost when you restart the server.</p>
+      </div>
+      <div class="bg-card rounded-xl p-5 border border-green-500/50 space-y-2">
+        <h3 class="font-bold text-green-400 text-sm">Team Appwrite</h3>
+        <code class="block text-xs text-slate-300 bg-dark rounded p-2">
+<span class="text-green-300">class AppwriteMatterRepository</span><br>
+implements MatterRepository {<br>
+&nbsp;&nbsp;constructor(databases, dbId, tableId)<br>
+&nbsp;&nbsp;create(input) { <span class="text-green-300">this.databases.createDocument(...)</span> }<br>
+&nbsp;&nbsp;list(q) { <span class="text-green-300">return this.databases.listDocuments(...)</span> }<br>
+}
+        </code>
+        <p class="text-xs text-slate-400">Data lives in Appwrite database. Permanent.</p>
+      </div>
+    </div>
+
+    <div class="bg-purple-900/20 border border-purple-500/30 rounded-lg p-4 text-sm text-purple-200">
+      <strong>Analogy:</strong> Think of Repository like a <strong>car's steering wheel</strong>. The driver (Service) uses the steering wheel to turn. They don't care if the car is electric or petrol — the steering wheel works the same way. Repository is the steering wheel. Demo = electric car. Appwrite = petrol car. The Service just drives.
+    </div>
+  </div>
+
+  <!-- PUTTING IT ALL TOGETHER -->
+  <div class="space-y-4">
+    <h2 class="text-2xl font-bold text-white border-l-4 border-brand pl-4">How They Work Together</h2>
+    <div class="bg-card rounded-xl p-6 border border-slate-700">
+      <pre class="text-sm font-mono text-slate-300 leading-relaxed">
+<span class="text-slate-500">// User clicks "Create new SAR" in the UI</span>
+         │
+         ▼
+<span class="text-blue-300">API Route</span>  POST /api/matters
+         │  reads body, resolves user context
+         ▼
+<span class="text-purple-300">MatterService.create(context, input)</span>          <span class="text-slate-500">← src/services/matter-service.ts</span>
+         │
+         ├─ 1. <span class="text-yellow-300">Domain: authorisation.ts</span>     → can this user create?
+         │       calls can(membership, scope, "matter:create")
+         │
+         ├─ 2. <span class="text-yellow-300">Domain: intake.ts</span>            → is the form data valid?
+         │       Zod validates input schema
+         │
+         ├─ 3. <span class="text-yellow-300">Domain: deadlines.ts</span>         → calculate statutoryDueAt
+         │       calculateDeadline(receivedAt, "sar-calendar-month")
+         │
+         ├─ 4. <span class="text-green-300">Repository: matter-repository</span> → save to database
+         │       repository.create(input)     ← <span class="text-orange-300">Demo</span> or <span class="text-green-300">Appwrite</span>
+         │
+         └─ 5. <span class="text-yellow-300">Domain: audit</span>                → record what happened
+                 audit.record(context, "matter.created", {...})
+      </pre>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<!-- DOUBT 2: HOW TO TEST WITHOUT MERGING                         -->
+<!-- ============================================================ -->
+<section class="space-y-8">
+  <h1 class="text-3xl font-extrabold text-white">Doubt #2 — <span class="text-brand">How to Test Without Merging</span></h1>
+
+  <div class="bg-blue-900/20 border border-blue-500/30 rounded-xl p-6 space-y-4">
+    <h2 class="text-xl font-bold text-blue-400">Short Answer: Each PR is a separate Git branch you can run independently.</h2>
+    <p class="text-sm text-slate-300">You don't need to merge to test. Each PR lives on its own branch. You checkout that branch, run the app, test it, and only merge when it passes.</p>
+  </div>
+
+  <!-- HOW GIT BRANCHES WORK -->
+  <div class="space-y-4">
+    <h2 class="text-2xl font-bold text-white border-l-4 border-brand pl-4">How It Works Visually</h2>
+    <div class="bg-card rounded-xl p-6 border border-slate-700">
+      <pre class="text-sm font-mono text-slate-300 leading-relaxed">
+<span class="text-slate-500">main branch (Appsuite)</span>  ─────────────────────────────────────
+       │
+       ├── <span class="text-green-300">PR #1 branch</span> (igos-core-foundation)      ← checkout this, run & test
+       │         │
+       │         ├── <span class="text-blue-300">PR #2 branch</span> (igos-stage-2)   ← checkout this, run & test
+       │         │         │
+       │         │         ├── <span class="text-purple-300">PR #3 branch</span> (igos-stage-3)  ← checkout this
+       │         │         │         │
+       │         │         │         ├── <span class="text-pink-300">PR #4 branch</span> (igos-stage-4)  ← checkout this
+       │         │         │         │         │
+       │         │         │         │         ├── <span class="text-orange-300">PR #5 branch</span> (igos-stage-4b) ← checkout this
+       │         │         │         │         │
+       ▼         ▼         ▼         ▼         ▼
+      Merge #1 → Merge #2 → Merge #3 → Merge #4 → Merge #5
+      <span class="text-red-300">⚠ ONLY after each one passes acceptance checks!</span>
+      </pre>
+    </div>
+  </div>
+
+  <!-- STEP BY STEP -->
+  <div class="space-y-4">
+    <h2 class="text-2xl font-bold text-white border-l-4 border-brand pl-4">Step by Step — How to Test a PR</h2>
+    <div class="space-y-3">
+      <div class="bg-card rounded-lg p-4 border border-slate-700 flex items-start gap-4">
+        <span class="bg-green-600 text-white text-xs font-bold px-3 py-1 rounded mt-0.5">Step 1</span>
+        <div>
+          <p class="text-sm text-white font-bold">Checkout the branch</p>
+          <code class="block text-xs text-green-300 bg-dark rounded px-3 py-2 mt-1">git checkout agent/igos-core-foundation</code>
+          <p class="text-xs text-slate-400 mt-1">Now your local files are PR #1's code. Not main. Not any other PR.</p>
+        </div>
+      </div>
+      <div class="bg-card rounded-lg p-4 border border-slate-700 flex items-start gap-4">
+        <span class="bg-green-600 text-white text-xs font-bold px-3 py-1 rounded mt-0.5">Step 2</span>
+        <div>
+          <p class="text-sm text-white font-bold">Install & run</p>
+          <code class="block text-xs text-green-300 bg-dark rounded px-3 py-2 mt-1">npm install --ignore-scripts && npm run dev</code>
+          <p class="text-xs text-slate-400 mt-1">Opens on localhost:3000. This is PR #1 running.</p>
+        </div>
+      </div>
+      <div class="bg-card rounded-lg p-4 border border-slate-700 flex items-start gap-4">
+        <span class="bg-green-600 text-white text-xs font-bold px-3 py-1 rounded mt-0.5">Step 3</span>
+        <div>
+          <p class="text-sm text-white font-bold">Test everything</p>
+          <p class="text-xs text-slate-400">Open the app, create SARs, advance workflows, check audit trail. All in demo mode. All self-contained.</p>
+        </div>
+      </div>
+      <div class="bg-card rounded-lg p-4 border border-slate-700 flex items-start gap-4">
+        <span class="bg-green-600 text-white text-xs font-bold px-3 py-1 rounded mt-0.5">Step 4</span>
+        <div>
+          <p class="text-sm text-white font-bold">Run tests</p>
+          <code class="block text-xs text-green-300 bg-dark rounded px-3 py-2 mt-1">npm run typecheck && npm test && npm run build</code>
+          <p class="text-xs text-slate-400 mt-1">This is the CI gate. Must pass before merge.</p>
+        </div>
+      </div>
+      <div class="bg-card rounded-lg p-4 border border-slate-700 flex items-start gap-4">
+        <span class="bg-green-600 text-white text-xs font-bold px-3 py-1 rounded mt-0.5">Step 5</span>
+        <div>
+          <p class="text-sm text-white font-bold">Only then merge</p>
+          <code class="block text-xs text-yellow-300 bg-dark rounded px-3 py-2 mt-1">git checkout main && git merge agent/igos-core-foundation</code>
+          <p class="text-xs text-slate-400 mt-1">After PR #1 merges, rebase PR #2 on top of main, then test PR #2, and so on.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- WHY NOT MERGE ALL AT ONCE -->
+  <div class="space-y-4">
+    <h2 class="text-2xl font-bold text-white border-l-4 border-red-500 pl-4">Why Not Merge All at Once?</h2>
+    <div class="bg-red-900/20 border border-red-500/30 rounded-xl p-6 space-y-4">
+      <div class="grid md:grid-cols-2 gap-4">
+        <div class="space-y-3">
+          <h3 class="font-bold text-red-400">If You Merge All at Once</h3>
+          <ul class="text-xs text-slate-300 space-y-1 list-disc list-inside">
+            <li>Bugs mix together — can't tell which PR broke what</li>
+            <li>If PR #3 has a critical bug, you can't undo just PR #3</li>
+            <li>Code review becomes impossible — too much change</li>
+            <li>Appwrite config might conflict between stages</li>
+          </ul>
+        </div>
+        <div class="space-y-3">
+          <h3 class="font-bold text-green-400">If You Merge Sequentially</h3>
+          <ul class="text-xs text-slate-300 space-y-1 list-disc list-inside">
+            <li>Each PR is tested in isolation before merge</li>
+            <li>If PR #2 breaks something, PR #1 still works</li>
+            <li>Easy to revert one stage without affecting others</li>
+            <li>Each merge is a clean, reviewable unit</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- THE WORKFLOW -->
+  <div class="space-y-4">
+    <h2 class="text-2xl font-bold text-white border-l-4 border-brand pl-4">The Actual Dev Workflow</h2>
+    <div class="bg-card rounded-xl p-6 border border-slate-700">
+      <pre class="text-sm font-mono text-slate-300 leading-relaxed">
+<span class="text-slate-500">Week 1: Work on PR #1</span>
+  git checkout agent/igos-core-foundation
+  npm run dev                               <span class="text-slate-500">← test in browser</span>
+  npm test                                  <span class="text-slate-500">← run all tests</span>
+  <span class="text-slate-500">... fix bugs, add Appwrite adapters, test ...</span>
+  git push                                  <span class="text-slate-500">← updates the PR on GitHub</span>
+  <span class="text-slate-500">... open PR #1 for review ...</span>
+
+<span class="text-slate-500">Week 2: Provision Appwrite dev, switch to appwrite mode</span>
+  <span class="text-green-300">IGOS_DATA_MODE=appwrite npm run dev</span>      <span class="text-slate-500">← real DB</span>
+  <span class="text-slate-500">... test with real data ...</span>
+  <span class="text-slate-500">... run acceptance checks from dev-handover.md ...</span>
+
+<span class="text-slate-500">When PR #1 passes:</span>
+  Merge PR #1 → main
+
+<span class="text-slate-500">Week 3: Work on PR #2</span>
+  git checkout agent/igos-stage-2-governance
+  git rebase main                            <span class="text-slate-500">← get PR #1's changes</span>
+  npm run dev                                <span class="text-slate-500">← has DPIA, ROPA, Policies</span>
+  <span class="text-slate-500">... test, fix, push ...</span>
+
+<span class="text-slate-500">When PR #2 passes:</span>
+  Merge PR #2 → main
+
+<span class="text-slate-500">... repeat for PR #3, #4, #5 ...</span>
+      </pre>
+    </div>
+  </div>
+
+  <!-- QUICK REFERENCE -->
+  <div class="space-y-4">
+    <h2 class="text-2xl font-bold text-white border-l-4 border-brand pl-4">Quick Git Commands</h2>
+    <div class="bg-card rounded-xl p-6 border border-slate-700 space-y-3 text-sm">
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+        <div>
+          <p class="text-xs text-slate-400 mb-1">Switch to a PR branch:</p>
+          <code class="text-xs text-green-300 bg-dark rounded px-3 py-1 block">git checkout agent/igos-core-foundation</code>
+        </div>
+        <div>
+          <p class="text-xs text-slate-400 mb-1">See all branches:</p>
+          <code class="text-xs text-green-300 bg-dark rounded px-3 py-1 block">git branch -a</code>
+        </div>
+        <div>
+          <p class="text-xs text-slate-400 mb-1">See which PR a branch is for:</p>
+          <code class="text-xs text-green-300 bg-dark rounded px-3 py-1 block">git log --oneline agent/igos-core-foundation</code>
+        </div>
+        <div>
+          <p class="text-xs text-slate-400 mb-1">Test with real Appwrite:</p>
+          <code class="text-xs text-yellow-300 bg-dark rounded px-3 py-1 block">IGOS_DATA_MODE=appwrite npm run dev</code>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="flex justify-between">
+  <a href="07-implementation-guide.html" class="inline-block bg-slate-700 hover:bg-slate-600 text-white font-bold px-6 py-3 rounded-xl transition">← Implementation Guide</a>
+  <a href="01-project-overview.html" class="inline-block bg-brand hover:bg-indigo-600 text-white font-bold px-6 py-3 rounded-xl transition">Back to Start →</a>
+</section>
+
+</main>
+</body>
+</html>

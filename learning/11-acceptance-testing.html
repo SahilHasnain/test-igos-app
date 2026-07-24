@@ -1,0 +1,509 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>IGOS — Acceptance Testing & Deployment Workflow</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+tailwind.config={theme:{extend:{colors:{brand:'#6366f1',dark:'#0f172a',card:'#1e293b'}}}}
+</script>
+</head>
+<body class="bg-dark text-slate-200 min-h-screen font-sans">
+
+<nav class="fixed top-0 inset-x-0 z-50 bg-dark/80 backdrop-blur border-b border-slate-700 px-6 py-3 flex items-center justify-between">
+  <span class="font-bold text-brand text-lg">IGOS Learning</span>
+  <div class="flex gap-3 text-sm">
+    <a href="01-project-overview.html" class="hover:text-white text-slate-400">01</a>
+    <a href="02-architecture.html" class="hover:text-white text-slate-400">02</a>
+    <a href="03-data-flow.html" class="hover:text-white text-slate-400">03</a>
+    <a href="04-current-state.html" class="hover:text-white text-slate-400">04</a>
+    <a href="05-database-schema.html" class="hover:text-white text-slate-400">05</a>
+    <a href="06-tenancy-roles.html" class="hover:text-white text-slate-400">06</a>
+    <a href="07-implementation-guide.html" class="hover:text-white text-slate-400">07</a>
+    <a href="08-doubts-cleared.html" class="hover:text-white text-slate-400">08</a>
+    <a href="09-how-to-test.html" class="hover:text-white text-slate-400">09 Testing</a>
+    <a href="11-acceptance-testing.html" class="text-brand font-bold border-b border-brand">11 Accept</a>
+  </div>
+</nav>
+
+<main class="max-w-5xl mx-auto px-6 pt-24 pb-20 space-y-16">
+
+<section class="text-center space-y-4">
+  <h1 class="text-4xl font-extrabold text-white">Acceptance Testing <span class="text-brand">& Deployment</span></h1>
+  <p class="text-lg text-slate-400">The complete workflow: test locally → deploy → verify → merge.</p>
+</section>
+
+<!-- OVERVIEW: THE 3 STEPS -->
+<section class="space-y-6">
+  <h2 class="text-2xl font-bold text-white border-l-4 border-brand pl-4">The Workflow at a Glance</h2>
+  <div class="grid md:grid-cols-3 gap-4">
+    <div class="bg-card rounded-xl p-5 border border-green-500/50 space-y-3">
+      <div class="text-3xl">1️⃣</div>
+      <h3 class="font-bold text-green-400">Local Demo Mode</h3>
+      <p class="text-xs text-slate-400">Click through every view and button. Verify nothing crashes. 15-20 minutes.</p>
+      <code class="block text-xs text-green-300 bg-dark rounded px-3 py-2">npm run dev</code>
+    </div>
+    <div class="bg-card rounded-xl p-5 border border-yellow-500/50 space-y-3">
+      <div class="text-3xl">2️⃣</div>
+      <h3 class="font-bold text-yellow-400">Deploy to Dev + Appwrite</h3>
+      <p class="text-xs text-slate-400">Provision Appwrite, seed data, deploy, verify with real auth. 30-60 minutes.</p>
+      <code class="block text-xs text-yellow-300 bg-dark rounded px-3 py-2">npm run provision && npm run seed</code>
+    </div>
+    <div class="bg-card rounded-xl p-5 border border-purple-500/50 space-y-3">
+      <div class="text-3xl">3️⃣</div>
+      <h3 class="font-bold text-purple-400">Merge PRs Sequentially</h3>
+      <p class="text-xs text-slate-400">PR #1 → #2 → #3 → #4 → #5. Only after dev passes all checks.</p>
+      <code class="block text-xs text-purple-300 bg-dark rounded px-3 py-2">merge to Appsuite</code>
+    </div>
+  </div>
+</section>
+
+<!-- STEP 1: LOCAL DEMO -->
+<section class="space-y-6">
+  <h2 class="text-2xl font-bold text-green-400 border-l-4 border-green-500 pl-4">Step 1 — Local Demo Mode Testing</h2>
+
+  <div class="bg-card rounded-xl p-6 border border-slate-700 space-y-4">
+    <h3 class="font-bold text-white text-sm">Setup & run:</h3>
+    <pre class="text-xs font-mono text-green-300 bg-dark rounded p-3">
+cd D:/Projects/IGOS-App
+npm run dev
+<span class="text-slate-500"># Opens at http://localhost:3000</span>
+    </pre>
+  </div>
+
+  <div class="bg-card rounded-xl p-6 border border-slate-700 space-y-4">
+    <h3 class="font-bold text-white text-sm">Complete click-through checklist:</h3>
+    <div class="grid md:grid-cols-2 gap-6">
+      <div class="space-y-3">
+        <h4 class="text-xs font-bold text-green-400">Login Page</h4>
+        <div class="text-xs text-slate-300 space-y-1">
+          <div>☐ Page loads at <code>/login</code> (redirected from <code>/</code>)</div>
+          <div>☐ Blue "Demo mode" banner visible</div>
+          <div>☐ Role dropdown has 6 options</div>
+          <div>☐ "Enter workspace" button works</div>
+          <div>☐ Redirects to main app after clicking</div>
+        </div>
+      </div>
+      <div class="space-y-3">
+        <h4 class="text-xs font-bold text-green-400">Sign Out</h4>
+        <div class="text-xs text-slate-300 space-y-1">
+          <div>☐ Click ↩ button in topbar</div>
+          <div>☐ Session cleared, returns to login</div>
+          <div>☐ Re-login with different role works</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="bg-card rounded-xl p-6 border border-slate-700 space-y-4">
+    <h3 class="font-bold text-white text-sm">Every view — click and verify:</h3>
+    <div class="grid md:grid-cols-2 gap-6">
+      <div class="space-y-2">
+        <div class="text-xs text-slate-300 space-y-1">
+          <div>☐ <strong>Overview</strong> — 4 metric cards render (Open SARs, Open FOIs, etc.)</div>
+          <div>☐ <strong>Overview</strong> — Priority matters table has rows</div>
+          <div>☐ <strong>Overview</strong> — Academy health bars show scores</div>
+          <div>☐ <strong>Overview</strong> — Activity timeline has entries</div>
+          <div>☐ <strong>SARs</strong> — Register table loads with demo data</div>
+          <div>☐ <strong>FOI</strong> — Register filtered to FOI only</div>
+          <div>☐ <strong>Breaches</strong> — Register filtered to Breach only</div>
+          <div>☐ <strong>DPIAs</strong> — DPIA progress panel renders with sections</div>
+          <div>☐ <strong>ROPA</strong> — Processing activities table renders</div>
+          <div>☐ <strong>ROPA</strong> — "Add activity" form opens and submits</div>
+        </div>
+      </div>
+      <div class="space-y-2">
+        <div class="text-xs text-slate-300 space-y-1">
+          <div>☐ <strong>Policies</strong> — Policy cards render with transitions</div>
+          <div>☐ <strong>Redaction</strong> — Workspace with analysis/suggestions renders</div>
+          <div>☐ <strong>AI</strong> — AI systems register renders</div>
+          <div>☐ <strong>Assets</strong> — Information asset register renders</div>
+          <div>☐ <strong>Records</strong> — Records management panel renders</div>
+          <div>☐ <strong>Contracts</strong> — Contract governance panel renders</div>
+          <div>☐ <strong>Assurance</strong> — Assurance overview panel renders</div>
+          <div>☐ <strong>Risks</strong> — Risk register panel renders</div>
+          <div>☐ <strong>Audits</strong> — Audit programme panel renders</div>
+          <div>☐ <strong>Actions</strong> — Open actions list renders</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="bg-card rounded-xl p-6 border border-slate-700 space-y-4">
+    <h3 class="font-bold text-white text-sm">Interactions to verify:</h3>
+    <div class="grid md:grid-cols-2 gap-6">
+      <div class="space-y-2">
+        <div class="text-xs text-slate-300 space-y-1">
+          <div>☐ Search box filters matters by typing "SAR-2026"</div>
+          <div>☐ Academy dropdown filters to specific academy</div>
+          <div>☐ "＋ New matter" button opens create form</div>
+          <div>☐ Create form: select type, enter title, pick academy, submit</div>
+          <div>☐ New matter appears in register table</div>
+        </div>
+      </div>
+      <div class="space-y-2">
+        <div class="text-xs text-slate-300 space-y-1">
+          <div>☐ Click matter row → detail drawer opens</div>
+          <div>☐ Drawer shows metadata, progress bar</div>
+          <div>☐ Drawer tabs: Summary, Tasks, Documents, Audit</div>
+          <div>☐ Each tab renders content</div>
+          <div>☐ Close drawer with × button or backdrop click</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="bg-card rounded-xl p-6 border border-slate-700 space-y-4">
+    <h3 class="font-bold text-white text-sm">Role switching verification:</h3>
+    <div class="text-xs text-slate-300 space-y-2">
+      <div>1. Login as <strong>DPO</strong> → verify "＋ New matter" visible, all sidebar views visible</div>
+      <div>2. Sign out → Login as <strong>Auditor</strong> → verify "＋ New matter" hidden, limited views</div>
+      <div>3. Sign out → Login as <strong>Read only</strong> → verify minimal views, no create buttons</div>
+      <div>4. Sign out → Login as <strong>Case manager</strong> → verify create visible, advance visible</div>
+      <div>5. Sign out → Login as <strong>Academy lead</strong> → verify academy-scoped views</div>
+      <div>6. Sign out → Login as <strong>MAT administrator</strong> → verify full access</div>
+    </div>
+  </div>
+</section>
+
+<!-- STEP 2: DEPLOY TO DEV -->
+<section class="space-y-6">
+  <h2 class="text-2xl font-bold text-yellow-400 border-l-4 border-yellow-500 pl-4">Step 2 — Deploy to Dev (Appwrite Mode)</h2>
+
+  <div class="bg-card rounded-xl p-6 border border-slate-700 space-y-4">
+    <h3 class="font-bold text-white text-sm">Prerequisites — what you need first:</h3>
+    <div class="text-xs text-slate-300 space-y-2">
+      <div>☐ Appwrite project created (Cloud at <code class="text-brand">cloud.appwrite.io</code> or self-hosted)</div>
+      <div>☐ API key created with scopes: <code class="text-yellow-300">databases.read/write</code>, <code class="text-yellow-300">files.read/write</code>, <code class="text-yellow-300">users.read</code></div>
+      <div>☐ <code class="text-brand">.env.local</code> file created with:</div>
+    </div>
+    <pre class="text-xs font-mono text-slate-300 bg-dark rounded p-3">
+NEXT_PUBLIC_APPWRITE_ENDPOINT=https://cloud.appwrite.io/v1
+NEXT_PUBLIC_APPWRITE_PROJECT_ID=your-project-id
+APPWRITE_API_KEY=your-api-key-v1.end
+APPWRITE_DATABASE_ID=your-database-id
+IGOS_DATA_MODE=demo
+    </pre>
+  </div>
+
+  <div class="bg-card rounded-xl p-6 border border-slate-700 space-y-4">
+    <h3 class="font-bold text-white text-sm">A. Provision Appwrite (one-time setup):</h3>
+    <pre class="text-xs font-mono text-green-300 bg-dark rounded p-3">
+<span class="text-slate-500"># Set your Appwrite credentials in the terminal:</span>
+export APPWRITE_ENDPOINT=https://cloud.appwrite.io/v1
+export APPWRITE_PROJECT_ID=your-project-id
+export APPWRITE_API_KEY=your-api-key
+
+<span class="text-slate-500"># Run the provisioning script:</span>
+npm run provision
+
+<span class="text-yellow-300"># This creates:</span>
+<span class="text-slate-300">✓ Database "igos-core"</span>
+<span class="text-slate-300">✓ All 33 tables with correct column types</span>
+<span class="text-slate-300">✓ Indexes as specified in schema.json</span>
+<span class="text-slate-300">✓ "case-documents" bucket (25MB, encryption, antivirus)</span>
+    </pre>
+  </div>
+
+  <div class="bg-card rounded-xl p-6 border border-slate-700 space-y-4">
+    <h3 class="font-bold text-white text-sm">B. Seed initial data (one-time setup):</h3>
+    <pre class="text-xs font-mono text-green-300 bg-dark rounded p-3">
+<span class="text-slate-500"># Add the database ID to your env:</span>
+export APPWRITE_DATABASE_ID=your-database-id
+
+<span class="text-slate-500"># Run the seed script:</span>
+npm run seed
+
+<span class="text-yellow-300"># This creates:</span>
+<span class="text-slate-300">✓ MAT "Rosa Federation" (slug: rosa-federation)</span>
+<span class="text-slate-300">✓ 5 academies (Riverside, Hillcrest, Greenfield, Lakeside, Meadow)</span>
+<span class="text-slate-300">✓ Admin user (admin@rosa-federation.igos.local / Change-Me-2026!)</span>
+<span class="text-slate-300">✓ Admin membership with mat-admin + dpo roles</span>
+
+<span class="text-yellow-300"># Output shows IDs you need for .env.local:</span>
+<span class="text-slate-300">  MAT_ID=...</span>
+<span class="text-slate-300">  ADMIN_USER_ID=...</span>
+<span class="text-slate-300">  ACADEMY_IDS=...</span>
+    </pre>
+  </div>
+
+  <div class="bg-card rounded-xl p-6 border border-slate-700 space-y-4">
+    <h3 class="font-bold text-white text-sm">C. Update .env.local with all table IDs:</h3>
+    <pre class="text-xs font-mono text-slate-300 bg-dark rounded p-3">
+<span class="text-yellow-300"># Copy schema.json table IDs into .env.local:</span>
+APPWRITE_DATABASE_ID=your-database-id
+APPWRITE_CASES_TABLE_ID=cases
+APPWRITE_AUDIT_TABLE_ID=audit-events
+APPWRITE_MEMBERSHIPS_TABLE_ID=memberships
+APPWRITE_DOCUMENTS_TABLE_ID=documents
+APPWRITE_DOCUMENTS_BUCKET_ID=case-documents
+APPWRITE_WORKFLOWS_TABLE_ID=workflows
+<span class="text-slate-500"># ... (all 33 table IDs from infra/appwrite/schema.json)</span>
+
+<span class="text-yellow-300"># Switch to Appwrite mode:</span>
+IGOS_DATA_MODE=appwrite
+    </pre>
+  </div>
+
+  <div class="bg-card rounded-xl p-6 border border-slate-700 space-y-4">
+    <h3 class="font-bold text-white text-sm">D. Run in Appwrite mode and test:</h3>
+    <pre class="text-xs font-mono text-green-300 bg-dark rounded p-3">
+npm run dev
+<span class="text-slate-500"># Go to http://localhost:3000/login</span>
+<span class="text-slate-500"># Login with: admin@rosa-federation.igos.local / Change-Me-2026!</span>
+    </pre>
+  </div>
+
+  <div class="bg-card rounded-xl p-6 border border-slate-700 space-y-4">
+    <h3 class="font-bold text-white text-sm">Acceptance checks — verify every one:</h3>
+    <div class="grid md:grid-cols-2 gap-6">
+      <div class="space-y-2">
+        <h4 class="text-xs font-bold text-yellow-400">Auth & Tenancy</h4>
+        <div class="text-xs text-slate-300 space-y-1">
+          <div>☐ Login succeeds with seeded credentials</div>
+          <div>☐ DPO/MAT admin sees all records in MAT</div>
+          <div>☐ Academy lead sees only assigned academy records</div>
+          <div>☐ Auditor cannot create or advance a matter</div>
+          <div>☐ Read-only user cannot mutate data</div>
+          <div>☐ Cross-MAT reads fail (create second MAT to test)</div>
+          <div>☐ Cross-MAT writes fail</div>
+        </div>
+      </div>
+      <div class="space-y-2">
+        <h4 class="text-xs font-bold text-yellow-400">Workflows & Deadlines</h4>
+        <div class="text-xs text-slate-300 space-y-1">
+          <div>☐ SAR month-end deadlines clamp correctly (31 Jan → 28 Feb)</div>
+          <div>☐ Breach deadlines cannot be paused</div>
+          <div>☐ SAR extensions require approval, max +2 months</div>
+          <div>☐ FOI clarification pauses record correctly</div>
+        </div>
+      </div>
+    </div>
+    <div class="grid md:grid-cols-2 gap-6 mt-4">
+      <div class="space-y-2">
+        <h4 class="text-xs font-bold text-yellow-400">Audit & Documents</h4>
+        <div class="text-xs text-slate-300 space-y-1">
+          <div>☐ Audit events link to preceding event (hash chain)</div>
+          <div>☐ Document upload stores file + metadata</div>
+          <div>☐ Duplicate notification idempotency works</div>
+          <div>☐ /api/health returns OK</div>
+        </div>
+      </div>
+      <div class="space-y-2">
+        <h4 class="text-xs font-bold text-yellow-400">Infrastructure</h4>
+        <div class="text-xs text-slate-300 space-y-1">
+          <div>☐ Microsoft 365 disabled doesn't break anything</div>
+          <div>☐ Backup restoration tested</div>
+          <div>☐ All 121 unit tests pass: <code class="text-green-300">npm test</code></div>
+          <div>☐ TypeScript clean: <code class="text-green-300">npm run typecheck</code></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- STEP 3: MERGE PRS -->
+<section class="space-y-6">
+  <h2 class="text-2xl font-bold text-purple-400 border-l-4 border-purple-500 pl-4">Step 3 — Merge PRs Sequentially</h2>
+
+  <div class="bg-card rounded-xl p-6 border border-slate-700 space-y-4">
+    <h3 class="font-bold text-white text-sm">Merge order — strict sequence:</h3>
+    <div class="space-y-3">
+      <div class="flex items-start gap-3">
+        <span class="bg-green-500/20 text-green-400 text-xs font-bold px-2 py-1 rounded">PR #1</span>
+        <div class="text-xs text-slate-300">
+          <strong>Core Foundation</strong> — matter, workflow, audit, document, notification, deadline repos + auth context<br/>
+          <span class="text-slate-500">→ Merge to Appsuite → Verify CI green → Deploy to dev</span>
+        </div>
+      </div>
+      <div class="flex items-start gap-3">
+        <span class="bg-blue-500/20 text-blue-400 text-xs font-bold px-2 py-1 rounded">PR #2</span>
+        <div class="text-xs text-slate-300">
+          <strong>Governance</strong> — DPIA, ROPA, policy, supplier repos + services<br/>
+          <span class="text-slate-500">→ Retarget to Appsuite → Merge → Deploy to dev</span>
+        </div>
+      </div>
+      <div class="flex items-start gap-3">
+        <span class="bg-yellow-500/20 text-yellow-400 text-xs font-bold px-2 py-1 rounded">PR #3</span>
+        <div class="text-xs text-slate-300">
+          <strong>Assurance & Risk</strong> — assurance actions, audit programmes, findings, risks, evidence<br/>
+          <span class="text-slate-500">→ Retarget to Appsuite → Merge → Deploy to dev</span>
+        </div>
+      </div>
+      <div class="flex items-start gap-3">
+        <span class="bg-orange-500/20 text-orange-400 text-xs font-bold px-2 py-1 rounded">PR #4</span>
+        <div class="text-xs text-slate-300">
+          <strong>AI Redaction</strong> — analysis, suggestions, second reviews, manifests<br/>
+          <span class="text-slate-500">→ Retarget to Appsuite → Merge → Deploy to dev</span>
+        </div>
+      </div>
+      <div class="flex items-start gap-3">
+        <span class="bg-purple-500/20 text-purple-400 text-xs font-bold px-2 py-1 rounded">PR #5</span>
+        <div class="text-xs text-slate-300">
+          <strong>Advanced Governance</strong> — AI systems, assets, retention, records, contracts, suppliers<br/>
+          <span class="text-slate-500">→ Retarget to Appsuite → Merge → Deploy to dev (final)</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="bg-red-900/20 border border-red-500/30 rounded-lg p-4 text-sm text-red-200">
+    <strong>CRITICAL RULES:</strong>
+    <ul class="mt-2 text-xs space-y-1 list-disc list-inside">
+      <li>Do NOT merge any PR until dev environment passes ALL acceptance checks</li>
+      <li>Each PR must have CI green (typecheck + tests + build) before merge</li>
+      <li>After each merge, redeploy to dev and re-run key acceptance checks</li>
+      <li>If any check fails, fix the issue before merging the next PR</li>
+    </ul>
+  </div>
+
+  <div class="bg-card rounded-xl p-6 border border-slate-700 space-y-4">
+    <h3 class="font-bold text-white text-sm">Before each merge — run these checks:</h3>
+    <pre class="text-xs font-mono text-green-300 bg-dark rounded p-3">
+<span class="text-slate-500"># 1. Type check</span>
+npm run typecheck
+
+<span class="text-slate-500"># 2. All tests pass</span>
+npm test
+
+<span class="text-slate-500"># 3. Production build succeeds</span>
+npm run build
+
+<span class="text-slate-500"># 4. No security vulnerabilities</span>
+npm audit --audit-level=high
+
+<span class="text-yellow-300"># ALL 4 must pass before merging any PR</span>
+    </pre>
+  </div>
+</section>
+
+<!-- FILE MAP: WHAT'S IN EACH PR -->
+<section class="space-y-6">
+  <h2 class="text-2xl font-bold text-white border-l-4 border-brand pl-4">Quick Reference: What Each PR Contains</h2>
+  <div class="overflow-x-auto">
+    <table class="w-full text-xs border-collapse">
+      <thead><tr class="border-b border-slate-700 bg-slate-800/50">
+        <th class="text-left py-2 px-3 text-slate-400">PR</th>
+        <th class="text-left py-2 px-3 text-slate-400">Scope</th>
+        <th class="text-left py-2 px-3 text-slate-400">Key Files</th>
+        <th class="text-left py-2 px-3 text-slate-400">Tables</th>
+      </tr></thead>
+      <tbody class="divide-y divide-slate-800">
+        <tr>
+          <td class="py-2 px-3 font-bold text-green-400">#1</td>
+          <td class="py-2 px-3 text-slate-300">Core Foundation</td>
+          <td class="py-2 px-3 text-slate-400">matter, workflow, audit, document, notification, deadline repos</td>
+          <td class="py-2 px-3 text-slate-400">cases, workflows, audit-events, documents, memberships, deadline-adjustments, notification-receipts</td>
+        </tr>
+        <tr>
+          <td class="py-2 px-3 font-bold text-blue-400">#2</td>
+          <td class="py-2 px-3 text-slate-300">Governance</td>
+          <td class="py-2 px-3 text-slate-400">DPIA, ROPA, policy, supplier repos + services</td>
+          <td class="py-2 px-3 text-slate-400">dpia-sections, dpia-risks, processing-activities, policies, policy-acknowledgements, policy-exceptions, supplier-assessments, transfer-assessments</td>
+        </tr>
+        <tr>
+          <td class="py-2 px-3 font-bold text-yellow-400">#3</td>
+          <td class="py-2 px-3 text-slate-300">Assurance & Risk</td>
+          <td class="py-2 px-3 text-slate-400">assurance actions, programmes, findings, risks, evidence</td>
+          <td class="py-2 px-3 text-slate-400">assurance-actions, audit-programmes, audit-findings, assurance-risks, evidence-packs</td>
+        </tr>
+        <tr>
+          <td class="py-2 px-3 font-bold text-orange-400">#4</td>
+          <td class="py-2 px-3 text-slate-300">AI Redaction</td>
+          <td class="py-2 px-3 text-slate-400">analysis, suggestions, reviews, manifests</td>
+          <td class="py-2 px-3 text-slate-400">redaction-analysis-runs, redaction-suggestions, redaction-second-reviews, redaction-manifests</td>
+        </tr>
+        <tr>
+          <td class="py-2 px-3 font-bold text-purple-400">#5</td>
+          <td class="py-2 px-3 text-slate-300">Advanced Governance</td>
+          <td class="py-2 px-3 text-slate-400">AI systems, assets, retention, records, contracts, suppliers</td>
+          <td class="py-2 px-3 text-slate-400">ai-systems, information-assets, retention-rules, record-instances, records-holds, contract-governance</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- COMMON ISSUES -->
+<section class="space-y-6">
+  <h2 class="text-2xl font-bold text-white border-l-4 border-brand pl-4">Common Issues & Fixes</h2>
+  <div class="space-y-3">
+    <div class="bg-card rounded-xl p-4 border border-slate-700">
+      <div class="flex items-start gap-3">
+        <span class="text-red-400 text-sm">✕</span>
+        <div class="text-xs text-slate-300">
+          <strong class="text-white">"Authentication required" on login</strong><br/>
+          Appwrite endpoint or project ID is wrong in .env.local. Verify with <code class="text-brand">curl $APPWRITE_ENDPOINT/health</code>
+        </div>
+      </div>
+    </div>
+    <div class="bg-card rounded-xl p-4 border border-slate-700">
+      <div class="flex items-start gap-3">
+        <span class="text-red-400 text-sm">✕</span>
+        <div class="text-xs text-slate-300">
+          <strong class="text-white">"No active MAT membership was found"</strong><br/>
+          Seed script hasn't been run, or membership record doesn't match your user ID. Re-run <code class="text-brand">npm run seed</code>
+        </div>
+      </div>
+    </div>
+    <div class="bg-card rounded-xl p-4 border border-slate-700">
+      <div class="flex items-start gap-3">
+        <span class="text-red-400 text-sm">✕</span>
+        <div class="text-xs text-slate-300">
+          <strong class="text-white">Tables not found / columns missing</strong><br/>
+          Provisioning wasn't run. Run <code class="text-brand">npm run provision</code> first, then verify table IDs in .env.local match schema.json
+        </div>
+      </div>
+    </div>
+    <div class="bg-card rounded-xl p-4 border border-slate-700">
+      <div class="flex items-start gap-3">
+        <span class="text-red-400 text-sm">✕</span>
+        <div class="text-xs text-slate-300">
+          <strong class="text-white">Demo mode shows login page but no blue banner</strong><br/>
+          Appwrite env vars are set but not valid. Remove NEXT_PUBLIC_APPWRITE_* from .env.local for pure demo mode
+        </div>
+      </div>
+    </div>
+    <div class="bg-card rounded-xl p-4 border border-slate-700">
+      <div class="flex items-start gap-3">
+        <span class="text-red-400 text-sm">✕</span>
+        <div class="text-xs text-slate-300">
+          <strong class="text-white">CI fails on npm audit</strong><br/>
+          Run <code class="text-brand">npm audit fix</code> or check if a dependency was added without <code class="text-brand">--save-exact</code>. Package-lock.json must be committed.
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- COMMAND CHEAT SHEET -->
+<section class="space-y-6">
+  <h2 class="text-2xl font-bold text-white border-l-4 border-brand pl-4">Cheat Sheet: Every Command</h2>
+  <div class="overflow-x-auto">
+    <table class="w-full text-xs border-collapse">
+      <thead><tr class="border-b border-slate-700 bg-slate-800/50">
+        <th class="text-left py-2 px-3 text-slate-400">Command</th>
+        <th class="text-left py-2 px-3 text-slate-400">Purpose</th>
+      </tr></thead>
+      <tbody class="divide-y divide-slate-800">
+        <tr><td class="py-2 px-3 font-mono text-green-300">npm test</td><td class="py-2 px-3 text-slate-300">Run all 121 unit tests</td></tr>
+        <tr><td class="py-2 px-3 font-mono text-green-300">npm run typecheck</td><td class="py-2 px-3 text-slate-300">TypeScript type check</td></tr>
+        <tr><td class="py-2 px-3 font-mono text-green-300">npm run build</td><td class="py-2 px-3 text-slate-300">Production build</td></tr>
+        <tr><td class="py-2 px-3 font-mono text-yellow-300">npm run dev</td><td class="py-2 px-3 text-slate-300">Start dev server (localhost:3000)</td></tr>
+        <tr><td class="py-2 px-3 font-mono text-yellow-300">npm run provision</td><td class="py-2 px-3 text-slate-300">Create Appwrite DB, tables, indexes, bucket</td></tr>
+        <tr><td class="py-2 px-3 font-mono text-yellow-300">npm run seed</td><td class="py-2 px-3 text-slate-300">Create MAT, academies, admin user</td></tr>
+        <tr><td class="py-2 px-3 font-mono text-purple-300">npm audit --audit-level=high</td><td class="py-2 px-3 text-slate-300">Security vulnerability check</td></tr>
+        <tr><td class="py-2 px-3 font-mono text-purple-300">npx vitest run tests/file.test.ts</td><td class="py-2 px-3 text-slate-300">Run single test file</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section class="flex justify-between">
+  <a href="09-how-to-test.html" class="inline-block bg-slate-700 hover:bg-slate-600 text-white font-bold px-6 py-3 rounded-xl transition">← Testing Guide</a>
+  <a href="01-project-overview.html" class="inline-block bg-brand hover:bg-indigo-600 text-white font-bold px-6 py-3 rounded-xl transition">Back to Start →</a>
+</section>
+
+</main>
+</body>
+</html>

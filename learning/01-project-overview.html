@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>IGOS — Project Overview</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+tailwind.config={theme:{extend:{colors:{brand:'#6366f1',dark:'#0f172a',card:'#1e293b'}}}}
+</script>
+</head>
+<body class="bg-dark text-slate-200 min-h-screen font-sans">
+
+<!-- NAV -->
+<nav class="fixed top-0 inset-x-0 z-50 bg-dark/80 backdrop-blur border-b border-slate-700 px-6 py-3 flex items-center justify-between">
+  <span class="font-bold text-brand text-lg">IGOS Learning</span>
+  <div class="flex gap-3 text-sm">
+    <a href="01-project-overview.html" class="text-brand font-bold border-b border-brand">01 Overview</a>
+    <a href="02-architecture.html" class="hover:text-white text-slate-400">02 Architecture</a>
+    <a href="03-data-flow.html" class="hover:text-white text-slate-400">03 Data Flow</a>
+    <a href="04-current-state.html" class="hover:text-white text-slate-400">04 Current State</a>
+    <a href="05-database-schema.html" class="hover:text-white text-slate-400">05 Schema</a>
+    <a href="06-tenancy-roles.html" class="hover:text-white text-slate-400">06 Tenancy</a>
+    <a href="07-implementation-guide.html" class="hover:text-white text-slate-400">07 Implementation</a>
+  </div>
+</nav>
+
+<main class="max-w-5xl mx-auto px-6 pt-24 pb-20 space-y-16">
+
+<!-- HERO -->
+<section class="text-center space-y-4">
+  <h1 class="text-4xl font-extrabold text-white">IGOS <span class="text-brand">— Project Overview</span></h1>
+  <p class="text-lg text-slate-400 max-w-2xl mx-auto">Information Governance Operating System — a provider-neutral compliance platform for UK Multi-Academy Trusts.</p>
+</section>
+
+<!-- WHAT IS IGOS -->
+<section class="space-y-6">
+  <h2 class="text-2xl font-bold text-white border-l-4 border-brand pl-4">What is IGOS?</h2>
+  <div class="grid md:grid-cols-2 gap-6">
+    <div class="bg-card rounded-xl p-6 border border-slate-700 space-y-3">
+      <h3 class="font-bold text-brand text-lg">Problem</h3>
+      <p class="text-slate-300 text-sm">UK schools (academies) grouped in Multi-Academy Trusts must legally comply with GDPR/UK-GDPR. Each trust needs centralised oversight of data protection cases across all its schools.</p>
+    </div>
+    <div class="bg-card rounded-xl p-6 border border-slate-700 space-y-3">
+      <h3 class="font-bold text-green-400 text-lg">Solution</h3>
+      <p class="text-slate-300 text-sm">IGOS provides a single platform to manage SARs, FOIs, Data Breaches, DPIAs with strict multi-tenant isolation — each academy's data stays separate and secure.</p>
+    </div>
+  </div>
+</section>
+
+<!-- 4 CASE TYPES -->
+<section class="space-y-6">
+  <h2 class="text-2xl font-bold text-white border-l-4 border-brand pl-4">4 Case Types</h2>
+  <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
+    <div class="bg-card rounded-xl p-5 border border-slate-700 space-y-2">
+      <div class="text-3xl">📋</div>
+      <h3 class="font-bold text-white">SAR</h3>
+      <p class="text-xs text-slate-400">Subject Access Request — someone asks "what data do you have on me?". Has a <strong class="text-yellow-400">1 calendar month</strong> deadline.</p>
+    </div>
+    <div class="bg-card rounded-xl p-5 border border-slate-700 space-y-2">
+      <div class="text-3xl">📢</div>
+      <h3 class="font-bold text-white">FOI</h3>
+      <p class="text-xs text-slate-400">Freedom of Information — public request for info. Has a <strong class="text-yellow-400">20 working days</strong> deadline.</p>
+    </div>
+    <div class="bg-card rounded-xl p-5 border border-slate-700 space-y-2">
+      <div class="text-3xl">🚨</div>
+      <h3 class="font-bold text-white">Breach</h3>
+      <p class="text-xs text-slate-400">Personal data breach — data leak/exposure. Has a <strong class="text-red-400">72 hours</strong> ICO notification deadline.</p>
+    </div>
+    <div class="bg-card rounded-xl p-5 border border-slate-700 space-y-2">
+      <div class="text-3xl">🔍</div>
+      <h3 class="font-bold text-white">DPIA</h3>
+      <p class="text-xs text-slate-400">Data Protection Impact Assessment — risk evaluation for new data processing activities before they go live.</p>
+    </div>
+  </div>
+</section>
+
+<!-- MULTI-TENANCY -->
+<section class="space-y-6">
+  <h2 class="text-2xl font-bold text-white border-l-4 border-brand pl-4">Core Concept — Multi-Tenancy</h2>
+  <div class="bg-card rounded-xl p-6 border border-slate-700">
+    <pre class="text-sm text-slate-300 font-mono leading-relaxed">
+MAT (Multi-Academy Trust) — e.g. "Federation of Northern Schools"
+│
+├── 🏫 Academy A — Riverside Academy
+│   ├── SAR-2026-001  (Academy A's SAR)
+│   ├── FOI-2026-003  (Academy A's FOI)
+│   └── 👤 Users with Academy A access only
+│
+├── 🏫 Academy B — Hillcrest Academy
+│   ├── BR-2026-005   (Academy B's Breach)
+│   └── 👤 Users with Academy B access only
+│
+└── 🌐 Federation-wide
+    └── DPIA-2026-001 (cross-academy assessment)</pre>
+    <p class="mt-4 text-sm text-slate-400"><strong class="text-red-400">KEY RULE:</strong> Academy A's user CANNOT read, update, or even infer the existence of Academy B's data.</p>
+  </div>
+</section>
+
+<!-- TECH STACK -->
+<section class="space-y-6">
+  <h2 class="text-2xl font-bold text-white border-l-4 border-brand pl-4">Tech Stack</h2>
+  <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
+    <div class="bg-card rounded-xl p-4 border border-slate-700 text-center">
+      <div class="text-2xl mb-2">⚛️</div>
+      <p class="font-bold text-white text-sm">Next.js 16 + React 19</p>
+      <p class="text-xs text-slate-400">Frontend & API Routes</p>
+    </div>
+    <div class="bg-card rounded-xl p-4 border border-slate-700 text-center">
+      <div class="text-2xl mb-2">📘</div>
+      <p class="font-bold text-white text-sm">TypeScript 5.9</p>
+      <p class="text-xs text-slate-400">Type-safe throughout</p>
+    </div>
+    <div class="bg-card rounded-xl p-4 border border-slate-700 text-center">
+      <div class="text-2xl mb-2">🗄️</div>
+      <p class="font-bold text-white text-sm">Appwrite</p>
+      <p class="text-xs text-slate-400">Database, Auth, Storage</p>
+    </div>
+    <div class="bg-card rounded-xl p-4 border border-slate-700 text-center">
+      <div class="text-2xl mb-2">✅</div>
+      <p class="font-bold text-white text-sm">Zod + Vitest</p>
+      <p class="text-xs text-slate-400">Validation & Testing</p>
+    </div>
+  </div>
+</section>
+
+<!-- TWO MODES -->
+<section class="space-y-6">
+  <h2 class="text-2xl font-bold text-white border-l-4 border-brand pl-4">Two Operating Modes</h2>
+  <div class="grid md:grid-cols-2 gap-6">
+    <div class="bg-card rounded-xl p-6 border-2 border-yellow-600/50 space-y-3">
+      <h3 class="font-bold text-yellow-400 text-lg">Demo Mode</h3>
+      <code class="block bg-dark rounded px-3 py-1 text-xs text-yellow-300">IGOS_DATA_MODE=demo</code>
+      <ul class="text-sm text-slate-300 space-y-1 list-disc list-inside">
+        <li>Uses in-memory JavaScript arrays</li>
+        <li>No database needed</li>
+        <li>Data resets on restart</li>
+        <li>For development only</li>
+      </ul>
+    </div>
+    <div class="bg-card rounded-xl p-6 border-2 border-green-600/50 space-y-3">
+      <h3 class="font-bold text-green-400 text-lg">Appwrite Mode</h3>
+      <code class="block bg-dark rounded px-3 py-1 text-xs text-green-300">IGOS_DATA_MODE=appwrite</code>
+      <ul class="text-sm text-slate-300 space-y-1 list-disc list-inside">
+        <li>Uses real Appwrite database</li>
+        <li>Persistent data</li>
+        <li>Requires Appwrite project setup</li>
+        <li>For production</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- FILE TREE -->
+<section class="space-y-6">
+  <h2 class="text-2xl font-bold text-white border-l-4 border-brand pl-4">Key File Structure</h2>
+  <div class="bg-card rounded-xl p-6 border border-slate-700">
+    <pre class="text-sm text-slate-300 font-mono leading-relaxed">
+src/
+├── <span class="text-yellow-400">domain/</span>        → 13 files — Business rules (pure logic, no DB)
+├── <span class="text-blue-400">repositories/</span>  →  4 files — Repository INTERFACES (contracts)
+├── <span class="text-green-400">appwrite/</span>      → 28 files — Appwrite IMPLEMENTATIONS
+├── <span class="text-orange-400">demo/</span>          →  4 files — In-memory DEMO implementations
+├── <span class="text-purple-400">services/</span>      → 13 files — Application logic
+├── <span class="text-red-400">auth/</span>          →  2 files — Authentication (JWT, memberships)
+└── <span class="text-slate-400">config/</span>        →  1 file  — Environment schema
+
+app/
+├── api/             → REST API endpoints
+├── page.tsx         → Entry point
+└── igos-client.tsx  → Main UI (SPA shell)
+
+infra/
+└── appwrite/
+    └── schema.json  → 33 tables + 1 storage bucket
+</pre>
+  </div>
+</section>
+
+<!-- PR ROADMAP -->
+<section class="space-y-6">
+  <h2 class="text-2xl font-bold text-white border-l-4 border-brand pl-4">PR Roadmap (Sequential Merge Order)</h2>
+  <div class="space-y-3">
+    <div class="flex items-center gap-4 bg-card rounded-lg p-4 border border-slate-700">
+      <span class="bg-green-600 text-white text-xs font-bold px-2 py-1 rounded">PR #1</span>
+      <div><p class="font-bold text-white text-sm">Stage 1 — Core Foundation</p><p class="text-xs text-slate-400">Dashboard, registers, case management, audit, deadlines</p></div>
+    </div>
+    <div class="flex items-center gap-4 bg-card rounded-lg p-4 border border-slate-700">
+      <span class="bg-blue-600 text-white text-xs font-bold px-2 py-1 rounded">PR #2</span>
+      <div><p class="font-bold text-white text-sm">Stage 2 — Governance</p><p class="text-xs text-slate-400">DPIA, ROPA, Policy lifecycle, Supplier assessment</p></div>
+    </div>
+    <div class="flex items-center gap-4 bg-card rounded-lg p-4 border border-slate-700">
+      <span class="bg-purple-600 text-white text-xs font-bold px-2 py-1 rounded">PR #3</span>
+      <div><p class="font-bold text-white text-sm">Stage 3 — Assurance</p><p class="text-xs text-slate-400">Actions, audit findings, risk register, scorecards</p></div>
+    </div>
+    <div class="flex items-center gap-4 bg-card rounded-lg p-4 border border-slate-700">
+      <span class="bg-pink-600 text-white text-xs font-bold px-2 py-1 rounded">PR #4</span>
+      <div><p class="font-bold text-white text-sm">Stage 4 — AI Redaction</p><p class="text-xs text-slate-400">Document review, redaction suggestions, disclosure manifests</p></div>
+    </div>
+    <div class="flex items-center gap-4 bg-card rounded-lg p-4 border border-slate-700">
+      <span class="bg-orange-600 text-white text-xs font-bold px-2 py-1 rounded">PR #5</span>
+      <div><p class="font-bold text-white text-sm">Stage 4B — Advanced Governance</p><p class="text-xs text-slate-400">AI register, assets, retention, contracts, release prep</p></div>
+    </div>
+  </div>
+  <p class="text-sm text-red-400 font-bold">⚠ All 5 PRs are OPEN & DRAFT. Do NOT merge until dev environment passes acceptance checks.</p>
+</section>
+
+<!-- NEXT -->
+<section class="text-center">
+  <a href="02-architecture.html" class="inline-block bg-brand hover:bg-indigo-600 text-white font-bold px-6 py-3 rounded-xl transition">Next: Architecture →</a>
+</section>
+
+</main>
+</body>
+</html>

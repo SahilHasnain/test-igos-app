@@ -6,10 +6,11 @@ import { DpiaProgressPanel, PolicyPanel, RopaPanel } from "./governance-panels";
 import { AssuranceOverviewPanel, AuditProgrammePanel, RiskRegisterPanel } from "./assurance-panels";
 import { RedactionWorkspace } from "./redaction-workspace";
 import { AiGovernancePanel, AssetRegisterPanel, ContractGovernancePanel, RecordsManagementPanel } from "./advanced-governance-panels";
+import { useAuth } from "../src/client/auth-context";
 
 type View = "Overview" | MatterType | "ROPA" | "Policies" | "Redaction" | "AI" | "Assets" | "Records" | "Contracts" | "Assurance" | "Risks" | "Audits" | "Actions" | "Audit";
-type DemoRole = "DPO" | "MAT administrator" | "Case manager" | "Academy lead" | "Auditor" | "Read only";
-const demoRoles: DemoRole[] = ["DPO", "MAT administrator", "Case manager", "Academy lead", "Auditor", "Read only"];
+type DisplayRole = "DPO" | "MAT administrator" | "Case manager" | "Academy lead" | "Auditor" | "Read only";
+const roleLabelMap: Record<string, DisplayRole> = { dpo: "DPO", "mat-admin": "MAT administrator", "case-manager": "Case manager", "academy-lead": "Academy lead", auditor: "Auditor", "read-only": "Read only" };
 const moduleLabels: Record<MatterType, string> = { SAR: "SARs", FOI: "FOI", Breach: "Breaches", DPIA: "DPIAs" };
 const icons: Record<string, string> = { Overview: "⌂", SAR: "◫", FOI: "◎", Breach: "△", DPIA: "◇", ROPA: "↔", Policies: "§", Redaction: "◩", AI: "✦", Assets: "▦", Records: "▧", Contracts: "⌁", Assurance: "◉", Risks: "!", Audits: "▤", Actions: "✓", Audit: "≡" };
 
@@ -23,14 +24,16 @@ function daysUntil(due: string) {
 }
 
 export default function IgosClient() {
+  const { auth, setAuth } = useAuth();
   const [view, setView] = useState<View>("Overview");
-  const [role, setRole] = useState<DemoRole>("DPO");
   const [academy, setAcademy] = useState(academies[0]);
   const [query, setQuery] = useState("");
   const [matters, setMatters] = useState(initialMatters);
   const [selected, setSelected] = useState<DemoMatter | null>(null);
   const [showCreate, setShowCreate] = useState(false);
   const [tab, setTab] = useState<"Summary" | "Tasks" | "Documents" | "Audit">("Summary");
+
+  const role: DisplayRole = roleLabelMap[auth.roles[0]] ?? "Read only";
 
   const filtered = useMemo(() => matters.filter((matter) => {
     const academyMatch = academy === academies[0] || matter.academy === academy;
@@ -91,17 +94,17 @@ export default function IgosClient() {
       <nav aria-label="Primary navigation">
         {availableViews.map((item) => <button key={item} className={view === item ? "active" : ""} onClick={() => setView(item)}><span>{icons[item]}</span>{item === "SAR" ? "SARs" : item === "Breach" ? "Breaches" : item === "DPIA" ? "DPIAs" : item}</button>)}
       </nav>
-      <div className="sidebar-foot"><div className="mode-dot" /> Demo workspace<br/><small>Appwrite-ready · M365 optional</small></div>
+      <div className="sidebar-foot"><div className="mode-dot" /> {role}<br/><small>{auth.userId}</small></div>
     </aside>
 
     <main id="main-content" tabIndex={-1}>
       <header className="topbar">
         <div><p className="eyebrow">Federation operations centre</p><h1>{view === "Overview" ? "Information governance overview" : view === "Actions" ? "Open actions" : view === "Audit" ? "Audit and assurance" : view === "ROPA" ? "Records of processing activities" : view === "Policies" ? "Policy management" : view === "Redaction" ? "AI-assisted review and redaction" : view === "AI" ? "AI governance" : view === "Assets" ? "Information Asset Register" : view === "Records" ? "Records management" : view === "Contracts" ? "Contract governance" : view === "Assurance" ? "Assurance overview" : view === "Risks" ? "Information governance risks" : view === "Audits" ? "Audit programme" : `${moduleLabels[view as MatterType]} register`}</h1></div>
-        <div className="top-actions"><label className="search"><span>⌕</span><input aria-label="Search matters" placeholder="Search cases…" value={query} onChange={(e) => setQuery(e.target.value)} /></label><select aria-label="Active role" value={role} onChange={(e) => { const nextRole = e.target.value as DemoRole; setRole(nextRole); if (view === "Audit" && !["DPO", "MAT administrator", "Auditor"].includes(nextRole)) setView("Overview"); }}>{demoRoles.map((item) => <option key={item}>{item}</option>)}</select><select aria-label="Academy filter" value={academy} onChange={(e) => setAcademy(e.target.value)}>{academies.map((item) => <option key={item}>{item}</option>)}</select>{canCreate && <button className="primary" onClick={() => setShowCreate(true)}>＋ New matter</button>}<span className="avatar" title={role} aria-label={`Current role: ${role}`}>{role.split(" ").map((word) => word[0]).join("").slice(0, 2)}</span></div>
+        <div className="top-actions"><label className="search"><span>⌕</span><input aria-label="Search matters" placeholder="Search cases…" value={query} onChange={(e) => setQuery(e.target.value)} /></label><select aria-label="Academy filter" value={academy} onChange={(e) => setAcademy(e.target.value)}>{academies.map((item) => <option key={item}>{item}</option>)}</select>{canCreate && <button className="primary" onClick={() => setShowCreate(true)}>＋ New matter</button>}<span className="avatar" title={`${role} · ${auth.userId}`} aria-label={`Current role: ${role}`}>{role.split(" ").map((word) => word[0]).join("").slice(0, 2)}</span><button className="text-button" onClick={() => { sessionStorage.removeItem("igos-auth"); window.location.href = "/login"; }} title="Sign out">↩</button></div>
       </header>
 
       <section className="content">
-        <div className="notice"><span>Placeholder environment</span> Records are stored in this browser session. Connect Appwrite when your project credentials are ready.</div>
+        {!auth.jwt && <div className="notice"><span>Placeholder environment</span> Records are stored in this browser session. Connect Appwrite when your project credentials are ready.</div>}
         {view === "Overview" && <>
           <div className="metric-grid">{metrics.map(([label, value, hint], i) => <article className="metric" key={String(label)}><div className={`metric-icon tone-${i}`}>{["◫", "◎", "◇", "!"][i]}</div><p>{label}</p><strong>{value}</strong><small>{hint}</small></article>)}</div>
           <div className="dashboard-grid">
@@ -112,17 +115,17 @@ export default function IgosClient() {
           </div>
         </>}
         {["SAR", "FOI", "Breach", "DPIA"].includes(view) && <section className="panel register"><div className="register-toolbar"><div><p className="eyebrow">Single source of truth</p><h2>{filtered.length} active records</h2></div><div className="pills"><button className="selected">All</button><button>Due soon</button><button>High risk</button></div></div><MatterTable matters={filtered} onSelect={setSelected} /></section>}
-        {view === "DPIA" && <DpiaProgressPanel role={role} />}
-        {view === "ROPA" && <RopaPanel academy={academy} role={role} />}
-        {view === "Policies" && <PolicyPanel role={role} />}
+        {view === "DPIA" && <DpiaProgressPanel role={role} matId={selected?.id ?? "demo-mat-1"} />}
+        {view === "ROPA" && <RopaPanel academy={academy} role={role} matId={selected?.id ?? "demo-mat-1"} />}
+        {view === "Policies" && <PolicyPanel role={role} matId={selected?.id ?? "demo-mat-1"} />}
         {view === "Redaction" && <RedactionWorkspace role={role} />}
-        {view === "AI" && <AiGovernancePanel role={role} />}
-        {view === "Assets" && <AssetRegisterPanel role={role} />}
-        {view === "Records" && <RecordsManagementPanel role={role} />}
-        {view === "Contracts" && <ContractGovernancePanel />}
-        {view === "Assurance" && <AssuranceOverviewPanel role={role} />}
-        {view === "Risks" && <RiskRegisterPanel role={role} />}
-        {view === "Audits" && <AuditProgrammePanel />}
+        {view === "AI" && <AiGovernancePanel role={role} matId={selected?.id ?? "demo-mat-1"} />}
+        {view === "Assets" && <AssetRegisterPanel role={role} matId={selected?.id ?? "demo-mat-1"} />}
+        {view === "Records" && <RecordsManagementPanel role={role} matId={selected?.id ?? "demo-mat-1"} />}
+        {view === "Contracts" && <ContractGovernancePanel matId={selected?.id ?? "demo-mat-1"} />}
+        {view === "Assurance" && <AssuranceOverviewPanel role={role} matId={selected?.id ?? "demo-mat-1"} />}
+        {view === "Risks" && <RiskRegisterPanel role={role} matId={selected?.id ?? "demo-mat-1"} />}
+        {view === "Audits" && <AuditProgrammePanel matId={selected?.id ?? "demo-mat-1"} />}
         {view === "Actions" && <section className="panel register"><div className="panel-head"><div><p className="eyebrow">Cross-module tracking</p><h2>Open actions</h2></div></div><div className="actions-list">{filtered.flatMap((matter) => matter.tasks.map((task, index) => <button key={`${matter.id}-${index}`} onClick={() => setSelected(matter)}><span className="check"/><div><strong>{task}</strong><small>{matter.id} · {matter.owner}</small></div><RiskBadge risk={matter.risk}/><time>{matter.due}</time></button>))}</div></section>}
         {view === "Audit" && <section className="panel register"><div className="panel-head"><div><p className="eyebrow">Immutable evidence</p><h2>Audit activity</h2></div></div><div className="timeline large">{matters.flatMap((matter) => matter.activity.slice(0, 2).map((event, index) => <button key={`${matter.id}-${index}`} onClick={() => setSelected(matter)}><span>{index ? "SYS" : matter.type}</span><div><strong>{event}</strong><small>{matter.id} · {matter.owner} · {matter.academy}</small></div><time>{index ? "Yesterday" : "Today"}</time></button>))}</div></section>}
       </section>

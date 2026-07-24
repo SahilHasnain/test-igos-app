@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>IGOS — Implementation Guide</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+tailwind.config={theme:{extend:{colors:{brand:'#6366f1',dark:'#0f172a',card:'#1e293b'}}}}
+</script>
+</head>
+<body class="bg-dark text-slate-200 min-h-screen font-sans">
+
+<nav class="fixed top-0 inset-x-0 z-50 bg-dark/80 backdrop-blur border-b border-slate-700 px-6 py-3 flex items-center justify-between">
+  <span class="font-bold text-brand text-lg">IGOS Learning</span>
+  <div class="flex gap-3 text-sm">
+    <a href="01-project-overview.html" class="hover:text-white text-slate-400">01</a>
+    <a href="02-architecture.html" class="hover:text-white text-slate-400">02</a>
+    <a href="03-data-flow.html" class="hover:text-white text-slate-400">03</a>
+    <a href="04-current-state.html" class="hover:text-white text-slate-400">04</a>
+    <a href="05-database-schema.html" class="hover:text-white text-slate-400">05</a>
+    <a href="06-tenancy-roles.html" class="hover:text-white text-slate-400">06</a>
+    <a href="07-implementation-guide.html" class="text-brand font-bold border-b border-brand">07 Implementation</a>
+  </div>
+</nav>
+
+<main class="max-w-5xl mx-auto px-6 pt-24 pb-20 space-y-16">
+
+<section class="text-center space-y-4">
+  <h1 class="text-4xl font-extrabold text-white">Implementation Guide <span class="text-brand">— What To Do</span></h1>
+  <p class="text-lg text-slate-400">Step-by-step breakdown of the remaining work.</p>
+</section>
+
+<!-- PHASE 1 -->
+<section class="space-y-6">
+  <div class="flex items-center gap-3">
+    <span class="bg-green-600 text-white text-sm font-bold px-3 py-1 rounded">PHASE 1</span>
+    <h2 class="text-2xl font-bold text-white">Provision Appwrite Dev Project</h2>
+  </div>
+  <div class="bg-card rounded-xl p-6 border border-green-500/30 space-y-4">
+    <div class="flex items-start gap-3">
+      <span class="bg-green-900/50 text-green-300 text-xs px-2 py-1 rounded mt-0.5">Step 1</span>
+      <div>
+        <p class="text-sm text-white font-bold">Create Appwrite Project</p>
+        <p class="text-xs text-slate-400">Go to Appwrite Cloud or self-hosted. Create a project named "igos-dev".</p>
+      </div>
+    </div>
+    <div class="flex items-start gap-3">
+      <span class="bg-green-900/50 text-green-300 text-xs px-2 py-1 rounded mt-0.5">Step 2</span>
+      <div>
+        <p class="text-sm text-white font-bold">Create Database + Tables from schema.json</p>
+        <p class="text-xs text-slate-400">Use <code class="text-brand">infra/appwrite/schema.json</code> to create: database "igos-core", all 33 tables, all columns, all indexes, the "case-documents" bucket.</p>
+      </div>
+    </div>
+    <div class="flex items-start gap-3">
+      <span class="bg-green-900/50 text-green-300 text-xs px-2 py-1 rounded mt-0.5">Step 3</span>
+      <div>
+        <p class="text-sm text-white font-bold">Create API Key</p>
+        <p class="text-xs text-slate-400">Least-privilege key with database, table-row, storage, user scopes. Store in secrets.</p>
+      </div>
+    </div>
+    <div class="flex items-start gap-3">
+      <span class="bg-green-900/50 text-green-300 text-xs px-2 py-1 rounded mt-0.5">Step 4</span>
+      <div>
+        <p class="text-sm text-white font-bold">Seed First MAT + User</p>
+        <p class="text-xs text-slate-400">Create user → MAT → academies → membership with mat-admin + dpo roles.</p>
+      </div>
+    </div>
+    <div class="flex items-start gap-3">
+      <span class="bg-green-900/50 text-green-300 text-xs px-2 py-1 rounded mt-0.5">Step 5</span>
+      <div>
+        <p class="text-sm text-white font-bold">Configure .env.local</p>
+        <p class="text-xs text-slate-400">Set all APPWRITE_* variables + IGOS_DATA_MODE=appwrite.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- PHASE 2 -->
+<section class="space-y-6">
+  <div class="flex items-center gap-3">
+    <span class="bg-blue-600 text-white text-sm font-bold px-3 py-1 rounded">PHASE 2</span>
+    <h2 class="text-2xl font-bold text-white">Wire Appwrite in Runtime</h2>
+  </div>
+  <div class="bg-card rounded-xl p-6 border border-blue-500/30 space-y-4">
+    <p class="text-sm text-slate-300">The Appwrite adapters are already written in <code class="text-brand">src/appwrite/</code>. The runtime switcher in <code class="text-brand">src/services/runtime.ts</code> already routes to them for matter, audit, and workflow. But some services still throw errors in Appwrite mode.</p>
+    <div class="bg-dark rounded-lg p-4 text-xs font-mono text-slate-300 space-y-1">
+      <p><span class="text-slate-500">Check each function in runtime.ts:</span></p>
+      <p>createRuntimeMatterService()          → <span class="text-green-300">✅ Works</span></p>
+      <p>createRuntimeWorkflowService()         → <span class="text-yellow-300">⚠ Verify</span></p>
+      <p>createRuntimeGovernanceServices()      → <span class="text-yellow-300">⚠ Verify</span></p>
+      <p>createRuntimeAssuranceServices()       → <span class="text-yellow-300">⚠ Verify</span></p>
+      <p>createRuntimeAdvancedGovernanceServices() → <span class="text-yellow-300">⚠ Verify</span></p>
+      <p>createRuntimeSupplierService()         → <span class="text-yellow-300">⚠ Verify</span></p>
+    </div>
+    <p class="text-sm text-yellow-400">⚠ Every Appwrite adapter in src/appwrite/services.ts already imports all 25+ repositories. Verify they instantiate correctly.</p>
+  </div>
+</section>
+
+<!-- PHASE 3 -->
+<section class="space-y-6">
+  <div class="flex items-center gap-3">
+    <span class="bg-purple-600 text-white text-sm font-bold px-3 py-1 rounded">PHASE 3</span>
+    <h2 class="text-2xl font-bold text-white">Connect UI to API</h2>
+  </div>
+  <div class="bg-card rounded-xl p-6 border border-purple-500/30 space-y-4">
+    <p class="text-sm text-slate-300">The biggest gap: the UI (<code class="text-brand">app/igos-client.tsx</code>) is entirely client-side. It uses useState with hardcoded data from <code class="text-brand">src/demo/ui-data.ts</code>.</p>
+    <div class="grid md:grid-cols-2 gap-4">
+      <div class="bg-dark rounded-lg p-4 space-y-2">
+        <h4 class="text-sm font-bold text-red-400">Current (Demo)</h4>
+        <pre class="text-xs font-mono text-slate-300">
+useState(initialMatters)  <span class="text-red-300">← hardcoded</span>
+setMatters(items => ...)   <span class="text-red-300">← local state</span>
+role selector → fake      <span class="text-red-300">← no auth</span>
+academy filter → fake     <span class="text-red-300">← no isolation</span>
+        </pre>
+      </div>
+      <div class="bg-dark rounded-lg p-4 space-y-2">
+        <h4 class="text-sm font-bold text-green-400">Target (Appwrite)</h4>
+        <pre class="text-xs font-mono text-slate-300">
+fetch("/api/matters?matId=X")  <span class="text-green-300">← real API</span>
+POST("/api/matters", {...})     <span class="text-green-300">← server-side</span>
+role from JWT membership       <span class="text-green-300">← real auth</span>
+academy from JWT membership    <span class="text-green-300">← real isolation</span>
+        </pre>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- PHASE 4 -->
+<section class="space-y-6">
+  <div class="flex items-center gap-3">
+    <span class="bg-pink-600 text-white text-sm font-bold px-3 py-1 rounded">PHASE 4</span>
+    <h2 class="text-2xl font-bold text-white">Authentication UI</h2>
+  </div>
+  <div class="bg-card rounded-xl p-6 border border-pink-500/30 space-y-4">
+    <p class="text-sm text-slate-300">No login page exists. The browser needs Appwrite account SDK to:</p>
+    <ul class="text-xs text-slate-300 space-y-1 list-disc list-inside">
+      <li>Create session (email + password)</li>
+      <li>Create JWT for API calls</li>
+      <li>Send JWT in Authorization header</li>
+      <li>Handle token refresh</li>
+    </ul>
+  </div>
+</section>
+
+<!-- PHASE 5 -->
+<section class="space-y-6">
+  <div class="flex items-center gap-3">
+    <span class="bg-orange-600 text-white text-sm font-bold px-3 py-1 rounded">PHASE 5</span>
+    <h2 class="text-2xl font-bold text-white">Deploy & Test</h2>
+  </div>
+  <div class="bg-card rounded-xl p-6 border border-orange-500/30 space-y-4">
+    <div class="grid md:grid-cols-2 gap-4 text-sm">
+      <div>
+        <h4 class="font-bold text-orange-400 mb-2">Deploy</h4>
+        <ul class="text-xs text-slate-300 space-y-1 list-disc list-inside">
+          <li>Create Dockerfile or use Coolify</li>
+          <li>Set environment variables</li>
+          <li>Deploy to dev environment</li>
+        </ul>
+      </div>
+      <div>
+        <h4 class="font-bold text-orange-400 mb-2">Acceptance Checks</h4>
+        <ul class="text-xs text-slate-300 space-y-1 list-disc list-inside">
+          <li>MAT admin can list/create matters</li>
+          <li>Academy-scoped user sees only their data</li>
+          <li>Cross-MAT access is blocked</li>
+          <li>Workflow creates audit event</li>
+          <li>Document upload stores file + checksum</li>
+          <li>Failed metadata write removes uploaded file</li>
+          <li>Deadlines use Europe/London calendar</li>
+          <li>/api/health returns OK</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- PHASE 6 -->
+<section class="space-y-6">
+  <div class="flex items-center gap-3">
+    <span class="bg-red-600 text-white text-sm font-bold px-3 py-1 rounded">PHASE 6</span>
+    <h2 class="text-2xl font-bold text-white">Background Jobs & Extras</h2>
+  </div>
+  <div class="bg-card rounded-xl p-6 border border-red-500/30 space-y-4">
+    <ul class="text-xs text-slate-300 space-y-2">
+      <li class="flex gap-2"><span class="text-red-400">•</span> Set up cron/worker for <code class="text-brand">deadline-scan.ts</code> (SAR deadline alerts)</li>
+      <li class="flex gap-2"><span class="text-red-400">•</span> Set up cron/worker for <code class="text-brand">governance-reminders.ts</code> (policy review reminders)</li>
+      <li class="flex gap-2"><span class="text-red-400">•</span> Replace <code class="text-brand">DemoNotificationAdapter</code> with real email/Teams adapter</li>
+      <li class="flex gap-2"><span class="text-red-400">•</span> Configure Appwrite Storage + antivirus scanning</li>
+      <li class="flex gap-2"><span class="text-red-400">•</span> Implement disposal processing for expired records</li>
+      <li class="flex gap-2"><span class="text-red-400">•</span> Complete backup and restoration testing</li>
+    </ul>
+  </div>
+</section>
+
+<!-- CONSTRAINTS -->
+<section class="space-y-6">
+  <h2 class="text-2xl font-bold text-red-400 border-l-4 border-red-500 pl-4">Critical Constraints</h2>
+  <div class="bg-red-900/20 border border-red-500/30 rounded-xl p-6 space-y-3 text-sm">
+    <div class="flex gap-3 items-start">
+      <span class="text-red-400 text-lg">⚠</span>
+      <p class="text-slate-300"><strong class="text-white">Merge PRs sequentially:</strong> #1 → #2 → #3 → #4 → #5. Retarget each PR to Appsuite after the previous one merges.</p>
+    </div>
+    <div class="flex gap-3 items-start">
+      <span class="text-red-400 text-lg">⚠</span>
+      <p class="text-slate-300"><strong class="text-white">Do NOT merge until dev environment passes acceptance checks.</strong></p>
+    </div>
+    <div class="flex gap-3 items-start">
+      <span class="text-red-400 text-lg">⚠</span>
+      <p class="text-slate-300"><strong class="text-white">Do NOT redesign domain controls.</strong> The domain logic is complete and tested.</p>
+    </div>
+    <div class="flex gap-3 items-start">
+      <span class="text-red-400 text-lg">⚠</span>
+      <p class="text-slate-300"><strong class="text-white">Do NOT make Microsoft 365 mandatory.</strong> It must remain optional.</p>
+    </div>
+  </div>
+</section>
+
+<!-- SUMMARY -->
+<section class="space-y-6">
+  <h2 class="text-2xl font-bold text-white border-l-4 border-brand pl-4">Summary — Your Work Plan</h2>
+  <div class="bg-card rounded-xl p-6 border border-slate-700">
+    <div class="space-y-3">
+      <div class="flex items-center gap-4">
+        <span class="w-8 h-8 bg-green-600 rounded-full flex items-center justify-center text-white text-sm font-bold">1</span>
+        <p class="text-sm text-white">Provision Appwrite dev project from schema.json</p>
+      </div>
+      <div class="flex items-center gap-4">
+        <span class="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center text-white text-sm font-bold">2</span>
+        <p class="text-sm text-white">Verify all 25 Appwrite adapters work in appwrite mode</p>
+      </div>
+      <div class="flex items-center gap-4">
+        <span class="w-8 h-8 bg-purple-600 rounded-full flex items-center justify-center text-white text-sm font-bold">3</span>
+        <p class="text-sm text-white">Build login page + connect UI to API routes</p>
+      </div>
+      <div class="flex items-center gap-4">
+        <span class="w-8 h-8 bg-pink-600 rounded-full flex items-center justify-center text-white text-sm font-bold">4</span>
+        <p class="text-sm text-white">Derive roles & academy access from Appwrite memberships</p>
+      </div>
+      <div class="flex items-center gap-4">
+        <span class="w-8 h-8 bg-orange-600 rounded-full flex items-center justify-center text-white text-sm font-bold">5</span>
+        <p class="text-sm text-white">Configure Appwrite Storage, antivirus, document permissions</p>
+      </div>
+      <div class="flex items-center gap-4">
+        <span class="w-8 h-8 bg-red-600 rounded-full flex items-center justify-center text-white text-sm font-bold">6</span>
+        <p class="text-sm text-white">Deploy to dev (Coolify or Appwrite site)</p>
+      </div>
+      <div class="flex items-center gap-4">
+        <span class="w-8 h-8 bg-yellow-600 rounded-full flex items-center justify-center text-white text-sm font-bold">7</span>
+        <p class="text-sm text-white">Test MAT & academy isolation for every role</p>
+      </div>
+      <div class="flex items-center gap-4">
+        <span class="w-8 h-8 bg-indigo-600 rounded-full flex items-center justify-center text-white text-sm font-bold">8</span>
+        <p class="text-sm text-white">Configure background jobs, notifications, reminders</p>
+      </div>
+      <div class="flex items-center gap-4">
+        <span class="w-8 h-8 bg-slate-600 rounded-full flex items-center justify-center text-white text-sm font-bold">9</span>
+        <p class="text-sm text-white">Backup & restoration testing</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="flex justify-between">
+  <a href="06-tenancy-roles.html" class="inline-block bg-slate-700 hover:bg-slate-600 text-white font-bold px-6 py-3 rounded-xl transition">← Tenancy & Roles</a>
+  <a href="01-project-overview.html" class="inline-block bg-brand hover:bg-indigo-600 text-white font-bold px-6 py-3 rounded-xl transition">Back to Start →</a>
+</section>
+
+</main>
+</body>
+</html>

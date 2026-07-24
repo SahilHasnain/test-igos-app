@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>IGOS — Architecture</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+tailwind.config={theme:{extend:{colors:{brand:'#6366f1',dark:'#0f172a',card:'#1e293b'}}}}
+</script>
+</head>
+<body class="bg-dark text-slate-200 min-h-screen font-sans">
+
+<nav class="fixed top-0 inset-x-0 z-50 bg-dark/80 backdrop-blur border-b border-slate-700 px-6 py-3 flex items-center justify-between">
+  <span class="font-bold text-brand text-lg">IGOS Learning</span>
+  <div class="flex gap-3 text-sm">
+    <a href="01-project-overview.html" class="hover:text-white text-slate-400">01 Overview</a>
+    <a href="02-architecture.html" class="text-brand font-bold border-b border-brand">02 Architecture</a>
+    <a href="03-data-flow.html" class="hover:text-white text-slate-400">03 Data Flow</a>
+    <a href="04-current-state.html" class="hover:text-white text-slate-400">04 Current State</a>
+    <a href="05-database-schema.html" class="hover:text-white text-slate-400">05 Schema</a>
+    <a href="06-tenancy-roles.html" class="hover:text-white text-slate-400">06 Tenancy</a>
+    <a href="07-implementation-guide.html" class="hover:text-white text-slate-400">07 Implementation</a>
+  </div>
+</nav>
+
+<main class="max-w-5xl mx-auto px-6 pt-24 pb-20 space-y-16">
+
+<section class="text-center space-y-4">
+  <h1 class="text-4xl font-extrabold text-white">Architecture <span class="text-brand">& Design Patterns</span></h1>
+  <p class="text-lg text-slate-400">How the codebase is structured and why.</p>
+</section>
+
+<!-- LAYER CAKE -->
+<section class="space-y-6">
+  <h2 class="text-2xl font-bold text-white border-l-4 border-brand pl-4">Layer Cake Architecture</h2>
+  <div class="bg-card rounded-xl p-6 border border-slate-700 space-y-2">
+    <div class="bg-indigo-600/30 border border-indigo-500 rounded-lg px-4 py-3 text-center text-sm font-bold text-indigo-200">① UI — React Components (app/*.tsx)</div>
+    <div class="text-center text-slate-500 text-xs">▼ fetches data via API calls</div>
+    <div class="bg-blue-600/30 border border-blue-500 rounded-lg px-4 py-3 text-center text-sm font-bold text-blue-200">② API Routes — Next.js Server (app/api/*.ts)</div>
+    <div class="text-center text-slate-500 text-xs">▼ calls services with request context</div>
+    <div class="bg-purple-600/30 border border-purple-500 rounded-lg px-4 py-3 text-center text-sm font-bold text-purple-200">③ Application Services — Business orchestration (src/services/*.ts)</div>
+    <div class="text-center text-slate-500 text-xs">▼ uses domain logic + repository calls</div>
+    <div class="bg-yellow-600/30 border border-yellow-500 rounded-lg px-4 py-3 text-center text-sm font-bold text-yellow-200">④ Domain Logic — Pure rules, no DB (src/domain/*.ts)</div>
+    <div class="text-center text-slate-500 text-xs">▼ operates on typed interfaces</div>
+    <div class="bg-slate-600/30 border border-slate-500 rounded-lg px-4 py-3 text-center text-sm font-bold text-slate-200">⑤ Repository Interfaces — Contracts (src/repositories/*.ts)</div>
+    <div class="text-center text-slate-500 text-xs">▼ implemented by either demo OR appwrite</div>
+    <div class="grid grid-cols-2 gap-2">
+      <div class="bg-orange-600/30 border border-orange-500 rounded-lg px-4 py-3 text-center text-sm font-bold text-orange-200">⑥a Demo — In-Memory Arrays</div>
+      <div class="bg-green-600/30 border border-green-500 rounded-lg px-4 py-3 text-center text-sm font-bold text-green-200">⑥b Appwrite — Real Database</div>
+    </div>
+  </div>
+</section>
+
+<!-- REPOSITORY PATTERN -->
+<section class="space-y-6">
+  <h2 class="text-2xl font-bold text-white border-l-4 border-brand pl-4">Repository Pattern — The Key Idea</h2>
+  <p class="text-slate-400 text-sm">Services never talk to the database directly. They use an <strong class="text-white">interface</strong>. Two implementations exist: Demo (arrays) and Appwrite (real DB).</p>
+  <div class="grid md:grid-cols-3 gap-4">
+    <div class="bg-card rounded-xl p-5 border border-slate-700 space-y-2">
+      <h3 class="font-bold text-blue-400 text-sm">Interface</h3>
+      <code class="block text-xs text-slate-300 bg-dark rounded p-2">
+src/repositories/matter-repository.ts<br>
+<span class="text-slate-500">interface MatterRepository {</span><br>
+&nbsp;&nbsp;create(input): Promise&lt;Matter&gt;<br>
+&nbsp;&nbsp;findById(scope, id): Promise&lt;Matter|null&gt;<br>
+&nbsp;&nbsp;list(query): Promise&lt;Matter[]&gt;<br>
+&nbsp;&nbsp;update(scope, id, ver, patch)<br>
+<span class="text-slate-500">}</span>
+      </code>
+      <p class="text-xs text-slate-400">Defines WHAT operations exist</p>
+    </div>
+    <div class="bg-card rounded-xl p-5 border border-orange-500/50 space-y-2">
+      <h3 class="font-bold text-orange-400 text-sm">Demo Implementation</h3>
+      <code class="block text-xs text-slate-300 bg-dark rounded p-2">
+src/demo/repositories.ts<br>
+<span class="text-orange-300">class DemoMatterRepository</span><br>
+&nbsp;&nbsp;implements MatterRepository<br>
+&nbsp;&nbsp;{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;private matters: Matter[] = []<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="text-slate-500">// push/find in array</span><br>
+&nbsp;&nbsp;}
+      </code>
+      <p class="text-xs text-slate-400">JavaScript array — data lost on restart</p>
+    </div>
+    <div class="bg-card rounded-xl p-5 border border-green-500/50 space-y-2">
+      <h3 class="font-bold text-green-400 text-sm">Appwrite Implementation</h3>
+      <code class="block text-xs text-slate-300 bg-dark rounded p-2">
+src/appwrite/matter-repository.ts<br>
+<span class="text-green-300">class AppwriteMatterRepository</span><br>
+&nbsp;&nbsp;implements MatterRepository<br>
+&nbsp;&nbsp;{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;constructor(databases, ...)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="text-slate-500">// this.databases.createDocument()</span><br>
+&nbsp;&nbsp;}
+      </code>
+      <p class="text-xs text-slate-400">Real Appwrite DB calls — persistent</p>
+    </div>
+  </div>
+</section>
+
+<!-- RUNTIME SWITCH -->
+<section class="space-y-6">
+  <h2 class="text-2xl font-bold text-white border-l-4 border-brand pl-4">Runtime Switching</h2>
+  <p class="text-slate-400 text-sm">The file <code class="text-brand">src/services/runtime.ts</code> decides which implementation to use at runtime.</p>
+  <div class="bg-card rounded-xl p-6 border border-slate-700">
+    <pre class="text-sm font-mono text-slate-300 leading-relaxed">
+<span class="text-slate-500">// src/services/runtime.ts</span>
+
+<span class="text-purple-400">function</span> <span class="text-yellow-300">createRuntimeMatterService</span>() {
+  <span class="text-purple-400">return</span> dataMode() === <span class="text-green-300">"demo"</span>
+    ? <span class="text-orange-300">new MatterService(demoMatters, auditService)</span>     <span class="text-slate-500">← demo mode</span>
+    : <span class="text-green-300">createAppwriteMatterService()</span>;                   <span class="text-slate-500">← appwrite mode</span>
+}
+
+<span class="text-purple-400">function</span> <span class="text-yellow-300">dataMode</span>() {
+  <span class="text-purple-400">return</span> readServerEnvironment().<span class="text-brand">IGOS_DATA_MODE</span>;  <span class="text-slate-500">← "demo" or "appwrite"</span>
+}
+    </pre>
+  </div>
+  <p class="text-sm text-yellow-400">⚠ The SAME pattern is repeated for governance, assurance, advanced governance, supplier, and workflow services.</p>
+</section>
+
+<!-- APPWRITE SERVICES FACTORY -->
+<section class="space-y-6">
+  <h2 class="text-2xl font-bold text-white border-l-4 border-brand pl-4">Appwrite Service Factory</h2>
+  <p class="text-slate-400 text-sm"><code class="text-brand">src/appwrite/services.ts</code> creates all Appwrite repositories, wires them into services, and returns them.</p>
+  <div class="bg-card rounded-xl p-6 border border-slate-700">
+    <pre class="text-sm font-mono text-slate-300 leading-relaxed">
+<span class="text-slate-500">// src/appwrite/services.ts</span>
+
+<span class="text-purple-400">export function</span> <span class="text-yellow-300">createMatterService</span>() {
+  <span class="text-purple-400">const</span> env = getEnv();
+  <span class="text-purple-400">const</span> admin = getAdmin();
+
+  <span class="text-green-300">const matters = new AppwriteMatterRepository(</span>
+    <span class="text-green-300">  admin.databases, env.APPWRITE_DATABASE_ID, env.APPWRITE_CASES_TABLE_ID</span>
+  <span class="text-green-300">);</span>
+
+  <span class="text-green-300">const audit = new AppwriteAuditRepository(...);</span>
+
+  <span class="text-purple-400">return new</span> MatterService(matters, <span class="text-purple-400">new</span> AuditService(audit));
+}
+    </pre>
+  </div>
+  <p class="text-sm text-slate-400">This file already imports <strong class="text-white">all 25+ Appwrite repositories</strong>. The adapters exist — they just need to be wired into the runtime and tested.</p>
+</section>
+
+<!-- API ROUTES -->
+<section class="space-y-6">
+  <h2 class="text-2xl font-bold text-white border-l-4 border-brand pl-4">API Routes — How the Backend Works</h2>
+  <div class="bg-card rounded-xl p-6 border border-slate-700">
+    <pre class="text-sm font-mono text-slate-300 leading-relaxed">
+<span class="text-slate-500">// app/api/matters/route.ts</span>
+
+<span class="text-purple-400">export async function</span> <span class="text-yellow-300">GET</span>(request: Request) {
+  <span class="text-slate-500">// 1. Get query params</span>
+  <span class="text-purple-400">const</span> matId = url.searchParams.get(<span class="text-green-300">"matId"</span>);
+
+  <span class="text-slate-500">// 2. Resolve user context (demo or appwrite auth)</span>
+  <span class="text-purple-400">const</span> context = <span class="text-purple-400">await</span> <span class="text-yellow-300">resolveRuntimeContext</span>(request, matId);
+
+  <span class="text-slate-500">// 3. Get service (demo or appwrite)</span>
+  <span class="text-purple-400">const</span> service = <span class="text-yellow-300">createRuntimeMatterService</span>();
+
+  <span class="text-slate-500">// 4. Call service (handles auth + domain logic)</span>
+  <span class="text-purple-400">const</span> matters = <span class="text-purple-400">await</span> service.list(context, { matId });
+
+  <span class="text-purple-400">return</span> NextResponse.json({ matters });
+}
+    </pre>
+  </div>
+</section>
+
+<!-- KEY FILES TABLE -->
+<section class="space-y-6">
+  <h2 class="text-2xl font-bold text-white border-l-4 border-brand pl-4">Key Files Reference</h2>
+  <div class="overflow-x-auto">
+    <table class="w-full text-sm border-collapse">
+      <thead><tr class="border-b border-slate-700">
+        <th class="text-left py-2 px-3 text-slate-400">File</th>
+        <th class="text-left py-2 px-3 text-slate-400">Purpose</th>
+      </tr></thead>
+      <tbody class="divide-y divide-slate-800">
+        <tr><td class="py-2 px-3 font-mono text-brand">src/domain/model.ts</td><td class="py-2 px-3 text-slate-300">Core types: Matter, Role, Capability</td></tr>
+        <tr><td class="py-2 px-3 font-mono text-brand">src/repositories/*.ts</td><td class="py-2 px-3 text-slate-300">Repository interfaces (contracts)</td></tr>
+        <tr><td class="py-2 px-3 font-mono text-green-400">src/appwrite/*.ts</td><td class="py-2 px-3 text-slate-300">Appwrite implementations (28 files)</td></tr>
+        <tr><td class="py-2 px-3 font-mono text-orange-400">src/demo/*.ts</td><td class="py-2 px-3 text-slate-300">Demo in-memory implementations</td></tr>
+        <tr><td class="py-2 px-3 font-mono text-purple-400">src/services/runtime.ts</td><td class="py-2 px-3 text-slate-300">Switches between demo/appwrite</td></tr>
+        <tr><td class="py-2 px-3 font-mono text-purple-400">src/appwrite/services.ts</td><td class="py-2 px-3 text-slate-300">Creates Appwrite service instances</td></tr>
+        <tr><td class="py-2 px-3 font-mono text-red-400">src/auth/appwrite-context.ts</td><td class="py-2 px-3 text-slate-300">JWT verification + membership lookup</td></tr>
+        <tr><td class="py-2 px-3 font-mono text-yellow-400">app/api/**/*.ts</td><td class="py-2 px-3 text-slate-300">REST API endpoints</td></tr>
+        <tr><td class="py-2 px-3 font-mono text-slate-400">infra/appwrite/schema.json</td><td class="py-2 px-3 text-slate-300">Database schema (33 tables)</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section class="flex justify-between">
+  <a href="01-project-overview.html" class="inline-block bg-slate-700 hover:bg-slate-600 text-white font-bold px-6 py-3 rounded-xl transition">← Overview</a>
+  <a href="03-data-flow.html" class="inline-block bg-brand hover:bg-indigo-600 text-white font-bold px-6 py-3 rounded-xl transition">Next: Data Flow →</a>
+</section>
+
+</main>
+</body>
+</html>

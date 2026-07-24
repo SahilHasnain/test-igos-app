@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>IGOS — How to Test</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+tailwind.config={theme:{extend:{colors:{brand:'#6366f1',dark:'#0f172a',card:'#1e293b'}}}}
+</script>
+</head>
+<body class="bg-dark text-slate-200 min-h-screen font-sans">
+
+<nav class="fixed top-0 inset-x-0 z-50 bg-dark/80 backdrop-blur border-b border-slate-700 px-6 py-3 flex items-center justify-between">
+  <span class="font-bold text-brand text-lg">IGOS Learning</span>
+  <div class="flex gap-3 text-sm">
+    <a href="01-project-overview.html" class="hover:text-white text-slate-400">01</a>
+    <a href="02-architecture.html" class="hover:text-white text-slate-400">02</a>
+    <a href="03-data-flow.html" class="hover:text-white text-slate-400">03</a>
+    <a href="04-current-state.html" class="hover:text-white text-slate-400">04</a>
+    <a href="05-database-schema.html" class="hover:text-white text-slate-400">05</a>
+    <a href="06-tenancy-roles.html" class="hover:text-white text-slate-400">06</a>
+    <a href="07-implementation-guide.html" class="hover:text-white text-slate-400">07</a>
+    <a href="08-doubts-cleared.html" class="hover:text-white text-slate-400">08</a>
+    <a href="09-how-to-test.html" class="text-brand font-bold border-b border-brand">09 Testing</a>
+    <a href="11-acceptance-testing.html" class="hover:text-white text-slate-400">11 Accept</a>
+  </div>
+</nav>
+
+<main class="max-w-5xl mx-auto px-6 pt-24 pb-20 space-y-16">
+
+<section class="text-center space-y-4">
+  <h1 class="text-4xl font-extrabold text-white">How to <span class="text-brand">Test</span></h1>
+  <p class="text-lg text-slate-400">Three levels of testing — from fast to full.</p>
+</section>
+
+<!-- 3 LEVELS -->
+<section class="space-y-6">
+  <h2 class="text-2xl font-bold text-white border-l-4 border-brand pl-4">Three Levels of Testing</h2>
+  <div class="grid md:grid-cols-3 gap-4">
+    <div class="bg-card rounded-xl p-5 border border-green-500/50 space-y-3">
+      <div class="text-3xl">⚡</div>
+      <h3 class="font-bold text-green-400">Level 1 — Unit Tests</h3>
+      <p class="text-xs text-slate-400">Test domain logic in isolation. Fast. No database. 20 test files, 121 tests.</p>
+      <code class="block text-xs text-green-300 bg-dark rounded px-3 py-2">npm test</code>
+      <p class="text-xs text-green-300">~5 seconds</p>
+    </div>
+    <div class="bg-card rounded-xl p-5 border border-yellow-500/50 space-y-3">
+      <div class="text-3xl">🔧</div>
+      <h3 class="font-bold text-yellow-400">Level 2 — Manual Browser Test</h3>
+      <p class="text-xs text-slate-400">Run the app, log in, click through every panel, create cases.</p>
+      <code class="block text-xs text-yellow-300 bg-dark rounded px-3 py-2">npm run dev</code>
+      <p class="text-xs text-yellow-300">Opens localhost:3000/login</p>
+    </div>
+    <div class="bg-card rounded-xl p-5 border border-purple-500/50 space-y-3">
+      <div class="text-3xl">🎯</div>
+      <h3 class="font-bold text-purple-400">Level 3 — Full Integration</h3>
+      <p class="text-xs text-slate-400">Real Appwrite DB. Real auth. Acceptance checks from dev-handover.md.</p>
+      <code class="block text-xs text-purple-300 bg-dark rounded px-3 py-2">npm run dev</code>
+      <p class="text-xs text-purple-300">Requires Appwrite provisioning + seed</p>
+    </div>
+  </div>
+</section>
+
+<!-- LEVEL 1: UNIT TESTS -->
+<section class="space-y-6">
+  <h2 class="text-2xl font-bold text-green-400 border-l-4 border-green-500 pl-4">Level 1 — Unit Tests (Fast, Automated)</h2>
+
+  <div class="bg-card rounded-xl p-6 border border-slate-700 space-y-4">
+    <h3 class="font-bold text-white text-sm">Run all tests:</h3>
+    <code class="block text-sm text-green-300 bg-dark rounded px-4 py-2">npm test</code>
+    <p class="text-xs text-slate-400">Uses Vitest. Runs all 20 files in <code class="text-white">tests/</code> directory. 121 tests total.</p>
+  </div>
+
+  <div class="bg-card rounded-xl p-6 border border-slate-700 space-y-4">
+    <h3 class="font-bold text-white text-sm">What the 20 test files cover:</h3>
+    <div class="grid sm:grid-cols-2 gap-3">
+      <div class="space-y-2">
+        <h4 class="text-xs font-bold text-green-400">Domain Logic (Pure Functions)</h4>
+        <div class="text-xs text-slate-300 space-y-1">
+          <div class="flex items-center gap-2"><span class="text-green-300">●</span> deadlines.test.ts — SAR/FOI/Breach deadline math</div>
+          <div class="flex items-center gap-2"><span class="text-green-300">●</span> deadline-adjustments.test.ts — Extensions & pauses</div>
+          <div class="flex items-center gap-2"><span class="text-green-300">●</span> deadline-scan.test.ts — Escalation scanner</div>
+          <div class="flex items-center gap-2"><span class="text-green-300">●</span> authorisation.test.ts — Role → capability checks</div>
+          <div class="flex items-center gap-2"><span class="text-green-300">●</span> authorization-integration.test.ts — 37 tests: MAT isolation, academy scoping, all 8 roles</div>
+          <div class="flex items-center gap-2"><span class="text-green-300">●</span> intake.test.ts — SAR/FOI/Breach form validation</div>
+          <div class="flex items-center gap-2"><span class="text-green-300">●</span> dpia.test.ts — DPIA section/risk rules</div>
+          <div class="flex items-center gap-2"><span class="text-green-300">●</span> ropa.test.ts — ROPA validation</div>
+          <div class="flex items-center gap-2"><span class="text-green-300">●</span> policy.test.ts — Policy lifecycle rules</div>
+          <div class="flex items-center gap-2"><span class="text-green-300">●</span> supplier.test.ts — Supplier assessment</div>
+          <div class="flex items-center gap-2"><span class="text-green-300">●</span> assurance.test.ts — Actions, findings, risks</div>
+          <div class="flex items-center gap-2"><span class="text-green-300">●</span> redaction.test.ts — Redaction rules</div>
+          <div class="flex items-center gap-2"><span class="text-green-300">●</span> advanced-governance.test.ts — Assets, retention, contracts</div>
+        </div>
+      </div>
+      <div class="space-y-2">
+        <h4 class="text-xs font-bold text-blue-400">Services & Integration</h4>
+        <div class="text-xs text-slate-300 space-y-1">
+          <div class="flex items-center gap-2"><span class="text-blue-300">●</span> matter-service.test.ts — Create, read, auth checks</div>
+          <div class="flex items-center gap-2"><span class="text-blue-300">●</span> workflow-service.test.ts — Stage transitions</div>
+          <div class="flex items-center gap-2"><span class="text-blue-300">●</span> audit-service.test.ts — Hash chain, append-only</div>
+          <div class="flex items-center gap-2"><span class="text-blue-300">●</span> governance-service.test.ts — DPIA/ROPA/Policy services</div>
+          <div class="flex items-center gap-2"><span class="text-blue-300">●</span> governance-reminders.test.ts — Reminder scanner</div>
+          <div class="flex items-center gap-2"><span class="text-blue-300">●</span> assurance-reporting.test.ts — Scorecard calculation</div>
+          <div class="flex items-center gap-2"><span class="text-blue-300">●</span> notification-service.test.ts — Idempotency</div>
+          <div class="flex items-center gap-2"><span class="text-purple-300">●</span> integration/documents.test.ts — Upload/AV (skipped without Appwrite)</div>
+          <div class="flex items-center gap-2"><span class="text-purple-300">●</span> integration/backup.test.ts — Restore round-trip (skipped without Appwrite)</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- LEVEL 2: MANUAL BROWSER -->
+<section class="space-y-6">
+  <h2 class="text-2xl font-bold text-yellow-400 border-l-4 border-yellow-500 pl-4">Level 2 — Manual Browser Test (Demo Mode)</h2>
+
+  <div class="bg-card rounded-xl p-6 border border-slate-700 space-y-4">
+    <div class="grid md:grid-cols-2 gap-6">
+      <div class="space-y-3">
+        <h3 class="font-bold text-white text-sm">Setup:</h3>
+        <pre class="text-xs font-mono text-green-300 bg-dark rounded p-3">
+npm run dev
+        </pre>
+        <p class="text-xs text-slate-400">Opens login page at <code class="text-white">localhost:3000/login</code></p>
+        <p class="text-xs text-slate-400">Select a demo role and click "Enter workspace"</p>
+      </div>
+      <div class="space-y-3">
+        <h3 class="font-bold text-white text-sm">What you see at login:</h3>
+        <ul class="text-xs text-slate-300 space-y-1">
+          <li>☐ Blue banner: "Demo mode — records stay in this browser session"</li>
+          <li>☐ Role dropdown with 6 options (DPO, MAT admin, etc.)</li>
+          <li>☐ "Enter workspace" button (no email/password needed)</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <div class="bg-card rounded-xl p-6 border border-slate-700 space-y-4">
+    <h3 class="font-bold text-white text-sm">Click-through checklist — every view:</h3>
+    <div class="grid md:grid-cols-2 gap-6">
+      <div class="space-y-2">
+        <h4 class="text-xs font-bold text-yellow-400">Sidebar Navigation</h4>
+        <div class="text-xs text-slate-300 space-y-1">
+          <div>☐ <strong>Overview</strong> — metric cards, priority matters table, health bars, workload donut, activity timeline</div>
+          <div>☐ <strong>SARs</strong> — filterable matter register with 7 demo cases</div>
+          <div>☐ <strong>FOI</strong> — same register, filtered to FOI type</div>
+          <div>☐ <strong>Breaches</strong> — same register, filtered to Breach type</div>
+          <div>☐ <strong>DPIAs</strong> — DPIA progress panel with sections + risks</div>
+          <div>☐ <strong>ROPA</strong> — processing activities table with CRUD</div>
+          <div>☐ <strong>Policies</strong> — policy cards with lifecycle transitions</div>
+          <div>☐ <strong>Redaction</strong> — workspace with analysis, suggestions, manifests</div>
+          <div>☐ <strong>AI</strong> — AI system register with risk levels</div>
+          <div>☐ <strong>Assets</strong> — information asset register</div>
+          <div>☐ <strong>Records</strong> — retention rules, holds, disposal</div>
+          <div>☐ <strong>Contracts</strong> — contract governance with IG terms</div>
+          <div>☐ <strong>Assurance</strong> — programme overview, actions, findings</div>
+          <div>☐ <strong>Risks</strong> — risk register with severity ratings</div>
+          <div>☐ <strong>Audits</strong> — audit programme with status tracking</div>
+        </div>
+      </div>
+      <div class="space-y-2">
+        <h4 class="text-xs font-bold text-yellow-400">Interactions</h4>
+        <div class="text-xs text-slate-300 space-y-1">
+          <div>☐ Search box filters matters by reference/title/academy</div>
+          <div>☐ Academy dropdown filters to specific academy</div>
+          <div>☐ "＋ New matter" button opens create form</div>
+          <div>☐ Create form: select type, enter title, pick academy, submit</div>
+          <div>☐ Clicking a matter row opens detail drawer</div>
+          <div>☐ Drawer shows: metadata, progress bar, Summary/Tasks/Documents/Audit tabs</div>
+          <div>☐ Avatar shows current role initials (e.g. "DA" for DPO)</div>
+          <div>☐ ↩ sign-out button clears session, returns to login</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="bg-yellow-900/20 border border-yellow-500/30 rounded-lg p-4 text-sm text-yellow-200">
+    <strong>Demo mode notes:</strong>
+    <ul class="mt-2 text-xs space-y-1 list-disc list-inside">
+      <li>Data lives in browser memory — refreshing the page resets to initial demo matters</li>
+      <li>Role enforcement is UI-only (hides buttons). Real enforcement happens server-side in Appwrite mode</li>
+      <li>The "Placeholder environment" banner appears to remind you</li>
+      <li>Each view renders via API fetches from <code>/api/*</code> routes (they use demo repositories in demo mode)</li>
+    </ul>
+  </div>
+
+  <div class="bg-card rounded-xl p-6 border border-slate-700 space-y-3">
+    <h3 class="font-bold text-white text-sm">Quick smoke test (5 minutes):</h3>
+    <ol class="text-xs text-slate-300 space-y-2 list-decimal list-inside">
+      <li>Run <code class="text-green-300">npm run dev</code>, go to localhost:3000</li>
+      <li>Select <strong>DPO</strong> role, click Enter workspace</li>
+      <li>Verify Overview loads with metric cards and tables</li>
+      <li>Click <strong>SARs</strong> → see register → click a row → drawer opens</li>
+      <li>Click <strong>＋ New matter</strong> → fill form → submit → verify it appears</li>
+      <li>Click through every sidebar view (SARs through Audits) — each should render without errors</li>
+      <li>Click <strong>ROPA</strong> → click "Add activity" → fill form → submit</li>
+      <li>Click <strong>Policies</strong> → verify policy cards render</li>
+      <li>Click <strong>AI</strong> → verify AI systems table renders</li>
+      <li>Click <strong>Assurance</strong> → verify programme panel renders</li>
+      <li>Use search box → type "SAR-2026" → verify filter works</li>
+      <li>Change academy dropdown → verify filter works</li>
+      <li>Click ↩ sign-out → verify returns to login page</li>
+      <li>Select <strong>Auditor</strong> role → verify "＋ New matter" button is hidden</li>
+      <li>Select <strong>Read only</strong> role → verify fewer nav items visible</li>
+    </ol>
+  </div>
+</section>
+
+<!-- LEVEL 3: FULL INTEGRATION -->
+<section class="space-y-6">
+  <h2 class="text-2xl font-bold text-purple-400 border-l-4 border-purple-500 pl-4">Level 3 — Full Integration (Appwrite Mode)</h2>
+
+  <div class="bg-card rounded-xl p-6 border border-slate-700 space-y-4">
+    <h3 class="font-bold text-white text-sm">Prerequisites:</h3>
+    <ul class="text-xs text-slate-300 space-y-1 list-disc list-inside">
+      <li>Appwrite project created (Cloud or self-hosted)</li>
+      <li>Run <code class="text-brand">npm run provision</code> — creates database + 33 tables + bucket</li>
+      <li>Run <code class="text-brand">npm run seed</code> — creates MAT, 5 academies, admin user</li>
+      <li>Copy all IDs from seed output into <code class="text-brand">.env.local</code></li>
+      <li>API key with database/storage/user scopes</li>
+    </ul>
+  </div>
+
+  <div class="bg-card rounded-xl p-6 border border-slate-700">
+    <pre class="text-sm font-mono text-slate-300 leading-relaxed">
+<span class="text-yellow-300">Start in Appwrite mode:</span>
+  npm run dev
+
+<span class="text-yellow-300">Login:</span>
+  Go to localhost:3000/login
+  Enter the admin email and password from seed script
+  Click "Sign in"
+
+<span class="text-yellow-300">Acceptance Checks (from docs/dev-handover.md):</span>
+
+<span class="text-green-300">Auth & Tenancy:</span>
+  ☐ DPO and MAT admin can see Federation-wide records
+  ☐ Academy lead sees ONLY assigned academy records
+  ☐ Auditor cannot create or advance a matter
+  ☐ Read-only user cannot mutate data
+  ☐ Cross-MAT reads and writes fail
+
+<span class="text-green-300">Workflows & Deadlines:</span>
+  ☐ SAR month-end deadlines clamp correctly (31 Jan → 28 Feb)
+  ☐ Breach deadlines cannot be paused
+  ☐ SAR extensions require approval record, max +2 months
+  ☐ FOI clarification pauses record start/resumption/rationale
+
+<span class="text-green-300">Audit & Documents:</span>
+  ☐ Audit events link to preceding event (hash chain)
+  ☐ Document upload stores file + checksum metadata
+  ☐ Failed metadata write removes the uploaded file
+  ☐ Duplicate notification idempotency keys = one send
+
+<span class="text-green-300">Infrastructure:</span>
+  ☐ /api/health returns OK without secrets
+  ☐ Microsoft 365 disabled does NOT affect login/cases/docs
+  ☐ Backup restoration tested in non-production environment
+    </pre>
+  </div>
+</section>
+
+<!-- CI PIPELINE -->
+<section class="space-y-6">
+  <h2 class="text-2xl font-bold text-white border-l-4 border-brand pl-4">CI Pipeline (What GitHub Runs Automatically)</h2>
+  <div class="bg-card rounded-xl p-6 border border-slate-700">
+    <p class="text-xs text-slate-400 mb-3">File: <code class="text-brand">.github/workflows/ci.yml</code> — runs on every push and PR.</p>
+    <pre class="text-sm font-mono text-slate-300 leading-relaxed">
+<span class="text-slate-500">Step 1:</span> npm ci --ignore-scripts       <span class="text-slate-500">← clean install</span>
+<span class="text-slate-500">Step 2:</span> npm audit --audit-level=high   <span class="text-slate-500">← security gate (fails on high vulns)</span>
+<span class="text-slate-500">Step 3:</span> npm run typecheck              <span class="text-slate-500">← tsc --noEmit (TypeScript errors)</span>
+<span class="text-slate-500">Step 4:</span> npm test                       <span class="text-slate-500">← all 20 test files (121 tests)</span>
+<span class="text-slate-500">Step 5:</span> npm run build                  <span class="text-slate-500">← production build (catches import errors)</span>
+
+<span class="text-red-300">ALL 5 steps must pass for CI to be green.</span>
+    </pre>
+  </div>
+</section>
+
+<!-- QUICK REFERENCE -->
+<section class="space-y-6">
+  <h2 class="text-2xl font-bold text-white border-l-4 border-brand pl-4">Quick Reference</h2>
+  <div class="overflow-x-auto">
+    <table class="w-full text-xs border-collapse">
+      <thead><tr class="border-b border-slate-700 bg-slate-800/50">
+        <th class="text-left py-2 px-3 text-slate-400">Command</th>
+        <th class="text-left py-2 px-3 text-slate-400">What It Does</th>
+        <th class="text-left py-2 px-3 text-slate-400">When to Use</th>
+      </tr></thead>
+      <tbody class="divide-y divide-slate-800">
+        <tr><td class="py-2 px-3 font-mono text-green-300">npm test</td><td class="py-2 px-3 text-slate-300">Runs all 20 Vitest test files (121 tests)</td><td class="py-2 px-3 text-slate-400">Every time you change code</td></tr>
+        <tr><td class="py-2 px-3 font-mono text-green-300">npx vitest run tests/file.test.ts</td><td class="py-2 px-3 text-slate-300">Runs one specific test file</td><td class="py-2 px-3 text-slate-400">When debugging one feature</td></tr>
+        <tr><td class="py-2 px-3 font-mono text-green-300">npx vitest --watch</td><td class="py-2 px-3 text-slate-300">Re-runs tests on every file save</td><td class="py-2 px-3 text-slate-400">During active development</td></tr>
+        <tr><td class="py-2 px-3 font-mono text-yellow-300">npm run typecheck</td><td class="py-2 px-3 text-slate-300">TypeScript type checking (no emit)</td><td class="py-2 px-3 text-slate-400">Before committing</td></tr>
+        <tr><td class="py-2 px-3 font-mono text-yellow-300">npm run build</td><td class="py-2 px-3 text-slate-300">Production build (catches import/route errors)</td><td class="py-2 px-3 text-slate-400">Before pushing to GitHub</td></tr>
+        <tr><td class="py-2 px-3 font-mono text-blue-300">npm run dev</td><td class="py-2 px-3 text-slate-300">Start dev server on localhost:3000</td><td class="py-2 px-3 text-slate-400">Manual browser testing</td></tr>
+        <tr><td class="py-2 px-3 font-mono text-purple-300">npm run provision</td><td class="py-2 px-3 text-slate-300">Creates Appwrite DB, tables, indexes, bucket</td><td class="py-2 px-3 text-slate-400">First time setup</td></tr>
+        <tr><td class="py-2 px-3 font-mono text-purple-300">npm run seed</td><td class="py-2 px-3 text-slate-300">Creates MAT, academies, admin user</td><td class="py-2 px-3 text-slate-400">After provisioning</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section class="flex justify-between">
+  <a href="10-dev-handover.html" class="inline-block bg-slate-700 hover:bg-slate-600 text-white font-bold px-6 py-3 rounded-xl transition">← Dev Handover</a>
+  <a href="11-acceptance-testing.html" class="inline-block bg-brand hover:bg-indigo-600 text-white font-bold px-6 py-3 rounded-xl transition">Acceptance Guide →</a>
+</section>
+
+</main>
+</body>
+</html>

@@ -1,5 +1,6 @@
 import IgosClient from "./igos-client";
+import { AuthGate } from "./auth-gate";
 
 export default function Home() {
-  return <IgosClient />;
+  return <AuthGate><IgosClient /></AuthGate>;
 }
