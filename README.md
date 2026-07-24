@@ -31,6 +31,10 @@ The stacked Stage 2 branch adds multi-party DPIA controls, Article 30 ROPA valid
 
 The stacked Stage 3 branch adds central actions, audit findings, risk treatment, evidence packs and academy assurance scorecards. See [Stage 3 assurance](docs/stage-3-assurance.md).
 
+## Stage 4 AI-assisted review
+
+The stacked Stage 4 branch adds matter-aware SAR/FOI document review, human-controlled redaction decisions and disclosure manifests. See [AI-assisted redaction](docs/ai-redaction.md).
+
 ## Run locally
 
 The default `demo` mode needs no external services:
@@ -58,3 +62,4 @@ Microsoft 365 remains optional and is disabled by default.
 - [Deployment and Dev handover](docs/dev-handover.md)
 - [Stage 2 governance](docs/stage-2-governance.md)
 - [Stage 3 assurance](docs/stage-3-assurance.md)
+- [AI-assisted redaction](docs/ai-redaction.md)
