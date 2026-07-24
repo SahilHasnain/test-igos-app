@@ -68,3 +68,4 @@ Microsoft 365 remains optional and is disabled by default.
 - [Stage 3 assurance](docs/stage-3-assurance.md)
 - [AI-assisted redaction](docs/ai-redaction.md)
 - [Stage 4B advanced governance](docs/stage-4b-advanced-governance.md)
+- [Release consolidation and deployment](docs/release-consolidation.md)
