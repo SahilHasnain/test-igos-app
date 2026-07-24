@@ -123,8 +123,8 @@ async function createMembership(matId: string, userId: string, academyIds: strin
   await databases.createDocument(databaseId, MEMBERSHIPS_TABLE, ID.unique(), {
     matId,
     userId,
-    academyIds: JSON.stringify(academyIds),
-    roles: JSON.stringify(["mat-admin", "dpo"]),
+    academyIds,
+    roles: ["mat-admin", "dpo"],
     status: "active",
   });
   console.log("  Admin membership created.");
