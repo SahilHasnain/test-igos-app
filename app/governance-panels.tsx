@@ -13,7 +13,7 @@ interface RopaActivity {
   id: string; matId: string; name: string; ownerUserId: string; purpose: string;
   dataSubjectCategories: readonly string[]; personalDataCategories: readonly string[];
   specialCategoryData: boolean; criminalOffenceData: boolean;
-  lawfulBasis: string; recipients: readonly string[]; processors: readonly string[];
+  lawfulBasis: string; specialCategoryCondition?: string; recipients: readonly string[]; processors: readonly string[];
   internationalTransfers: readonly { destination: string; mechanism: string; transferRiskAssessmentId?: string }[];
   retentionRule: string; securityMeasures: readonly string[];
   sourceSystems: readonly string[]; destinationSystems: readonly string[];
@@ -177,12 +177,15 @@ function RopaForm({ matId, academy, item, onSave, onClose }: { matId: string; ac
       </fieldset>
       <fieldset>
         <legend>Data subjects &amp; categories</legend>
-        <TagInputField label="Data subject categories" value={draft.dataSubjectCategories as string[]} onChange={v => set("dataSubjectCategories", v)} placeholder="e.g. Staff, Pupils, Parents" />
-        <TagInputField label="Personal data categories" value={draft.personalDataCategories as string[]} onChange={v => set("personalDataCategories", v)} placeholder="e.g. Name, Contact details, Health" />
+        <TagInputField label="Data subject categories" value={draft.dataSubjectCategories as string[]} onChange={v => set("dataSubjectCategories", v)} placeholder="e.g. Staff, Pupils, Parents" required />
+        <TagInputField label="Personal data categories" value={draft.personalDataCategories as string[]} onChange={v => set("personalDataCategories", v)} placeholder="e.g. Name, Contact details, Health" required />
         <div className="field-row">
           <CheckField label="Special category data" checked={draft.specialCategoryData} onChange={v => set("specialCategoryData", v)} />
           <CheckField label="Criminal offence data" checked={draft.criminalOffenceData} onChange={v => set("criminalOffenceData", v)} />
         </div>
+        {draft.specialCategoryData && (
+          <SelectField label="Article 9 condition" value={draft.specialCategoryCondition ?? ""} onChange={v => set("specialCategoryCondition", v)} options={["", "explicit-consent", "employment-social-protection", "vital-interests", "not-for-profit", "made-public", "legal-claims", "substantial-public-interest", "health-social-care", "public-health", "research-statistics"]} required />
+        )}
       </fieldset>
       <fieldset>
         <legend>Legal basis</legend>
@@ -193,8 +196,8 @@ function RopaForm({ matId, academy, item, onSave, onClose }: { matId: string; ac
       <fieldset>
         <legend>Retention &amp; Security</legend>
         <TextAreaField label="Retention rule" value={draft.retentionRule} onChange={v => set("retentionRule", v)} required placeholder="How long is data kept?" />
-        <TagInputField label="Security measures" value={draft.securityMeasures as string[]} onChange={v => set("securityMeasures", v)} placeholder="e.g. Access controls, Encryption" />
-        <TagInputField label="Source systems" value={draft.sourceSystems as string[]} onChange={v => set("sourceSystems", v)} placeholder="Where does data come from?" />
+        <TagInputField label="Security measures" value={draft.securityMeasures as string[]} onChange={v => set("securityMeasures", v)} placeholder="e.g. Access controls, Encryption" required />
+        <TagInputField label="Source systems" value={draft.sourceSystems as string[]} onChange={v => set("sourceSystems", v)} placeholder="Where does data come from?" required />
         <TagInputField label="Destination systems" value={draft.destinationSystems as string[]} onChange={v => set("destinationSystems", v)} placeholder="Where is data sent?" />
       </fieldset>
       <fieldset>
