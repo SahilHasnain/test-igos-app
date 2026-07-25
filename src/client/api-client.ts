@@ -100,6 +100,13 @@ export function createApiClient(authHeaders: RequestHeaders = {}, refreshJwt?: (
       save: (body: Record<string, unknown>) => req<{ assessment: unknown }>("/api/governance/suppliers", { method: "POST", body: JSON.stringify(body) }),
     },
 
+    events: {
+      list: (matId: string, matterId?: string) => {
+        const params = `matId=${matId}${matterId ? `&matterId=${matterId}` : ""}`;
+        return req<{ events: readonly unknown[] }>(`/api/events?${params}`);
+      },
+    },
+
     deadlines: {
       list: (matId: string, matterId: string) => req<{ adjustments: readonly unknown[] }>(`/api/deadlines?matId=${matId}&matterId=${matterId}`),
       save: (body: Record<string, unknown>) => req<{ adjustment: unknown }>("/api/deadlines", { method: "POST", body: JSON.stringify(body) }),

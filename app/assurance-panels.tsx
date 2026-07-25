@@ -348,26 +348,25 @@ export function ActionsPanel({ matId }: { matId: string }) {
       .catch(() => setLoading(false));
   }, [matId]);
 
-  const complete = useCallback(async (id: string) => {
-    await api.assurance.actions.save({ matId, id, status: "Complete" });
-    setActions(prev => prev.map(a => a.id === id ? { ...a, status: "Complete" } : a));
-  }, [matId, api]);
-
   if (loading) return <div className="panel"><p>Loading...</p></div>;
 
   return (
     <section className="panel register">
       <div className="panel-head"><div><p className="eyebrow">Cross-module tracking</p><h2>{actions.length} open actions</h2></div></div>
-      <div className="actions-list">
-        {actions.map(action => (
-          <button key={action.id} disabled={action.status === "Complete"}>
-            <span className="check" />
-            <div><strong>{action.title}</strong><small>{action.id} · {action.owner}</small></div>
-            <span className={`badge risk-${action.priority === "Critical" || action.priority === "High" ? "high" : "medium"}`}>{action.priority}</span>
-            <time>{action.due}</time>
-          </button>
-        ))}
-      </div>
+      {actions.length === 0 ? (
+        <div className="empty"><b>✓</b><h3>No actions yet</h3><p>Actions are generated from assurance findings, risk treatments, and governance workflows.</p></div>
+      ) : (
+        <div className="actions-list">
+          {actions.map(action => (
+            <button key={action.id} disabled={action.status === "Complete"}>
+              <span className="check" />
+              <div><strong>{action.title}</strong><small>{action.id} · {action.owner}</small></div>
+              <span className={`badge risk-${action.priority === "Critical" || action.priority === "High" ? "high" : "medium"}`}>{action.priority}</span>
+              <time>{action.due}</time>
+            </button>
+          ))}
+        </div>
+      )}
     </section>
   );
 }

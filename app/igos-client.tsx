@@ -67,6 +67,7 @@ export default function IgosClient() {
   const [showCreate, setShowCreate] = useState(false);
   const [matterError, setMatterError] = useState("");
   const [tab, setTab] = useState<"Summary" | "Tasks" | "Documents" | "Audit">("Summary");
+  const [auditEvents, setAuditEvents] = useState<{ id: string; matterId?: string; actorUserId: string; action: string; occurredAt: string; metadata?: Record<string, unknown> }[]>([]);
 
   const isAppwrite = !!auth.jwt;
   const matId = auth.matId;
@@ -87,6 +88,14 @@ export default function IgosClient() {
         setMatterError(cause instanceof Error ? cause.message : "Could not load matters");
       });
   }, [isAppwrite, matId, api]);
+
+  useEffect(() => {
+    if (view !== "Audit" || !isAppwrite || !matId) return;
+    const matterId = selected?._serverId ?? undefined;
+    api.events.list(matId, matterId)
+      .then((res) => setAuditEvents(res.events as typeof auditEvents))
+      .catch(() => setAuditEvents([]));
+  }, [view, isAppwrite, matId, selected?._serverId, api]);
 
   const role: DisplayRole = roleLabelMap[auth.roles[0]] ?? "Read only";
 
@@ -221,7 +230,7 @@ export default function IgosClient() {
         {view === "Risks" && <RiskRegisterPanel role={role} matId={governanceMatId} />}
         {view === "Audits" && <AuditProgrammePanel matId={governanceMatId} />}
         {view === "Actions" && <ActionsPanel matId={governanceMatId} />}
-        {view === "Audit" && <section className="panel register"><div className="panel-head"><div><p className="eyebrow">Immutable evidence</p><h2>Audit activity</h2></div></div><div className="timeline large">{matters.flatMap((matter) => matter.activity.slice(0, 2).map((event, index) => <button key={`${matter.id}-${index}`} onClick={() => setSelected(matter)}><span>{index ? "SYS" : matter.type}</span><div><strong>{event}</strong><small>{matter.id} · {matter.owner} · {matter.academy}</small></div><time>{index ? "Yesterday" : "Today"}</time></button>))}</div></section>}
+        {view === "Audit" && <section className="panel register"><div className="panel-head"><div><p className="eyebrow">Immutable evidence</p><h2>Audit activity</h2></div></div><div className="timeline large">{auditEvents.length === 0 && <div className="empty"><h3>No audit events</h3><p>{isAppwrite ? "Events are recorded as actions are performed across the system." : "Audit events are not available in demo mode."}</p></div>}{auditEvents.map((event) => <div className="audit-row" key={event.id}><span>{event.action.split(":")[0] ?? "SYS"}</span><div><strong>{event.action}</strong><small>{event.actorUserId} · {event.occurredAt ? new Date(event.occurredAt).toLocaleString("en-GB") : ""}</small></div><time>{event.occurredAt ? new Date(event.occurredAt).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" }) : ""}</time></div>)}</div></section>}
       </section>
     </main>
 
