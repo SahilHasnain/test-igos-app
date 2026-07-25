@@ -98,7 +98,7 @@ export class AppwriteRedactionSuggestionRepository implements RedactionSuggestio
       excerptHash: suggestion.excerptHash,
       explanation: suggestion.explanation,
       legalGround: suggestion.legalGround ?? null,
-      contextualFactors: JSON.stringify(suggestion.contextualFactors),
+      contextualFactors: suggestion.contextualFactors,
       decision: suggestion.decision,
       decidedByUserId: suggestion.decidedByUserId ?? null,
       decidedAt: suggestion.decidedAt ?? null,

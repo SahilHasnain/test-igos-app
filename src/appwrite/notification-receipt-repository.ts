@@ -52,7 +52,7 @@ export class AppwriteNotificationReceiptStore implements NotificationReceiptStor
         provider: receipt.provider,
         externalId: receipt.externalId,
         purpose: receipt.purpose,
-        recipients: JSON.stringify(receipt.recipients),
+        recipients: receipt.recipients,
         sentAt: receipt.sentAt,
         idempotencyKey: receipt.idempotencyKey,
       }

@@ -77,7 +77,7 @@ export class AppwriteAuditProgrammeRepository implements AuditProgrammeRepositor
       matId: scope.matId,
       title: programme.title,
       scope: programme.scope,
-      academyIds: JSON.stringify(programme.academyIds),
+      academyIds: programme.academyIds,
       leadAuditorUserId: programme.leadAuditorUserId,
       plannedStartAt: programme.plannedStartAt,
       plannedEndAt: programme.plannedEndAt,

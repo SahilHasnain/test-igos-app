@@ -97,7 +97,7 @@ export class AppwriteAssuranceActionRepository implements AssuranceActionReposit
       priority: action.priority,
       status: action.status,
       dueAt: action.dueAt,
-      evidenceDocumentIds: JSON.stringify(action.evidenceDocumentIds),
+      evidenceDocumentIds: action.evidenceDocumentIds,
       completedAt: action.completedAt ?? null,
       completedByUserId: action.completedByUserId ?? null,
       closureRationale: action.closureRationale ?? null,

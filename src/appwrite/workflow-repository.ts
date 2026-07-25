@@ -38,7 +38,7 @@ export class AppwriteWorkflowRepository implements WorkflowRepository {
         stage: workflow.stage,
         assignedUserId: workflow.assignedUserId,
         dueAt: workflow.dueAt ?? null,
-        completedStages: JSON.stringify(workflow.completedStages),
+        completedStages: workflow.completedStages,
         version: 1,
       }
     );
@@ -97,7 +97,7 @@ export class AppwriteWorkflowRepository implements WorkflowRepository {
 
     const updates: Record<string, unknown> = {
       stage: to,
-      completedStages: JSON.stringify(completedStages),
+      completedStages: completedStages as string[],
       version: expectedVersion + 1,
     };
     if (assignedUserId !== undefined) {

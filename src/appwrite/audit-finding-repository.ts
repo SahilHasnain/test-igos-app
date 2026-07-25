@@ -106,7 +106,7 @@ export class AppwriteAuditFindingRepository implements AuditFindingRepository {
       status: finding.status,
       verifiedByUserId: finding.verifiedByUserId ?? null,
       verifiedAt: finding.verifiedAt ?? null,
-      evidenceDocumentIds: JSON.stringify(finding.evidenceDocumentIds),
+      evidenceDocumentIds: finding.evidenceDocumentIds,
     };
     packOverflow(data, OVERFLOW_KEYS);
 

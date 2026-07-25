@@ -109,7 +109,7 @@ export class AppwritePolicyRepository implements PolicyRepository {
 
     const data = {
       matId: scope.matId,
-      academyIds: JSON.stringify(policy.academyIds),
+      academyIds: policy.academyIds,
       title: policy.title,
       ownerUserId: policy.ownerUserId,
       versionLabel: policy.version,
@@ -192,7 +192,7 @@ export class AppwritePolicyRepository implements PolicyRepository {
       policyId: exception.policyId,
       requestedByUserId: exception.requestedByUserId,
       rationale: exception.rationale,
-      compensatingControls: JSON.stringify(exception.compensatingControls),
+      compensatingControls: exception.compensatingControls,
       expiresAt: exception.expiresAt,
       approvedByUserId: exception.approvedByUserId ?? null,
       approvedAt: exception.approvedAt ?? null,

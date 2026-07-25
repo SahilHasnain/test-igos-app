@@ -108,7 +108,7 @@ export class AppwriteAiSystemRepository implements AiSystemRepository {
       trainingDataDescription: system.trainingDataDescription ?? null,
       dpiaId: system.dpiaId ?? null,
       supplierAssessmentId: system.supplierAssessmentId ?? null,
-      monitoringMetrics: JSON.stringify(system.monitoringMetrics),
+      monitoringMetrics: system.monitoringMetrics,
       reviewDueAt: system.reviewDueAt,
       approvedByUserId: system.approvedByUserId ?? null,
       approvalRationale: system.approvalRationale ?? null,
