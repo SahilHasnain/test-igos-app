@@ -59,7 +59,15 @@ export function AssuranceOverviewPanel({ role, matId }: { role: Role; matId: str
       api.assurance.findings.list(matId),
       api.assurance.risks.list(matId),
     ]).then(([a, f, r]) => {
-      setActions(a.actions as Action[]);
+      setActions((a.actions as Record<string, unknown>[]).map(x => ({
+        id: String(x.id ?? ""),
+        title: String(x.title ?? ""),
+        academy: String(x.academyId ?? "Federation-wide"),
+        owner: String(x.ownerUserId ?? "Unassigned"),
+        due: x.dueAt ? new Date(String(x.dueAt)).toLocaleDateString("en-GB") : "Not set",
+        priority: String(x.priority ?? "Medium"),
+        status: String(x.status ?? "open"),
+      })));
       setFindings(f.findings as Finding[]);
       setRisks(r.risks as Risk[]);
       setLoading(false);
@@ -324,7 +332,19 @@ export function ActionsPanel({ matId }: { matId: string }) {
 
   useEffect(() => {
     api.assurance.actions.list(matId)
-      .then(r => { setActions(r.actions as Action[]); setLoading(false); })
+      .then(r => {
+        const mapped = (r.actions as Record<string, unknown>[]).map(a => ({
+          id: String(a.id ?? ""),
+          title: String(a.title ?? ""),
+          academy: String(a.academyId ?? "Federation-wide"),
+          owner: String(a.ownerUserId ?? "Unassigned"),
+          due: a.dueAt ? new Date(String(a.dueAt)).toLocaleDateString("en-GB") : "Not set",
+          priority: String(a.priority ?? "Medium"),
+          status: String(a.status ?? "open"),
+        }));
+        setActions(mapped);
+        setLoading(false);
+      })
       .catch(() => setLoading(false));
   }, [matId]);
 
