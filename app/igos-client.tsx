@@ -65,6 +65,7 @@ export default function IgosClient() {
   const [matters, setMatters] = useState<DemoMatter[]>([]);
   const [selected, setSelected] = useState<DemoMatter | null>(null);
   const [showCreate, setShowCreate] = useState(false);
+  const [matterError, setMatterError] = useState("");
   const [tab, setTab] = useState<"Summary" | "Tasks" | "Documents" | "Audit">("Summary");
 
   const isAppwrite = !!auth.jwt;
@@ -75,12 +76,16 @@ export default function IgosClient() {
       import("../src/demo/ui-data").then((mod) => setMatters(mod.initialMatters));
       return;
     }
-    api.matters.list()
+    setMatterError("");
+    api.matters.list(matId)
       .then((res) => {
         const mapped = (res.matters as Record<string, unknown>[]).map(mapApiMatter);
         setMatters(mapped);
       })
-      .catch(() => {});
+      .catch((cause) => {
+        console.error("Could not load matters", cause);
+        setMatterError(cause instanceof Error ? cause.message : "Could not load matters");
+      });
   }, [isAppwrite, matId, api]);
 
   const role: DisplayRole = roleLabelMap[auth.roles[0]] ?? "Read only";
@@ -133,7 +138,11 @@ export default function IgosClient() {
         setShowCreate(false);
         setSelected(mapped);
         return;
-      } catch { /* fall through to local creation */ }
+      } catch (cause) {
+        console.error("Could not create matter", cause);
+        setMatterError(cause instanceof Error ? cause.message : "Could not create matter");
+        return;
+      }
     }
 
     const count = matters.filter((item) => item.type === type).length + 1;
@@ -189,6 +198,7 @@ export default function IgosClient() {
 
       <section className="content">
         {!isAppwrite && <div className="notice"><span>Placeholder environment</span> Records are stored in this browser session. Connect Appwrite when your project credentials are ready.</div>}
+        {matterError && <div className="notice risk-high"><span>Matter persistence</span> {matterError}</div>}
         {view === "Overview" && <>
           <div className="metric-grid">{metrics.map(([label, value, hint], i) => <article className="metric" key={String(label)}><div className={`metric-icon tone-${i}`}>{["◫", "◎", "◇", "!"][i]}</div><p>{label}</p><strong>{value}</strong><small>{hint}</small></article>)}</div>
           <div className="dashboard-grid">

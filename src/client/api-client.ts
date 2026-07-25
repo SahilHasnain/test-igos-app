@@ -29,7 +29,7 @@ export function createApiClient(authHeaders: RequestHeaders = {}, refreshJwt?: (
   }
   return {
     matters: {
-      list: () => req<{ matters: readonly unknown[] }>("/api/matters"),
+      list: (matId: string) => req<{ matters: readonly unknown[] }>(`/api/matters?matId=${encodeURIComponent(matId)}`),
       create: (body: Record<string, unknown>) => req<{ matter: unknown }>("/api/matters", { method: "POST", body: JSON.stringify(body) }),
       get: (matId: string) => req<{ matter: unknown }>(`/api/matters/${matId}`),
       patch: (matId: string, body: Record<string, unknown>) => req<{ matter: unknown }>(`/api/matters/${matId}`, { method: "PATCH", body: JSON.stringify(body) }),
