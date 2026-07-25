@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>IGOS — Actions System Explained</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+tailwind.config={theme:{extend:{colors:{brand:'#6366f1',dark:'#0f172a',card:'#1e293b'}}}}
+</script>
+</head>
+<body class="bg-dark text-slate-200 min-h-screen font-sans">
+
+<nav class="fixed top-0 inset-x-0 z-50 bg-dark/80 backdrop-blur border-b border-slate-700 px-6 py-3 flex items-center justify-between">
+  <span class="font-bold text-brand text-lg">IGOS Learning</span>
+  <div class="flex gap-3 text-sm">
+    <a href="12-manual-e2e-testing.html" class="hover:text-white text-slate-400">← Prev</a>
+    <a href="#" class="text-brand font-bold border-b border-brand">13 Actions</a>
+  </div>
+</nav>
+
+<main class="max-w-5xl mx-auto px-6 pt-24 pb-20 space-y-16">
+
+<!-- HERO -->
+<section class="text-center space-y-4">
+  <h1 class="text-4xl font-extrabold text-white">Actions <span class="text-brand">— Cross-Module Tracking</span></h1>
+  <p class="text-lg text-slate-400 max-w-2xl mx-auto">Actions are remediation tasks generated from findings, risks, DPIAs, and policies. They track what needs to be done, who owns it, and whether it's complete.</p>
+</section>
+
+<!-- WHAT IS AN ACTION -->
+<section class="space-y-6">
+  <h2 class="text-2xl font-bold text-white border-l-4 border-brand pl-4">What is an Action?</h2>
+  <div class="bg-card rounded-xl p-6 border border-slate-700 space-y-4">
+    <p>An <strong class="text-white">Action</strong> is a tracked remediation task that says: <em class="text-slate-400">"Someone must do this thing by this date."</em></p>
+    <p>It is the <strong class="text-white">output</strong> of the assurance and governance process. When you identify a gap — a finding, a risk, a policy exception — you raise an action to track its resolution.</p>
+
+    <div class="grid md:grid-cols-2 gap-4 mt-4">
+      <div class="bg-slate-800 rounded-lg p-4 space-y-2">
+        <h3 class="font-bold text-brand">Action Fields</h3>
+        <table class="text-sm w-full">
+          <tr><td class="text-slate-400 pr-4">id</td><td><code class="text-green-400">ACT-123456</code> — unique reference</td></tr>
+          <tr><td class="text-slate-400 pr-4">title</td><td>What needs to be done</td></tr>
+          <tr><td class="text-slate-400 pr-4">description</td><td>Full explanation</td></tr>
+          <tr><td class="text-slate-400 pr-4">ownerUserId</td><td>Who is responsible</td></tr>
+          <tr><td class="text-slate-400 pr-4">priority</td><td>low / medium / high / critical</td></tr>
+          <tr><td class="text-slate-400 pr-4">status</td><td>open / in-progress / blocked / awaiting-evidence / complete / cancelled</td></tr>
+          <tr><td class="text-slate-400 pr-4">dueAt</td><td>Deadline date</td></tr>
+          <tr><td class="text-slate-400 pr-4">sourceType</td><td>Where it came from (see below)</td></tr>
+          <tr><td class="text-slate-400 pr-4">sourceId</td><td>Link back to the originating record</td></tr>
+          <tr><td class="text-slate-400 pr-4">evidenceDocumentIds</td><td>Proof of completion (required to close)</td></tr>
+        </table>
+      </div>
+      <div class="bg-slate-800 rounded-lg p-4 space-y-2">
+        <h3 class="font-bold text-brand">Lifecycle</h3>
+        <div class="space-y-3 text-sm">
+          <div class="flex items-start gap-3">
+            <span class="bg-green-500/20 text-green-400 px-2 py-0.5 rounded text-xs font-bold mt-0.5">1</span>
+            <div><strong class="text-white">Created</strong> — Action is raised from a source (finding, risk, manual entry)</div>
+          </div>
+          <div class="flex items-start gap-3">
+            <span class="bg-yellow-500/20 text-yellow-400 px-2 py-0.5 rounded text-xs font-bold mt-0.5">2</span>
+            <div><strong class="text-white">In Progress</strong> — Owner is working on it</div>
+          </div>
+          <div class="flex items-start gap-3">
+            <span class="bg-orange-500/20 text-orange-400 px-2 py-0.5 rounded text-xs font-bold mt-0.5">3</span>
+            <div><strong class="text-white">Awaiting Evidence</strong> — Work done, waiting for proof</div>
+          </div>
+          <div class="flex items-start gap-3">
+            <span class="bg-blue-500/20 text-blue-400 px-2 py-0.5 rounded text-xs font-bold mt-0.5">4</span>
+            <div><strong class="text-white">Complete</strong> — Evidence attached, rationale recorded, action closed</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- WHERE ACTIONS COME FROM -->
+<section class="space-y-6">
+  <h2 class="text-2xl font-bold text-white border-l-4 border-brand pl-4">Where Actions Come From (sourceType)</h2>
+  <div class="grid md:grid-cols-3 gap-4">
+    <div class="bg-card rounded-xl p-5 border border-slate-700 space-y-2">
+      <h3 class="font-bold text-white">audit-finding</h3>
+      <p class="text-sm text-slate-400">An audit identified a gap. E.g. "Encryption at rest not configured" → action to fix it.</p>
+      <p class="text-xs text-slate-500">Created from: Audit Findings panel</p>
+    </div>
+    <div class="bg-card rounded-xl p-5 border border-slate-700 space-y-2">
+      <h3 class="font-bold text-white">risk-treatment</h3>
+      <p class="text-sm text-slate-400">A risk treatment plan says "we'll do X by Y date" → that's an action.</p>
+      <p class="text-xs text-slate-500">Created from: Risk Register (treatments field)</p>
+    </div>
+    <div class="bg-card rounded-xl p-5 border border-slate-700 space-y-2">
+      <h3 class="font-bold text-white">incident</h3>
+      <p class="text-sm text-slate-400">A data breach or security incident requires follow-up actions.</p>
+      <p class="text-xs text-slate-500">Created from: Breach workflow</p>
+    </div>
+    <div class="bg-card rounded-xl p-5 border border-slate-700 space-y-2">
+      <h3 class="font-bold text-white">dpia</h3>
+      <p class="text-sm text-slate-400">DPIA identified mitigations that need implementing → tracked as actions.</p>
+      <p class="text-xs text-slate-500">Created from: DPIA risk register</p>
+    </div>
+    <div class="bg-card rounded-xl p-5 border border-slate-700 space-y-2">
+      <h3 class="font-bold text-white">policy</h3>
+      <p class="text-sm text-slate-400">A policy exception or non-compliance triggers a remediation action.</p>
+      <p class="text-xs text-slate-500">Created from: Policy exceptions</p>
+    </div>
+    <div class="bg-card rounded-xl p-5 border border-slate-700 space-y-2">
+      <h3 class="font-bold text-white">manual</h3>
+      <p class="text-sm text-slate-400">DPO or MAT admin creates an action directly — e.g. "Schedule annual IG review".</p>
+      <p class="text-xs text-slate-500">Created from: Actions panel "New action" button</p>
+    </div>
+  </div>
+</section>
+
+<!-- HOW IT CONNECTS -->
+<section class="space-y-6">
+  <h2 class="text-2xl font-bold text-white border-l-4 border-brand pl-4">How It Connects to Other Panels</h2>
+  <div class="bg-card rounded-xl p-6 border border-slate-700">
+    <pre class="text-sm text-slate-300 overflow-x-auto">
+┌─────────────────┐     ┌─────────────────┐     ┌─────────────────┐
+│   Risk Register  │     │  Audit Findings  │     │   DPIA Risks     │
+│   (Risks panel)  │     │  (Audits panel)  │     │  (DPIA panel)    │
+└────────┬────────┘     └────────┬────────┘     └────────┬────────┘
+         │ treatment              │ root-cause             │ mitigation
+         ▼                        ▼                       ▼
+    ┌──────────────────────────────────────────────────────────────┐
+    │                    ACTIONS (Actions panel)                    │
+    │                                                              │
+    │  ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌──────────┐    │
+    │  │  Open     │→ │Progress │→ │Awaiting  │→ │ Complete │    │
+    │  │          │  │          │  │ Evidence │  │          │    │
+    │  └──────────┘  └──────────┘  └──────────┘  └──────────┘    │
+    │                                                              │
+    │  Completion requires: evidence documents + rationale         │
+    └──────────────────────────────────────────────────────────────┘
+         │
+         ▼
+    ┌─────────────────┐
+    │  Assurance       │
+    │  Overview panel  │  ← shows top-priority open actions
+    └─────────────────┘
+    </pre>
+  </div>
+</section>
+
+<!-- CURRENT STATE -->
+<section class="space-y-6">
+  <h2 class="text-2xl font-bold text-white border-l-4 border-brand pl-4">Current State in IGOS</h2>
+  <div class="bg-card rounded-xl p-6 border border-slate-700 space-y-4">
+    <div class="grid md:grid-cols-2 gap-6">
+      <div class="space-y-3">
+        <h3 class="font-bold text-green-400">What works</h3>
+        <ul class="text-sm space-y-1">
+          <li>Assurance Actions API — create, list, save</li>
+          <li>Actions panel in sidebar — fetches from API, shows list</li>
+          <li>Assurance Overview — shows priority actions with complete button</li>
+          <li>Appwrite persistence — actions survive page refresh</li>
+        </ul>
+      </div>
+      <div class="space-y-3">
+        <h3 class="font-bold text-yellow-400">What's incomplete</h3>
+        <ul class="text-sm space-y-1">
+          <li>No "New action" button — manual creation UI not built (domain model supports sourceType: "manual")</li>
+          <li>Complete button needs evidence docs (not wired to storage)</li>
+          <li>Actions don't show in individual matter detail drawer</li>
+          <li>No filtering by priority, status, or owner</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- NAVIGATION -->
+<section class="flex justify-between items-center pt-8 border-t border-slate-700">
+  <a href="12-manual-e2e-testing.html" class="text-brand hover:underline">← 12 Manual E2E Testing</a>
+  <span class="text-slate-600 text-sm">End of learning modules</span>
+</section>
+
+</main>
+</body>
+</html>
