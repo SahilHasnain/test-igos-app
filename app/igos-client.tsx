@@ -202,7 +202,7 @@ export default function IgosClient() {
         {view === "DPIA" && <DpiaProgressPanel role={role} matId={governanceMatId} />}
         {view === "ROPA" && <RopaPanel academy={academy} role={role} matId={governanceMatId} />}
         {view === "Policies" && <PolicyPanel role={role} matId={governanceMatId} />}
-        {view === "Redaction" && <RedactionWorkspace role={role} matId={governanceMatId} />}
+        {view === "Redaction" && <RedactionWorkspace role={role} matId={governanceMatId} matters={matters} />}
         {view === "AI" && <AiGovernancePanel role={role} matId={governanceMatId} />}
         {view === "Assets" && <AssetRegisterPanel role={role} matId={governanceMatId} />}
         {view === "Records" && <RecordsManagementPanel role={role} matId={governanceMatId} />}

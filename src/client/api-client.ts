@@ -108,9 +108,10 @@ export function createApiClient(authHeaders: RequestHeaders = {}, refreshJwt?: (
     redaction: {
       list: (matId: string, matterId: string, documentId?: string) => {
         const params = `matId=${matId}&matterId=${matterId}${documentId ? `&documentId=${documentId}` : ""}`;
-        return req<{ suggestions: readonly unknown[]; analysisRuns: readonly unknown[] }>(`/api/redaction?${params}`);
+        return req<{ suggestions: readonly unknown[]; analysisRuns: readonly unknown[]; manifests: readonly unknown[] }>(`/api/redaction?${params}`);
       },
       decide: (body: Record<string, unknown>) => req<{ suggestion: unknown }>("/api/redaction", { method: "POST", body: JSON.stringify({ ...body, matId: body.matId, action: "decide" }) }),
+      generateManifest: (body: Record<string, unknown>) => req<{ manifest: unknown }>("/api/redaction", { method: "POST", body: JSON.stringify({ ...body, action: "generate-manifest" }) }),
       saveAnalysis: (body: Record<string, unknown>) => req<{ analysis: unknown }>("/api/redaction", { method: "POST", body: JSON.stringify({ ...body, action: "save-analysis" }) }),
       saveSuggestion: (body: Record<string, unknown>) => req<{ suggestion: unknown }>("/api/redaction", { method: "POST", body: JSON.stringify({ ...body, action: "save-suggestion" }) }),
       saveManifest: (body: Record<string, unknown>) => req<{ manifest: unknown }>("/api/redaction", { method: "POST", body: JSON.stringify({ ...body, action: "save-manifest" }) }),

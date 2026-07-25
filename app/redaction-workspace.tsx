@@ -1,76 +1,175 @@
 "use client";
 
-import { useEffect, useMemo, useState, useCallback } from "react";
+import { FormEvent, useCallback, useEffect, useMemo, useState } from "react";
 import { useApi } from "../src/client/use-api";
+import type { DemoMatter } from "../src/demo/ui-data";
 
 type Role = "DPO" | "MAT administrator" | "Case manager" | "Academy lead" | "Auditor" | "Read only";
-type Decision = "Pending" | "Accepted" | "Rejected" | "Escalated";
+type Decision = "accepted" | "rejected" | "modified" | "escalated";
 
 interface Suggestion {
   id: string;
-  page: number;
+  matterId: string;
+  documentId: string;
+  documentVersion: number;
+  location?: { page?: number };
   category: string;
-  treatment: string;
+  suggestedTreatment: string;
+  finalTreatment?: string;
   confidence: number;
-  text: string;
-  reason: string;
-  ground: string;
-  decision: Decision;
-  sensitive: boolean;
+  explanation: string;
+  legalGround?: string;
+  decision: "pending" | Decision;
+  reviewerRationale?: string;
 }
 
-const fallbackSuggestions: Suggestion[] = [
-  { id: "SUG-001", page: 2, category: "Third-party personal data", treatment: "Redact", confidence: 96, text: "[third-party email address]", reason: "Email address may identify a third party not covered by the request.", ground: "DPA 2018 third-party personal data review", decision: "Pending", sensitive: false },
-  { id: "SUG-002", page: 4, category: "Safeguarding-sensitive", treatment: "Escalate", confidence: 82, text: "[safeguarding contextual passage]", reason: "Disclosure could reveal risk-of-harm information requiring contextual review.", ground: "Safeguarding and third-party rights assessment", decision: "Escalated", sensitive: true },
-  { id: "SUG-003", page: 7, category: "Potential privilege", treatment: "Escalate", confidence: 78, text: "[potential legal advice passage]", reason: "The passage may contain confidential legal advice.", ground: "DPA 2018 Schedule 2 legal professional privilege restriction", decision: "Pending", sensitive: true },
-  { id: "SUG-004", page: 9, category: "Out of scope", treatment: "Redact", confidence: 71, text: "[record outside requested date range]", reason: "The record appears outside the SAR date range; low-confidence review required.", ground: "Request scope", decision: "Pending", sensitive: false },
-];
+interface Manifest {
+  id: string;
+  generatedAt: string;
+  generatedByUserId: string;
+  manifestHash: string;
+  redactedCopyDocumentId: string;
+}
 
-export function RedactionWorkspace({ role, matId }: { role: Role; matId: string }) {
+const sensitiveCategories = new Set(["child-family-information", "legal-professional-privilege", "safeguarding-sensitive"]);
+
+export function RedactionWorkspace({ role, matId, matters }: { role: Role; matId: string; matters: readonly DemoMatter[] }) {
   const api = useApi();
+  const reviewMatters = useMemo(() => matters.filter((matter) => matter.type === "SAR" || matter.type === "FOI"), [matters]);
+  const [matterId, setMatterId] = useState(reviewMatters[0]?._serverId ?? reviewMatters[0]?.id ?? "");
+  const [documentId, setDocumentId] = useState("");
   const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
-  const [selectedPage, setSelectedPage] = useState(2);
+  const [manifests, setManifests] = useState<Manifest[]>([]);
+  const [rationales, setRationales] = useState<Record<string, string>>({});
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
   const canDecide = ["DPO", "MAT administrator", "Case manager"].includes(role);
+  const canGenerate = ["DPO", "MAT administrator"].includes(role);
 
   useEffect(() => {
-    api.redaction.list(matId, matId)
+    if (!matterId && reviewMatters[0]) setMatterId(reviewMatters[0]._serverId ?? reviewMatters[0].id);
+  }, [matterId, reviewMatters]);
+
+  useEffect(() => {
+    if (!matterId || !documentId.trim()) {
+      setSuggestions([]);
+      setManifests([]);
+      return;
+    }
+    setLoading(true);
+    setError("");
+    api.redaction.list(matId, matterId, documentId.trim())
       .then((res) => {
-        const items = (res.suggestions ?? []) as Record<string, unknown>[];
-        if (items.length) {
-          setSuggestions(items.map((s) => ({
-            id: String(s.id ?? ""),
-            page: Number(s.page ?? 1),
-            category: String(s.category ?? ""),
-            treatment: String(s.treatment ?? "Redact"),
-            confidence: Number(s.confidence ?? 0),
-            text: String(s.text ?? ""),
-            reason: String(s.reason ?? ""),
-            ground: String(s.ground ?? ""),
-            decision: (String(s.decision ?? "Pending") as Decision),
-            sensitive: Boolean(s.sensitive),
-          })));
-        } else {
-          setSuggestions(fallbackSuggestions);
-        }
+        setSuggestions((res.suggestions ?? []) as Suggestion[]);
+        setManifests((res.manifests ?? []) as Manifest[]);
       })
-      .catch(() => setSuggestions(fallbackSuggestions));
-  }, [matId, api]);
+      .catch((cause) => setError(cause instanceof Error ? cause.message : "Could not load redaction data"))
+      .finally(() => setLoading(false));
+  }, [api, matId, matterId, documentId]);
 
-  const decide = useCallback(async (id: string, decision: Decision) => {
-    setSuggestions((items) => items.map((item) => item.id === id ? { ...item, decision } : item));
-    try {
-      await api.redaction.decide({ matId, id, decision });
-    } catch { /* optimistic update */ }
-  }, [matId, api]);
+  const decide = useCallback(async (suggestion: Suggestion, decision: Decision) => {
+    const reviewerRationale = rationales[suggestion.id]?.trim();
+    if (!reviewerRationale) {
+      setError("A reviewer rationale is required before recording a redaction decision.");
+      return;
+    }
+    setError("");
+    const finalTreatment = decision === "modified" ? "redact" : undefined;
+    const res = await api.redaction.decide({ matId, id: suggestion.id, decision, reviewerRationale, finalTreatment });
+    setSuggestions((items) => items.map((item) => item.id === suggestion.id ? res.suggestion as Suggestion : item));
+  }, [api, matId, rationales]);
 
-  const pending = suggestions.filter((item) => item.decision === "Pending" || item.decision === "Escalated").length;
-  const pageSuggestions = useMemo(() => suggestions.filter((item) => item.page === selectedPage), [selectedPage, suggestions]);
+  const saveSecondReview = useCallback(async (suggestion: Suggestion) => {
+    const rationale = rationales[suggestion.id]?.trim();
+    if (!rationale) {
+      setError("A second-review rationale is required.");
+      return;
+    }
+    await api.redaction.saveReview({
+      matId,
+      id: `review-${suggestion.id}-${Date.now()}`,
+      matterId: suggestion.matterId,
+      suggestionId: suggestion.id,
+      reviewerUserId: "current-user",
+      decision: "approved",
+      rationale,
+      reviewedAt: new Date().toISOString(),
+    });
+    setError("Second review recorded. You can now generate the manifest if all decisions are complete.");
+  }, [api, matId, rationales]);
+
+  const generateManifest = useCallback(async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    const data = new FormData(event.currentTarget);
+    setError("");
+    const res = await api.redaction.generateManifest({
+      matId,
+      matterId,
+      documentId: documentId.trim(),
+      documentVersion: Number(data.get("documentVersion") || suggestions[0]?.documentVersion || 1),
+      originalChecksum: String(data.get("originalChecksum") || ""),
+      redactedCopyDocumentId: String(data.get("redactedCopyDocumentId") || ""),
+      redactedCopyChecksum: String(data.get("redactedCopyChecksum") || ""),
+    });
+    setManifests((items) => [res.manifest as Manifest, ...items]);
+  }, [api, documentId, matId, matterId, suggestions]);
+
+  const unresolved = suggestions.filter((item) => item.decision === "pending" || item.decision === "escalated").length;
+  const selectedMatter = reviewMatters.find((matter) => (matter._serverId ?? matter.id) === matterId);
 
   return <div className="redaction-shell">
-    <section className="panel redaction-head"><div><p className="eyebrow">{matId}</p><h2>AI-assisted document review</h2><p>Matter context: document review and redaction workspace</p></div><div className="redaction-summary"><span><b>{suggestions.length}</b> suggestions</span><span className="risk-high"><b>{pending}</b> unresolved</span><button className="primary" disabled={pending > 0 || !canDecide}>Generate disclosure copy</button></div></section>
-    <div className="redaction-grid"><aside className="panel document-list" aria-label="SAR documents"><div className="panel-head"><div><p className="eyebrow">Evidence set</p><h2>Documents</h2></div></div>{["Safeguarding chronology.pdf", "Principal correspondence.pdf", "Meeting notes.docx", "Legal advice email.pdf"].map((name, index) => <button key={name} className={index === 0 ? "active" : ""}><span>▣</span><div><strong>{name}</strong><small>{index === 0 ? "12 pages · 4 suggestions" : `${index + 3} pages · ${index} suggestions`}</small></div></button>)}</aside>
-      <section className="panel document-preview" aria-label="Document preview"><header><button aria-label="Previous page" onClick={() => setSelectedPage((page) => Math.max(1, page - 1))}>←</button><strong>Page {selectedPage} of 12</strong><button aria-label="Next page" onClick={() => setSelectedPage((page) => Math.min(12, page + 1))}>→</button></header><div className="paper"><p>Safeguarding chronology — contextual extract</p><p>This protected preview represents the document review surface. Original documents remain unchanged in secure storage.</p>{pageSuggestions.map((item) => <mark key={item.id} className={item.sensitive ? "mark-sensitive" : ""}>{item.text}<span>{item.treatment} · {item.confidence}%</span></mark>)}{!pageSuggestions.length && <p className="no-suggestions">No suggestions detected on this page. Human review is still required.</p>}</div></section>
-      <aside className="panel suggestion-panel" aria-label="Redaction suggestions"><div className="panel-head"><div><p className="eyebrow">Human decision required</p><h2>Suggestions</h2></div></div>{suggestions.map((item) => <article key={item.id} className={item.decision !== "Pending" ? "decided" : ""}><div className="suggestion-title"><span className={`confidence ${item.confidence < 72 ? "low" : item.sensitive ? "sensitive" : ""}`}>{item.confidence}%</span><div><strong>{item.category}</strong><small>Page {item.page} · {item.treatment}</small></div></div><p>{item.reason}</p><details><summary>Reason and legal ground</summary><small>{item.ground}</small></details><div className="decision-row"><span className="stage">{item.decision}</span>{canDecide && <><button onClick={() => decide(item.id, "Accepted")}>Accept</button><button onClick={() => decide(item.id, "Rejected")}>Reject</button><button onClick={() => decide(item.id, "Escalated")}>Escalate</button></>}</div></article>)}</aside>
-    </div><section className="notice redaction-note"><span>Human-controlled review</span> AI suggestions are advisory. Sensitive and low-confidence decisions require escalation or second review; every action is recorded in the disclosure manifest.</section>
+    <section className="panel redaction-head">
+      <div>
+        <p className="eyebrow">Human-controlled disclosure review</p>
+        <h2>Production redaction workspace</h2>
+        <p>Select a SAR/FOI matter and document ID. Original documents remain immutable; this workspace records decisions and generates a checksum manifest for a separately stored disclosure copy.</p>
+      </div>
+      <div className="redaction-summary"><span><b>{suggestions.length}</b> suggestions</span><span className={unresolved ? "risk-high" : "risk-low"}><b>{unresolved}</b> unresolved</span><span><b>{manifests.length}</b> manifests</span></div>
+    </section>
+
+    <section className="panel register">
+      <div className="field-row">
+        <label>Matter<select value={matterId} onChange={(e) => setMatterId(e.target.value)}>{reviewMatters.map((matter) => <option key={matter._serverId ?? matter.id} value={matter._serverId ?? matter.id}>{matter.id} - {matter.title}</option>)}</select></label>
+        <label>Document ID<input value={documentId} onChange={(e) => setDocumentId(e.target.value)} placeholder="Appwrite document/file ID" /></label>
+      </div>
+      {selectedMatter && <p className="notice"><span>{selectedMatter.type}</span> {selectedMatter.title} · {selectedMatter.academy}</p>}
+      {error && <p className="notice risk-high"><span>Redaction notice</span> {error}</p>}
+      {loading && <p>Loading redaction records...</p>}
+    </section>
+
+    <div className="redaction-grid">
+      <section className="panel document-preview" aria-label="Document preview">
+        <header><strong>Document evidence</strong></header>
+        <div className="paper">
+          <p><strong>Document ID:</strong> {documentId || "No document selected"}</p>
+          <p>Render the source document from secure storage in this panel. IGOS does not modify originals; disclosure copies must be stored as separate documents and linked by checksum in the manifest.</p>
+          {!suggestions.length && <p className="no-suggestions">No stored suggestions for this matter/document pair.</p>}
+        </div>
+      </section>
+
+      <aside className="panel suggestion-panel" aria-label="Redaction suggestions">
+        <div className="panel-head"><div><p className="eyebrow">Review decisions</p><h2>Suggestions</h2></div></div>
+        {suggestions.map((item) => {
+          const needsSecondReview = sensitiveCategories.has(item.category);
+          return <article key={item.id} className={item.decision !== "pending" ? "decided" : ""}>
+            <div className="suggestion-title"><span className={`confidence ${item.confidence < 0.72 ? "low" : needsSecondReview ? "sensitive" : ""}`}>{Math.round(item.confidence * 100)}%</span><div><strong>{item.category}</strong><small>Page {item.location?.page ?? "?"} · {item.suggestedTreatment}</small></div></div>
+            <p>{item.explanation}</p>
+            {item.legalGround && <details><summary>Legal ground</summary><small>{item.legalGround}</small></details>}
+            <label>Decision rationale<textarea rows={3} value={rationales[item.id] ?? item.reviewerRationale ?? ""} onChange={(e) => setRationales((prev) => ({ ...prev, [item.id]: e.target.value }))} placeholder="Why is this accepted, rejected, modified or escalated?" /></label>
+            <div className="decision-row"><span className="stage">{item.decision}</span>{canDecide && <><button onClick={() => decide(item, "accepted")}>Accept</button><button onClick={() => decide(item, "rejected")}>Reject</button><button onClick={() => decide(item, "modified")}>Modify</button><button onClick={() => decide(item, "escalated")}>Escalate</button></>}{canGenerate && needsSecondReview && item.decision !== "pending" && <button onClick={() => saveSecondReview(item)}>Second review</button>}</div>
+          </article>;
+        })}
+      </aside>
+    </div>
+
+    <section className="panel register">
+      <div className="panel-head"><div><p className="eyebrow">Disclosure control</p><h2>Manifest generation</h2></div></div>
+      <form className="entity-form" onSubmit={generateManifest}>
+        <div className="field-row"><label>Document version<input name="documentVersion" type="number" min="1" defaultValue={suggestions[0]?.documentVersion ?? 1} required /></label><label>Original checksum<input name="originalChecksum" required placeholder="sha256 of immutable source" /></label></div>
+        <div className="field-row"><label>Disclosure copy document ID<input name="redactedCopyDocumentId" required placeholder="separate stored file/document ID" /></label><label>Disclosure copy checksum<input name="redactedCopyChecksum" required placeholder="sha256 of disclosure copy" /></label></div>
+        <button className="primary" disabled={!canGenerate || unresolved > 0 || !suggestions.length}>Generate manifest</button>
+      </form>
+      <div className="timeline large">{manifests.map((manifest) => <div className="audit-row" key={manifest.id}><span>MAN</span><div><strong>{manifest.manifestHash}</strong><small>{manifest.redactedCopyDocumentId} · {new Date(manifest.generatedAt).toLocaleString("en-GB")}</small></div></div>)}</div>
+    </section>
   </div>;
 }
