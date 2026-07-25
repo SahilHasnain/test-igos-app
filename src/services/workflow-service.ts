@@ -27,7 +27,7 @@ export class WorkflowService {
     if(definition.requiresReason&&!input.reason?.trim()) throw new Error("A recorded reason is required for this transition");
     const completed=[...new Set([...current.completedStages,current.stage])];
     const updated=await this.workflows.transition(input,input.matterId,input.expectedVersion,input.to,completed,input.assignedUserId);
-    await this.audit.record(context,input,"workflow.transitioned",{from:current.stage,to:updated.stage,reason:input.reason??null,version:updated.version},input.matterId);
+    await this.audit.record(context,{matId:input.matId,academyId:input.academyId},"workflow.transitioned",{from:current.stage,to:updated.stage,reason:input.reason??null,version:updated.version},input.matterId);
     return updated;
   }
 }

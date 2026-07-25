@@ -24,7 +24,7 @@ export class MatterService {
     const context = requireContext(rawContext);
     assertAllowed(context, input, "matter:create");
     const matter = await this.matters.create(input);
-    await this.audit.record(context, input, "matter.created", { id: matter.id, reference: matter.reference, type: matter.type }, matter.id);
+    await this.audit.record(context, { matId: input.matId, academyId: input.academyId }, "matter.created", { id: matter.id, reference: matter.reference, type: matter.type }, matter.id);
     return matter;
   }
 
