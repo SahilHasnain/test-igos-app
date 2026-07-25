@@ -2,12 +2,48 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useApi } from "@/src/client/use-api";
+import { EntityFormModal, TextField, TextAreaField, SelectField, NumberField, DateField, TagInputField } from "./components/entity-form-modal";
 
 type Role = "DPO" | "MAT administrator" | "Case manager" | "Academy lead" | "Auditor" | "Read only";
 
 interface Action { id: string; title: string; academy: string; owner: string; due: string; priority: string; status: string }
 interface Finding { id: string; title: string; audit: string; academy: string; rating: string; owner: string; due: string; status: string }
-interface Risk { id: string; title: string; category: string; owner: string; inherent: number; residual: number; rating: string; treatment: number }
+
+interface Risk {
+  id: string; matId: string; title: string; description: string;
+  category: "regulatory" | "privacy" | "information-security" | "records" | "supplier" | "operational";
+  ownerUserId: string; likelihood: 1 | 2 | 3 | 4 | 5; impact: 1 | 2 | 3 | 4 | 5;
+  controlEffectiveness: number; controls: readonly string[]; treatments: readonly string[];
+  appetite: "low" | "medium" | "high" | "critical";
+  reviewDueAt: string; status: "open" | "treating" | "accepted" | "closed";
+}
+
+interface AuditProgramme {
+  id: string; matId: string; title: string; scope: string;
+  academyIds: readonly string[]; leadAuditorUserId: string;
+  plannedStartAt: string; plannedEndAt: string;
+  status: "planned" | "fieldwork" | "reporting" | "complete" | "cancelled";
+}
+
+function scoreRisk(likelihood: number, impact: number, controlEffectiveness: number) {
+  const inherent = likelihood * impact;
+  const residual = Math.max(1, Math.round(inherent * (1 - controlEffectiveness / 100)));
+  const rating = residual >= 16 ? "critical" : residual >= 10 ? "high" : residual >= 5 ? "medium" : "low";
+  return { inherent, residual, rating };
+}
+
+const emptyRisk = (matId: string): Risk => ({
+  id: "", matId, title: "", description: "", category: "operational", ownerUserId: "",
+  likelihood: 3, impact: 3, controlEffectiveness: 50,
+  controls: [], treatments: [], appetite: "medium",
+  reviewDueAt: new Date(Date.now() + 90 * 86400000).toISOString(), status: "open",
+});
+
+const emptyProgramme = (matId: string): AuditProgramme => ({
+  id: "", matId, title: "", scope: "", academyIds: [], leadAuditorUserId: "",
+  plannedStartAt: new Date().toISOString(), plannedEndAt: new Date(Date.now() + 30 * 86400000).toISOString(),
+  status: "planned",
+});
 
 export function AssuranceOverviewPanel({ role, matId }: { role: Role; matId: string }) {
   const api = useApi();
@@ -103,6 +139,8 @@ export function RiskRegisterPanel({ role, matId }: { role: Role; matId: string }
   const api = useApi();
   const [items, setItems] = useState<Risk[]>([]);
   const [loading, setLoading] = useState(true);
+  const [editing, setEditing] = useState<Risk | null>(null);
+  const [showCreate, setShowCreate] = useState(false);
   const canAccept = role === "DPO" || role === "MAT administrator";
 
   useEffect(() => {
@@ -111,11 +149,15 @@ export function RiskRegisterPanel({ role, matId }: { role: Role; matId: string }
       .catch(() => setLoading(false));
   }, [matId]);
 
-  const addRisk = useCallback(async () => {
-    const newRisk: Risk = { id: `RSK-${String(items.length + 24).padStart(3, "0")}`, title: "New risk awaiting assessment", category: "Operational", owner: "Unassigned", inherent: 9, residual: 9, rating: "Medium", treatment: 0 };
-    await api.assurance.risks.save({ matId, ...newRisk });
-    setItems(prev => [newRisk, ...prev]);
-  }, [matId, items.length, api]);
+  const handleSave = useCallback(async (draft: Risk) => {
+    const toSave = { ...draft, matId };
+    await api.assurance.risks.save(toSave);
+    if (draft.id && items.some(i => i.id === draft.id)) {
+      setItems(prev => prev.map(i => i.id === draft.id ? toSave : i));
+    } else {
+      setItems(prev => [{ ...toSave, id: `RSK-${String(Date.now()).slice(-6)}` }, ...prev]);
+    }
+  }, [matId, items, api]);
 
   if (loading) return <div className="panel"><p>Loading...</p></div>;
 
@@ -123,22 +165,69 @@ export function RiskRegisterPanel({ role, matId }: { role: Role; matId: string }
     <section className="panel register">
       <div className="register-toolbar">
         <div><p className="eyebrow">Federation risk register</p><h2>{items.length} information-governance risks</h2></div>
-        {canAccept && <button className="primary" onClick={addRisk}>＋ New risk</button>}
+        {canAccept && <button className="primary" onClick={() => setShowCreate(true)}>＋ New risk</button>}
       </div>
       <div className="risk-cards">
-        {items.map(risk => (
-          <article key={risk.id}>
-            <div><code>{risk.id}</code><h3>{risk.title}</h3><p>{risk.category} · Owner: {risk.owner}</p></div>
-            <div className="risk-numbers">
-              <span>Inherent <b>{risk.inherent}</b></span>
-              <span>Residual <b>{risk.residual}</b></span>
-              <span className={`badge risk-${risk.rating.toLowerCase()}`}>{risk.rating}</span>
-            </div>
-            <div><small>Treatment progress</small><div className="bar"><i style={{ width: `${risk.treatment}%` }} /></div><b>{risk.treatment}%</b></div>
-          </article>
-        ))}
+        {items.map(risk => {
+          const s = scoreRisk(risk.likelihood, risk.impact, risk.controlEffectiveness);
+          return (
+            <article key={risk.id} onClick={() => canAccept && setEditing(risk)}>
+              <div><code>{risk.id}</code><h3>{risk.title}</h3><p>{risk.category} · Owner: {risk.ownerUserId}</p></div>
+              <div className="risk-numbers">
+                <span>Inherent <b>{s.inherent}</b></span>
+                <span>Residual <b>{s.residual}</b></span>
+                <span className={`badge risk-${s.rating}`}>{s.rating}</span>
+              </div>
+            </article>
+          );
+        })}
       </div>
+      {showCreate && <RiskForm matId={matId} onSave={handleSave} onClose={() => setShowCreate(false)} />}
+      {editing && <RiskForm matId={matId} item={editing} onSave={handleSave} onClose={() => setEditing(null)} />}
     </section>
+  );
+}
+
+function RiskForm({ matId, item, onSave, onClose }: { matId: string; item?: Risk; onSave: (d: Risk) => Promise<void>; onClose: () => void }) {
+  const base = item ?? emptyRisk(matId);
+  const [draft, setDraft] = useState(base);
+  const set = <K extends keyof Risk>(key: K, value: Risk[K]) => setDraft(prev => ({ ...prev, [key]: value }));
+
+  return (
+    <EntityFormModal title={item ? `Edit ${item.title || item.id}` : "New risk"} onClose={onClose} onSubmit={() => onSave(draft)} submitLabel={item ? "Update" : "Create"}>
+      <fieldset>
+        <legend>Core</legend>
+        <TextField label="Risk title" value={draft.title} onChange={v => set("title", v)} required placeholder="e.g. Inadequate data retention" />
+        <TextAreaField label="Description" value={draft.description} onChange={v => set("description", v)} required placeholder="Describe the risk" />
+        <div className="field-row">
+          <SelectField label="Category" value={draft.category} onChange={v => set("category", v as Risk["category"])} options={["regulatory", "privacy", "information-security", "records", "supplier", "operational"]} required />
+          <SelectField label="Status" value={draft.status} onChange={v => set("status", v as Risk["status"])} options={["open", "treating", "accepted", "closed"]} required />
+        </div>
+      </fieldset>
+      <fieldset>
+        <legend>Scoring</legend>
+        <div className="field-row">
+          <SelectField label="Likelihood" value={String(draft.likelihood)} onChange={v => set("likelihood", Number(v) as Risk["likelihood"])} options={["1", "2", "3", "4", "5"]} required />
+          <SelectField label="Impact" value={String(draft.impact)} onChange={v => set("impact", Number(v) as Risk["impact"])} options={["1", "2", "3", "4", "5"]} required />
+        </div>
+        <NumberField label="Control effectiveness (%)" value={draft.controlEffectiveness} onChange={v => set("controlEffectiveness", v)} min={0} max={100} required />
+        <div className="field-row">
+          <span style={{ fontSize: 10, color: "#698087", padding: "6px 0" }}>Inherent: <b>{draft.likelihood * draft.impact}</b></span>
+          <span style={{ fontSize: 10, color: "#698087", padding: "6px 0" }}>Residual: <b>{Math.max(1, Math.round(draft.likelihood * draft.impact * (1 - draft.controlEffectiveness / 100)))}</b></span>
+        </div>
+      </fieldset>
+      <fieldset>
+        <legend>Controls</legend>
+        <TagInputField label="Controls" value={draft.controls as string[]} onChange={v => set("controls", v)} placeholder="Existing controls" />
+        <TagInputField label="Treatments" value={draft.treatments as string[]} onChange={v => set("treatments", v)} placeholder="Planned treatments" />
+        <SelectField label="Risk appetite" value={draft.appetite} onChange={v => set("appetite", v as Risk["appetite"])} options={["low", "medium", "high", "critical"]} required />
+      </fieldset>
+      <fieldset>
+        <legend>Review</legend>
+        <TextField label="Owner" value={draft.ownerUserId} onChange={v => set("ownerUserId", v)} required placeholder="User ID" />
+        <DateField label="Review due" value={draft.reviewDueAt} onChange={v => set("reviewDueAt", v)} required />
+      </fieldset>
+    </EntityFormModal>
   );
 }
 
@@ -146,6 +235,7 @@ export function AuditProgrammePanel({ matId }: { matId: string }) {
   const api = useApi();
   const [findings, setFindings] = useState<Finding[]>([]);
   const [loading, setLoading] = useState(true);
+  const [showCreate, setShowCreate] = useState(false);
 
   useEffect(() => {
     api.assurance.findings.list(matId)
@@ -153,16 +243,50 @@ export function AuditProgrammePanel({ matId }: { matId: string }) {
       .catch(() => setLoading(false));
   }, [matId]);
 
+  const handleSave = useCallback(async (draft: AuditProgramme) => {
+    const toSave = { ...draft, matId };
+    await api.assurance.programmes.save(toSave);
+    setShowCreate(false);
+  }, [matId, api]);
+
   if (loading) return <div className="panel"><p>Loading...</p></div>;
 
   return (
     <section className="panel register">
       <div className="register-toolbar">
         <div><p className="eyebrow">Assurance programme</p><h2>Audit findings and verification</h2></div>
-        <button className="primary">＋ Plan audit</button>
+        <button className="primary" onClick={() => setShowCreate(true)}>＋ Plan audit</button>
       </div>
       <FindingTable findings={findings} />
+      {showCreate && <ProgrammeForm matId={matId} onSave={handleSave} onClose={() => setShowCreate(false)} />}
     </section>
+  );
+}
+
+function ProgrammeForm({ matId, onSave, onClose }: { matId: string; onSave: (d: AuditProgramme) => Promise<void>; onClose: () => void }) {
+  const [draft, setDraft] = useState(emptyProgramme(matId));
+  const set = <K extends keyof AuditProgramme>(key: K, value: AuditProgramme[K]) => setDraft(prev => ({ ...prev, [key]: value }));
+
+  return (
+    <EntityFormModal title="Plan audit programme" onClose={onClose} onSubmit={() => onSave(draft)} submitLabel="Create">
+      <fieldset>
+        <legend>Core</legend>
+        <TextField label="Audit title" value={draft.title} onChange={v => set("title", v)} required placeholder="e.g. Annual IG audit 2026" />
+        <TextAreaField label="Scope" value={draft.scope} onChange={v => set("scope", v)} required placeholder="What does this audit cover?" />
+      </fieldset>
+      <fieldset>
+        <legend>Team</legend>
+        <TextField label="Lead auditor" value={draft.leadAuditorUserId} onChange={v => set("leadAuditorUserId", v)} required placeholder="User ID" />
+        <TagInputField label="Academy IDs" value={draft.academyIds as string[]} onChange={v => set("academyIds", v)} placeholder="Comma-separated academy IDs" />
+      </fieldset>
+      <fieldset>
+        <legend>Schedule</legend>
+        <div className="field-row">
+          <DateField label="Planned start" value={draft.plannedStartAt} onChange={v => set("plannedStartAt", v)} required />
+          <DateField label="Planned end" value={draft.plannedEndAt} onChange={v => set("plannedEndAt", v)} required />
+        </div>
+      </fieldset>
+    </EntityFormModal>
   );
 }
 

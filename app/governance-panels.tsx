@@ -3,12 +3,42 @@
 import { useMemo, useState, useEffect, useCallback } from "react";
 import { useApi } from "@/src/client/use-api";
 import { useAuth } from "@/src/client/auth-context";
+import { EntityFormModal, TextField, TextAreaField, SelectField, CheckField, DateField, TagInputField } from "./components/entity-form-modal";
 
 type GovernanceRole = "DPO" | "MAT administrator" | "Case manager" | "Academy lead" | "Auditor" | "Read only";
 
 interface DpiaSection { id: string; title: string; assignedRole: string; assignedUserId?: string; status: string; answers: Record<string, unknown>; submittedAt?: string; acceptedAt?: string }
-interface RopaActivity { id: string; name: string; academy: string; owner: string; basis: string; review: string; score: number; status: string }
-interface PolicyItem { id: string; title: string; version: string; owner: string; review: string; status: string; acknowledged: number }
+
+interface RopaActivity {
+  id: string; matId: string; name: string; ownerUserId: string; purpose: string;
+  dataSubjectCategories: readonly string[]; personalDataCategories: readonly string[];
+  specialCategoryData: boolean; criminalOffenceData: boolean;
+  lawfulBasis: string; recipients: readonly string[]; processors: readonly string[];
+  retentionRule: string; securityMeasures: readonly string[];
+  sourceSystems: readonly string[]; destinationSystems: readonly string[];
+  status: string; nextReviewAt: string; academyIds: readonly string[];
+}
+
+interface PolicyItem {
+  id: string; matId: string; title: string; ownerUserId: string; version: string;
+  status: string; reviewDueAt: string; academyIds: readonly string[];
+}
+
+const emptyRopa = (matId: string, academy: string): RopaActivity => ({
+  id: "", matId, name: "", ownerUserId: "", purpose: "",
+  dataSubjectCategories: [], personalDataCategories: [],
+  specialCategoryData: false, criminalOffenceData: false,
+  lawfulBasis: "public-task", recipients: [], processors: [],
+  retentionRule: "", securityMeasures: [], sourceSystems: [], destinationSystems: [],
+  status: "draft", nextReviewAt: new Date(Date.now() + 90 * 86400000).toISOString(),
+  academyIds: academy === "Federation-wide" ? ["all"] : [academy],
+});
+
+const emptyPolicy = (matId: string): PolicyItem => ({
+  id: "", matId, title: "", ownerUserId: "", version: "0.1",
+  status: "draft", reviewDueAt: new Date(Date.now() + 90 * 86400000).toISOString(),
+  academyIds: ["all"],
+});
 
 export function DpiaProgressPanel({ role, matId }: { role: GovernanceRole; matId: string }) {
   const api = useApi();
@@ -33,41 +63,36 @@ export function DpiaProgressPanel({ role, matId }: { role: GovernanceRole; matId
   if (loading) return <div className="panel"><p>Loading...</p></div>;
 
   const accepted = sections.filter(s => s.status === "accepted").length;
-  const displaySections = sections.length ? sections : [
-    { id: "1", title: "Project description", assignedRole: "requester", status: "accepted", answers: {} },
-    { id: "2", title: "Supplier security", assignedRole: "supplier", status: "submitted", answers: {} },
-    { id: "3", title: "Necessity and proportionality", assignedRole: "compliance", status: "in-progress", answers: {} },
-    { id: "4", title: "International transfers", assignedRole: "compliance", status: "not-started", answers: {} },
-    { id: "5", title: "AI and automated decisions", assignedRole: "dpo", status: "in-progress", answers: {} },
-    { id: "6", title: "Residual risk approval", assignedRole: "dpo", status: "not-started", answers: {} },
-  ];
 
   return (
     <section className="panel governance-progress" aria-labelledby="dpia-progress-title">
       <div className="panel-head">
-        <div><p className="eyebrow">Multi-party completion</p><h2 id="dpia-progress-title">AI safeguarding triage DPIA</h2></div>
-        <strong>{accepted}/{displaySections.length} accepted</strong>
+        <div><p className="eyebrow">Multi-party completion</p><h2 id="dpia-progress-title">DPIA progress</h2></div>
+        <strong>{accepted}/{sections.length || 0} accepted</strong>
       </div>
-      <div className="section-grid">
-        {displaySections.map((section, index) => (
-          <article key={section.id}>
-            <div>
-              <span className={`status-dot status-${section.status.toLowerCase().replaceAll(" ", "-")}`} />
-              <strong>{section.title}</strong>
-              <small>{section.assignedRole}</small>
-            </div>
-            <span className="stage">{section.status}</span>
-            {canReview && section.status === "submitted" && (
-              <button onClick={() => acceptSection(index)}>Accept</button>
-            )}
-          </article>
-        ))}
-      </div>
-      <div className="risk-strip">
-        <div><p className="eyebrow">Residual risk</p><strong>High · 15/25</strong><small>Explicit DPO acceptance required before approval</small></div>
-        <div className="bar"><i style={{ width: "60%" }} /></div>
-        <button className="secondary" disabled={!canReview}>Review risks</button>
-      </div>
+      {!sections.length ? (
+        <div className="empty" style={{ padding: "40px 20px" }}>
+          <b>📋</b>
+          <h3>No DPIA sections</h3>
+          <p>Sections will appear when a DPIA is linked to this matter.</p>
+        </div>
+      ) : (
+        <div className="section-grid">
+          {sections.map((section, index) => (
+            <article key={section.id}>
+              <div>
+                <span className={`status-dot status-${section.status.toLowerCase().replaceAll(" ", "-")}`} />
+                <strong>{section.title}</strong>
+                <small>{section.assignedRole}</small>
+              </div>
+              <span className="stage">{section.status}</span>
+              {canReview && section.status === "submitted" && (
+                <button onClick={() => acceptSection(index)}>Accept</button>
+              )}
+            </article>
+          ))}
+        </div>
+      )}
     </section>
   );
 }
@@ -78,7 +103,7 @@ export function RopaPanel({ academy, role, matId }: { academy: string; role: Gov
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState("");
   const [showCreate, setShowCreate] = useState(false);
-  const [draftName, setDraftName] = useState("");
+  const [editing, setEditing] = useState<RopaActivity | null>(null);
   const canEdit = !["Auditor", "Read only"].includes(role);
 
   useEffect(() => {
@@ -87,36 +112,18 @@ export function RopaPanel({ academy, role, matId }: { academy: string; role: Gov
       .catch(() => setLoading(false));
   }, [matId, api]);
 
-  const createActivity = useCallback(async (name: string) => {
-    const newItem: RopaActivity = { id: `ROPA-${String(items.length + 30).padStart(3, "0")}`, name, academy, owner: "Unassigned", basis: "To be confirmed", review: "23 Aug 2026", score: 38, status: "Draft" };
-    const now = new Date().toISOString();
-    const nextReview = new Date(Date.now() + 90 * 86400000).toISOString();
-    await api.governance.ropa.save(matId, {
-      ...newItem,
-      matId,
-      academyIds: academy === "Federation-wide" ? ["all"] : [academy],
-      ownerUserId: "unassigned",
-      purpose: `${name} — processing purpose to be confirmed during initial assessment.`,
-      dataSubjectCategories: ["Staff", "Pupils"],
-      personalDataCategories: ["Name", "Contact details"],
-      specialCategoryData: false,
-      criminalOffenceData: false,
-      lawfulBasis: "public-task",
-      recipients: [],
-      processors: [],
-      internationalTransfers: [],
-      retentionRule: "Retention period to be confirmed",
-      securityMeasures: ["Access controls", "Encryption at rest"],
-      sourceSystems: ["To be confirmed"],
-      destinationSystems: [],
-      status: "draft",
-      nextReviewAt: nextReview,
-    });
-    setItems(prev => [newItem, ...prev]);
-  }, [items.length, academy, matId, api]);
+  const handleSave = useCallback(async (draft: RopaActivity) => {
+    const toSave = { ...draft, matId };
+    await api.governance.ropa.save(matId, toSave);
+    if (draft.id && items.some(i => i.id === draft.id)) {
+      setItems(prev => prev.map(i => i.id === draft.id ? toSave : i));
+    } else {
+      setItems(prev => [{ ...toSave, id: `ROPA-${String(Date.now()).slice(-6)}` }, ...prev]);
+    }
+  }, [matId, items, api]);
 
   const rows = useMemo(() =>
-    items.filter(a => (academy === "Federation-wide" || a.academy === academy || a.academy === "Federation-wide") && a.name.toLowerCase().includes(filter.toLowerCase())),
+    items.filter(a => (academy === "Federation-wide" || a.academyIds?.includes(academy) || a.academyIds?.includes("all")) && a.name.toLowerCase().includes(filter.toLowerCase())),
     [items, academy, filter]
   );
 
@@ -128,35 +135,72 @@ export function RopaPanel({ academy, role, matId }: { academy: string; role: Gov
         <div><p className="eyebrow">Article 30 inventory</p><h2 id="ropa-title">{rows.length} processing activities</h2></div>
         <div className="inline-tools">
           <input aria-label="Filter processing activities" value={filter} onChange={e => setFilter(e.target.value)} placeholder="Filter activities…" />
-          {canEdit && <button className="primary" onClick={() => setShowCreate(v => !v)}>＋ New activity</button>}
+          {canEdit && <button className="primary" onClick={() => setShowCreate(true)}>＋ New activity</button>}
         </div>
       </div>
-      {showCreate && (
-        <form className="quick-create" onSubmit={e => { e.preventDefault(); if (!draftName.trim()) return; createActivity(draftName.trim()); setDraftName(""); setShowCreate(false); }}>
-          <label>Processing activity name<input required value={draftName} onChange={e => setDraftName(e.target.value)} placeholder="e.g. Educational visits" /></label>
-          <button className="primary">Create draft</button>
-          <button type="button" className="secondary" onClick={() => setShowCreate(false)}>Cancel</button>
-        </form>
-      )}
       <div className="table-wrap">
         <table>
-          <thead><tr><th>Reference</th><th>Processing activity</th><th>Scope</th><th>Lawful basis</th><th>Owner</th><th>Review</th><th>Completeness</th></tr></thead>
+          <thead><tr><th>Reference</th><th>Processing activity</th><th>Lawful basis</th><th>Owner</th><th>Status</th><th>Review</th></tr></thead>
           <tbody>
             {rows.map(activity => (
-              <tr key={activity.id}>
+              <tr key={activity.id} onClick={() => canEdit && setEditing(activity)}>
                 <td><code>{activity.id}</code></td>
-                <td><strong>{activity.name}</strong><small>{activity.status}</small></td>
-                <td>{activity.academy?.replace(" Academy", "") ?? "—"}</td>
-                <td>{activity.basis}</td>
-                <td>{activity.owner}</td>
-                <td>{activity.review}</td>
-                <td><span className={`badge ${activity.score < 80 ? "risk-high" : activity.score < 100 ? "risk-medium" : "risk-low"}`}>{activity.score}%</span></td>
+                <td><strong>{activity.name}</strong></td>
+                <td>{activity.lawfulBasis}</td>
+                <td>{activity.ownerUserId || "—"}</td>
+                <td><span className="stage">{activity.status}</span></td>
+                <td>{activity.nextReviewAt ? new Date(activity.nextReviewAt).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" }) : "—"}</td>
               </tr>
             ))}
           </tbody>
         </table>
       </div>
+      {showCreate && <RopaForm matId={matId} academy={academy} onSave={handleSave} onClose={() => setShowCreate(false)} />}
+      {editing && <RopaForm matId={matId} academy={academy} item={editing} onSave={handleSave} onClose={() => setEditing(null)} />}
     </section>
+  );
+}
+
+function RopaForm({ matId, academy, item, onSave, onClose }: { matId: string; academy: string; item?: RopaActivity; onSave: (d: RopaActivity) => Promise<void>; onClose: () => void }) {
+  const base = item ?? emptyRopa(matId, academy);
+  const [draft, setDraft] = useState(base);
+  const set = <K extends keyof RopaActivity>(key: K, value: RopaActivity[K]) => setDraft(prev => ({ ...prev, [key]: value }));
+
+  return (
+    <EntityFormModal title={item ? `Edit ${item.name || item.id}` : "New processing activity"} onClose={onClose} onSubmit={() => onSave(draft)} submitLabel={item ? "Update" : "Create"}>
+      <fieldset>
+        <legend>Core</legend>
+        <TextField label="Activity name" value={draft.name} onChange={v => set("name", v)} required placeholder="e.g. Educational visits" />
+        <TextAreaField label="Purpose" value={draft.purpose} onChange={v => set("purpose", v)} required placeholder="What is the purpose of this processing?" />
+      </fieldset>
+      <fieldset>
+        <legend>Data subjects &amp; categories</legend>
+        <TagInputField label="Data subject categories" value={draft.dataSubjectCategories as string[]} onChange={v => set("dataSubjectCategories", v)} placeholder="e.g. Staff, Pupils, Parents" />
+        <TagInputField label="Personal data categories" value={draft.personalDataCategories as string[]} onChange={v => set("personalDataCategories", v)} placeholder="e.g. Name, Contact details, Health" />
+        <div className="field-row">
+          <CheckField label="Special category data" checked={draft.specialCategoryData} onChange={v => set("specialCategoryData", v)} />
+          <CheckField label="Criminal offence data" checked={draft.criminalOffenceData} onChange={v => set("criminalOffenceData", v)} />
+        </div>
+      </fieldset>
+      <fieldset>
+        <legend>Legal basis</legend>
+        <SelectField label="Lawful basis" value={draft.lawfulBasis} onChange={v => set("lawfulBasis", v)} options={["consent", "contract", "legal-obligation", "vital-interests", "public-task", "legitimate-interests"]} required />
+        <TagInputField label="Recipients" value={draft.recipients as string[]} onChange={v => set("recipients", v)} placeholder="Who receives this data?" />
+        <TagInputField label="Processors" value={draft.processors as string[]} onChange={v => set("processors", v)} placeholder="Third-party processors" />
+      </fieldset>
+      <fieldset>
+        <legend>Retention &amp; Security</legend>
+        <TextAreaField label="Retention rule" value={draft.retentionRule} onChange={v => set("retentionRule", v)} required placeholder="How long is data kept?" />
+        <TagInputField label="Security measures" value={draft.securityMeasures as string[]} onChange={v => set("securityMeasures", v)} placeholder="e.g. Access controls, Encryption" />
+        <TagInputField label="Source systems" value={draft.sourceSystems as string[]} onChange={v => set("sourceSystems", v)} placeholder="Where does data come from?" />
+        <TagInputField label="Destination systems" value={draft.destinationSystems as string[]} onChange={v => set("destinationSystems", v)} placeholder="Where is data sent?" />
+      </fieldset>
+      <fieldset>
+        <legend>Review</legend>
+        <SelectField label="Status" value={draft.status} onChange={v => set("status", v)} options={["draft", "active", "under-review", "retired"]} required />
+        <DateField label="Next review" value={draft.nextReviewAt} onChange={v => set("nextReviewAt", v)} required />
+      </fieldset>
+    </EntityFormModal>
   );
 }
 
@@ -166,8 +210,9 @@ export function PolicyPanel({ role, matId }: { role: GovernanceRole; matId: stri
   const [items, setItems] = useState<PolicyItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [showCreate, setShowCreate] = useState(false);
-  const [draftTitle, setDraftTitle] = useState("");
+  const [editing, setEditing] = useState<PolicyItem | null>(null);
   const canApprove = role === "DPO" || role === "MAT administrator";
+  const canEdit = !["Auditor", "Read only"].includes(role);
 
   useEffect(() => {
     api.governance.policy.list(matId)
@@ -175,22 +220,15 @@ export function PolicyPanel({ role, matId }: { role: GovernanceRole; matId: stri
       .catch(() => setLoading(false));
   }, [matId, api]);
 
-  const createPolicy = useCallback(async (title: string) => {
-    const newItem: PolicyItem = { id: `POL-${String(items.length + 14).padStart(3, "0")}`, title, version: "0.1", owner: role, review: "23 Aug 2026", status: "Draft", acknowledged: 0 };
-    const now = new Date().toISOString();
-    const reviewDue = new Date(Date.now() + 90 * 86400000).toISOString();
-    await api.governance.policy.save(matId, {
-      ...newItem,
-      matId,
-      academyIds: ["all"],
-      ownerUserId: auth.userId,
-      version: "0.1",
-      status: "draft",
-      reviewDueAt: reviewDue,
-      documentId: "pending",
-    });
-    setItems(prev => [newItem, ...prev]);
-  }, [items.length, role, matId, auth.userId, api]);
+  const handleSave = useCallback(async (draft: PolicyItem) => {
+    const toSave = { ...draft, matId, ownerUserId: auth.userId, documentId: draft.id ? "exists" : "pending" };
+    await api.governance.policy.save(matId, toSave);
+    if (draft.id && items.some(i => i.id === draft.id)) {
+      setItems(prev => prev.map(i => i.id === draft.id ? toSave : i));
+    } else {
+      setItems(prev => [{ ...toSave, id: `POL-${String(Date.now()).slice(-6)}` }, ...prev]);
+    }
+  }, [matId, auth.userId, items, api]);
 
   if (loading) return <div className="panel"><p>Loading...</p></div>;
 
@@ -198,39 +236,57 @@ export function PolicyPanel({ role, matId }: { role: GovernanceRole; matId: stri
     <section className="panel register" aria-labelledby="policy-title">
       <div className="register-toolbar">
         <div><p className="eyebrow">Controlled documents</p><h2 id="policy-title">Policy register</h2></div>
-        {!["Auditor", "Read only"].includes(role) && <button className="primary" onClick={() => setShowCreate(v => !v)}>＋ New policy</button>}
+        {canEdit && <button className="primary" onClick={() => setShowCreate(true)}>＋ New policy</button>}
       </div>
-      {showCreate && (
-        <form className="quick-create" onSubmit={e => { e.preventDefault(); if (!draftTitle.trim()) return; createPolicy(draftTitle.trim()); setDraftTitle(""); setShowCreate(false); }}>
-          <label>Policy title<input required value={draftTitle} onChange={e => setDraftTitle(e.target.value)} placeholder="e.g. Data sharing standard" /></label>
-          <button className="primary">Create draft</button>
-          <button type="button" className="secondary" onClick={() => setShowCreate(false)}>Cancel</button>
-        </form>
-      )}
       <div className="policy-grid">
         {items.map(policy => (
-          <article key={policy.id}>
+          <article key={policy.id} onClick={() => canEdit && setEditing(policy)} style={{ cursor: canEdit ? "pointer" : undefined }}>
             <div className="policy-icon">§</div>
             <div>
               <code>{policy.id}</code>
               <h3>{policy.title}</h3>
-              <p>Version {policy.version} · {policy.owner}</p>
-              <small>Review due {policy.review}</small>
+              <p>Version {policy.version} · {policy.ownerUserId}</p>
+              <small>Review due {policy.reviewDueAt ? new Date(policy.reviewDueAt).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" }) : "—"}</small>
             </div>
             <div className="policy-state">
-              <span className={`badge ${policy.status === "Published" ? "risk-low" : policy.status === "Draft" ? "risk-medium" : "stage"}`}>{policy.status}</span>
-              <strong>{policy.acknowledged}%</strong>
-              <small>acknowledged</small>
-              {canApprove && policy.status === "In review" && (
-                <button onClick={async () => {
+              <span className={`badge ${policy.status === "published" ? "risk-low" : policy.status === "draft" ? "risk-medium" : "stage"}`}>{policy.status}</span>
+              {canApprove && policy.status === "in-review" && (
+                <button onClick={async (e) => {
+                  e.stopPropagation();
                   try { await api.governance.policy.transition(matId, policy.id, { matId, to: "approved" }); } catch { /* optimistic */ }
-                  setItems(prev => prev.map(p => p.id === policy.id ? { ...p, status: "Approved" } : p));
+                  setItems(prev => prev.map(p => p.id === policy.id ? { ...p, status: "approved" } : p));
                 }}>Approve</button>
               )}
             </div>
           </article>
         ))}
       </div>
+      {showCreate && <PolicyForm matId={matId} onSave={handleSave} onClose={() => setShowCreate(false)} />}
+      {editing && <PolicyForm matId={matId} item={editing} onSave={handleSave} onClose={() => setEditing(null)} />}
     </section>
+  );
+}
+
+function PolicyForm({ matId, item, onSave, onClose }: { matId: string; item?: PolicyItem; onSave: (d: PolicyItem) => Promise<void>; onClose: () => void }) {
+  const base = item ?? emptyPolicy(matId);
+  const [draft, setDraft] = useState(base);
+  const set = <K extends keyof PolicyItem>(key: K, value: PolicyItem[K]) => setDraft(prev => ({ ...prev, [key]: value }));
+
+  return (
+    <EntityFormModal title={item ? `Edit ${item.title || item.id}` : "New policy"} onClose={onClose} onSubmit={() => onSave(draft)} submitLabel={item ? "Update" : "Create"}>
+      <fieldset>
+        <legend>Core</legend>
+        <TextField label="Policy title" value={draft.title} onChange={v => set("title", v)} required placeholder="e.g. Data sharing standard" />
+        <div className="field-row">
+          <TextField label="Version" value={draft.version} onChange={v => set("version", v)} required placeholder="0.1" />
+          <SelectField label="Status" value={draft.status} onChange={v => set("status", v)} options={["draft", "in-review", "approved", "published", "retired"]} required />
+        </div>
+      </fieldset>
+      <fieldset>
+        <legend>Review</legend>
+        <DateField label="Review due" value={draft.reviewDueAt} onChange={v => set("reviewDueAt", v)} required />
+        <TagInputField label="Academy IDs" value={draft.academyIds as string[]} onChange={v => set("academyIds", v)} placeholder="all = federation-wide" />
+      </fieldset>
+    </EntityFormModal>
   );
 }
