@@ -6,6 +6,7 @@ export interface AuthState {
   userId: string;
   roles: string[];
   academyIds: string[];
+  matId?: string;
   jwt?: string;
 }
 

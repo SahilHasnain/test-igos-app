@@ -61,18 +61,14 @@ function parseColumn(spec: string) {
 
 async function createTable(table: { id: string; name: string; permissions: string; columns: string[] }) {
   const dbId = schema.database.id;
-  console.log(`Creating table "${table.name}" (${table.id})...`);
 
   const permissions: string[] = [Permission.read(Role.any())];
 
   try {
     await databases.createCollection(dbId, table.id, table.name, permissions);
-    console.log("  Table created.");
   } catch (e: unknown) {
     const msg = e instanceof Error ? e.message : String(e);
-    if (msg.includes("already exists")) {
-      console.log("  Table already exists, skipping.");
-    } else {
+    if (!msg.includes("already exists")) {
       throw e;
     }
   }
@@ -95,11 +91,10 @@ async function createTable(table: { id: string; name: string; permissions: strin
       } else {
         await databases.createStringAttribute(dbId, table.id, col.key, col.size ?? 256, col.required, undefined, col.array);
       }
-      console.log(`    Column ${col.key} (${col.type}${col.array ? "[]" : ""}) created.`);
     } catch (e: unknown) {
       const msg = e instanceof Error ? e.message : String(e);
       if (!msg.includes("already exists")) {
-        console.warn(`    Column ${col.key}: ${msg}`);
+        console.warn(`    ${table.id}.${col.key}: ${msg}`);
       }
     }
   }
@@ -150,6 +145,22 @@ async function createBucket() {
   }
 }
 
+async function processCollection(table: { id: string; name: string; permissions: string; columns: string[] }) {
+  await createTable(table);
+  await createIndexes(table);
+}
+
+async function runConcurrent<T>(items: T[], fn: (item: T) => Promise<void>, concurrency: number) {
+  const queue = [...items];
+  const workers = Array.from({ length: Math.min(concurrency, queue.length) }, async () => {
+    while (queue.length) {
+      const item = queue.shift()!;
+      await fn(item);
+    }
+  });
+  await Promise.all(workers);
+}
+
 async function main() {
   console.log("=== IGOS Appwrite Provisioning ===\n");
 
@@ -168,11 +179,10 @@ async function main() {
   }
   console.log("");
 
-  for (const table of schema.tables) {
-    await createTable(table);
-    await createIndexes(table);
-    console.log("");
-  }
+  const concurrency = parseInt(process.env.CONCURRENCY ?? "5", 10);
+  console.log(`Provisioning ${schema.tables.length} collections with ${concurrency} workers...\n`);
+
+  await runConcurrent(schema.tables, processCollection, concurrency);
 
   await createBucket();
   console.log("\n=== Provisioning complete ===");

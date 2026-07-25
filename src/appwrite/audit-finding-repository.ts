@@ -1,6 +1,7 @@
 import { ID, Query, type Databases } from "node-appwrite";
 import type { AuditFinding } from "@/src/domain/assurance";
 import type { TenantScope } from "@/src/domain/model";
+import { parseOverflow, packOverflow } from "./mappers";
 
 export interface AuditFindingRepository {
   list(scope: TenantScope): Promise<readonly AuditFinding[]>;
@@ -8,7 +9,10 @@ export interface AuditFindingRepository {
   save(scope: TenantScope, finding: AuditFinding): Promise<AuditFinding>;
 }
 
+const OVERFLOW_KEYS = ["recommendation", "managementResponse"] as const;
+
 function toAuditFinding(document: Record<string, unknown>): AuditFinding {
+  const ext = parseOverflow(document);
   return {
     id: document.$id as string,
     matId: document.matId as string,
@@ -18,8 +22,8 @@ function toAuditFinding(document: Record<string, unknown>): AuditFinding {
     description: document.description as string,
     rating: document.rating as AuditFinding["rating"],
     rootCause: document.rootCause as string,
-    recommendation: document.recommendation as string,
-    managementResponse: (document.managementResponse as string) || undefined,
+    recommendation: (ext.recommendation as string) || (document.recommendation as string) || "",
+    managementResponse: (ext.managementResponse as string) || (document.managementResponse as string) || undefined,
     ownerUserId: document.ownerUserId as string,
     dueAt: document.dueAt as string,
     status: document.status as AuditFinding["status"],
@@ -87,7 +91,7 @@ export class AppwriteAuditFindingRepository implements AuditFindingRepository {
     );
     const found = existing.documents.find((doc) => doc.$id === finding.id);
 
-    const data = {
+    const data: Record<string, unknown> = {
       matId: scope.matId,
       academyId: finding.academyId ?? null,
       auditProgrammeId: finding.auditProgrammeId,
@@ -104,6 +108,7 @@ export class AppwriteAuditFindingRepository implements AuditFindingRepository {
       verifiedAt: finding.verifiedAt ?? null,
       evidenceDocumentIds: JSON.stringify(finding.evidenceDocumentIds),
     };
+    packOverflow(data, OVERFLOW_KEYS);
 
     if (found) {
       const doc = await this.databases.updateDocument(

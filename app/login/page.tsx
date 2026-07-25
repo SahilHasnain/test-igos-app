@@ -23,7 +23,7 @@ export default function LoginPage() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const isAppwrite = process.env.NEXT_PUBLIC_APPWRITE_ENDPOINT && process.env.NEXT_PUBLIC_APPWRITE_PROJECT_ID;
+  const isAppwrite = process.env.NEXT_PUBLIC_IGOS_DATA_MODE === "appwrite";
 
   async function withRetry<T>(fn: () => Promise<T>, attempts = 3, delayMs = 500): Promise<T> {
     for (let i = 0; i < attempts; i++) {
@@ -47,6 +47,7 @@ export default function LoginPage() {
         const client = createAppwriteClient();
         const account = new Account(client);
 
+        try { await account.deleteSession("current"); } catch { /* no session to delete */ }
         await withRetry(() => account.createEmailPasswordSession(email, password));
         const user = await withRetry(() => account.get());
         const jwtResult = await withRetry(() => account.createJWT());
@@ -60,6 +61,7 @@ export default function LoginPage() {
           userId: user.$id,
           roles: membershipData.roles ?? ["read-only"],
           academyIds: membershipData.academyIds ?? [],
+          matId: membershipData.matId,
           jwt: jwtResult.jwt,
         }));
       } else {

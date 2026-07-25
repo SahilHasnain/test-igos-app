@@ -1,6 +1,7 @@
 import { ID, Query, type Databases } from "node-appwrite";
 import type { AiSystemRecord } from "@/src/domain/advanced-governance";
 import type { TenantScope } from "@/src/domain/model";
+import { parseOverflow, packOverflow } from "./mappers";
 
 export interface AiSystemRepository {
   list(scope: TenantScope): Promise<readonly AiSystemRecord[]>;
@@ -8,7 +9,10 @@ export interface AiSystemRepository {
   save(scope: TenantScope, system: AiSystemRecord): Promise<AiSystemRecord>;
 }
 
+const OVERFLOW_KEYS = ["explainabilityDescription", "trainingDataDescription", "approvalRationale"] as const;
+
 function toAiSystemRecord(document: Record<string, unknown>): AiSystemRecord {
+  const ext = parseOverflow(document);
   return {
     id: document.$id as string,
     matId: document.matId as string,
@@ -24,14 +28,14 @@ function toAiSystemRecord(document: Record<string, unknown>): AiSystemRecord {
     specialCategoryDataUsed: document.specialCategoryDataUsed as boolean,
     automatedDecisionSignificantEffect: document.automatedDecisionSignificantEffect as boolean,
     humanOversightDescription: document.humanOversightDescription as string,
-    explainabilityDescription: document.explainabilityDescription as string,
-    trainingDataDescription: (document.trainingDataDescription as string) || undefined,
+    explainabilityDescription: (ext.explainabilityDescription as string) || (document.explainabilityDescription as string) || "",
+    trainingDataDescription: (ext.trainingDataDescription as string) || (document.trainingDataDescription as string) || undefined,
     dpiaId: (document.dpiaId as string) || undefined,
     supplierAssessmentId: (document.supplierAssessmentId as string) || undefined,
     monitoringMetrics: (document.monitoringMetrics as string[]) || [],
     reviewDueAt: document.reviewDueAt as string,
     approvedByUserId: (document.approvedByUserId as string) || undefined,
-    approvalRationale: (document.approvalRationale as string) || undefined,
+    approvalRationale: (ext.approvalRationale as string) || (document.approvalRationale as string) || undefined,
   };
 }
 
@@ -86,7 +90,7 @@ export class AppwriteAiSystemRepository implements AiSystemRepository {
     );
     const found = existing.documents.find((doc) => doc.$id === system.id);
 
-    const data = {
+    const data: Record<string, unknown> = {
       matId: scope.matId,
       name: system.name,
       purpose: system.purpose,
@@ -109,6 +113,7 @@ export class AppwriteAiSystemRepository implements AiSystemRepository {
       approvedByUserId: system.approvedByUserId ?? null,
       approvalRationale: system.approvalRationale ?? null,
     };
+    packOverflow(data, OVERFLOW_KEYS);
 
     if (found) {
       const doc = await this.databases.updateDocument(

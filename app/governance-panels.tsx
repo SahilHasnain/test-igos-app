@@ -2,6 +2,7 @@
 
 import { useMemo, useState, useEffect, useCallback } from "react";
 import { useApi } from "@/src/client/use-api";
+import { useAuth } from "@/src/client/auth-context";
 
 type GovernanceRole = "DPO" | "MAT administrator" | "Case manager" | "Academy lead" | "Auditor" | "Read only";
 
@@ -88,7 +89,29 @@ export function RopaPanel({ academy, role, matId }: { academy: string; role: Gov
 
   const createActivity = useCallback(async (name: string) => {
     const newItem: RopaActivity = { id: `ROPA-${String(items.length + 30).padStart(3, "0")}`, name, academy, owner: "Unassigned", basis: "To be confirmed", review: "23 Aug 2026", score: 38, status: "Draft" };
-    await api.governance.ropa.save(matId, { matId, ...newItem });
+    const now = new Date().toISOString();
+    const nextReview = new Date(Date.now() + 90 * 86400000).toISOString();
+    await api.governance.ropa.save(matId, {
+      ...newItem,
+      matId,
+      academyIds: academy === "Federation-wide" ? ["all"] : [academy],
+      ownerUserId: "unassigned",
+      purpose: `${name} — processing purpose to be confirmed during initial assessment.`,
+      dataSubjectCategories: ["Staff", "Pupils"],
+      personalDataCategories: ["Name", "Contact details"],
+      specialCategoryData: false,
+      criminalOffenceData: false,
+      lawfulBasis: "public-task",
+      recipients: [],
+      processors: [],
+      internationalTransfers: [],
+      retentionRule: "Retention period to be confirmed",
+      securityMeasures: ["Access controls", "Encryption at rest"],
+      sourceSystems: ["To be confirmed"],
+      destinationSystems: [],
+      status: "draft",
+      nextReviewAt: nextReview,
+    });
     setItems(prev => [newItem, ...prev]);
   }, [items.length, academy, matId, api]);
 
@@ -139,6 +162,7 @@ export function RopaPanel({ academy, role, matId }: { academy: string; role: Gov
 
 export function PolicyPanel({ role, matId }: { role: GovernanceRole; matId: string }) {
   const api = useApi();
+  const { auth } = useAuth();
   const [items, setItems] = useState<PolicyItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [showCreate, setShowCreate] = useState(false);
@@ -153,9 +177,20 @@ export function PolicyPanel({ role, matId }: { role: GovernanceRole; matId: stri
 
   const createPolicy = useCallback(async (title: string) => {
     const newItem: PolicyItem = { id: `POL-${String(items.length + 14).padStart(3, "0")}`, title, version: "0.1", owner: role, review: "23 Aug 2026", status: "Draft", acknowledged: 0 };
-    await api.governance.policy.save(matId, { matId, ...newItem });
+    const now = new Date().toISOString();
+    const reviewDue = new Date(Date.now() + 90 * 86400000).toISOString();
+    await api.governance.policy.save(matId, {
+      ...newItem,
+      matId,
+      academyIds: ["all"],
+      ownerUserId: auth.userId,
+      version: "0.1",
+      status: "draft",
+      reviewDueAt: reviewDue,
+      documentId: "pending",
+    });
     setItems(prev => [newItem, ...prev]);
-  }, [items.length, role, matId, api]);
+  }, [items.length, role, matId, auth.userId, api]);
 
   if (loading) return <div className="panel"><p>Loading...</p></div>;
 
@@ -187,7 +222,10 @@ export function PolicyPanel({ role, matId }: { role: GovernanceRole; matId: stri
               <strong>{policy.acknowledged}%</strong>
               <small>acknowledged</small>
               {canApprove && policy.status === "In review" && (
-                <button onClick={() => setItems(prev => prev.map(p => p.id === policy.id ? { ...p, status: "Published" } : p))}>Approve</button>
+                <button onClick={async () => {
+                  try { await api.governance.policy.transition(matId, policy.id, { matId, to: "approved" }); } catch { /* optimistic */ }
+                  setItems(prev => prev.map(p => p.id === policy.id ? { ...p, status: "Approved" } : p));
+                }}>Approve</button>
               )}
             </div>
           </article>

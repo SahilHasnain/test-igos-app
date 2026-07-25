@@ -50,6 +50,7 @@ const brokenIndexes: Array<{ collection: string; oldKey: string; newKey: string;
 
 // Columns that failed due to attribute limit per collection
 const missingColumns: Array<{ collection: string; key: string; type: string; size?: number }> = [
+  { collection: "matters", key: "version", type: "integer" },
   { collection: "dpia-risks", key: "acceptanceRationale", type: "string", size: 4096 },
   { collection: "supplier-assessments", key: "residualRiskRationale", type: "string", size: 4096 },
   { collection: "assurance-actions", key: "closureRationale", type: "string", size: 4096 },
@@ -99,7 +100,15 @@ async function fixColumns() {
   for (const col of missingColumns) {
     console.log(`  ${col.collection}.${col.key}:`);
     try {
-      await db.createStringAttribute(databaseId, col.collection, col.key, col.size ?? 256, false);
+      if (col.type === "integer") {
+        await db.createIntegerAttribute(databaseId, col.collection, col.key, false);
+      } else if (col.type === "boolean") {
+        await db.createBooleanAttribute(databaseId, col.collection, col.key, false);
+      } else if (col.type === "datetime") {
+        await db.createDatetimeAttribute(databaseId, col.collection, col.key, false);
+      } else {
+        await db.createStringAttribute(databaseId, col.collection, col.key, col.size ?? 256, false);
+      }
       console.log(`    Column created`);
     } catch (e: unknown) {
       const msg = e instanceof Error ? e.message : String(e);

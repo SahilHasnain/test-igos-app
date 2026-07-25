@@ -3,6 +3,7 @@ export type MatterRisk = "Low" | "Medium" | "High";
 
 export type DemoMatter = {
   id: string;
+  _serverId?: string;
   type: MatterType;
   title: string;
   academy: string;

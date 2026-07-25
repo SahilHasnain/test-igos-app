@@ -111,6 +111,7 @@ export class AppwriteRopaRepository implements RopaRepository {
       status: activity.status,
       lastReviewedAt: activity.lastReviewedAt ?? null,
       nextReviewAt: activity.nextReviewAt,
+      version: 1,
     };
 
     if (found) {

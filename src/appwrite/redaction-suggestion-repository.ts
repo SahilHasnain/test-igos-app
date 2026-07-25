@@ -1,6 +1,7 @@
 import { ID, Query, type Databases } from "node-appwrite";
 import type { RedactionSuggestion } from "@/src/domain/redaction";
 import type { TenantScope } from "@/src/domain/model";
+import { parseOverflow, packOverflow } from "./mappers";
 
 export interface RedactionSuggestionRepository {
   listByMatterAndDocument(scope: TenantScope, matterId: string, documentId: string): Promise<readonly RedactionSuggestion[]>;
@@ -9,7 +10,10 @@ export interface RedactionSuggestionRepository {
   update(scope: TenantScope, id: string, suggestion: RedactionSuggestion): Promise<RedactionSuggestion>;
 }
 
+const OVERFLOW_KEYS = ["reviewerRationale"] as const;
+
 function toRedactionSuggestion(document: Record<string, unknown>): RedactionSuggestion {
+  const ext = parseOverflow(document);
   return {
     id: document.$id as string,
     matId: document.matId as string,
@@ -28,7 +32,7 @@ function toRedactionSuggestion(document: Record<string, unknown>): RedactionSugg
     decision: document.decision as RedactionSuggestion["decision"],
     decidedByUserId: (document.decidedByUserId as string) || undefined,
     decidedAt: (document.decidedAt as string) || undefined,
-    reviewerRationale: (document.reviewerRationale as string) || undefined,
+    reviewerRationale: (ext.reviewerRationale as string) || (document.reviewerRationale as string) || undefined,
     finalTreatment: (document.finalTreatment as RedactionSuggestion["finalTreatment"]) || undefined,
   };
 }
@@ -81,7 +85,7 @@ export class AppwriteRedactionSuggestionRepository implements RedactionSuggestio
       throw new Error("Redaction suggestion is outside the authorised scope");
     }
 
-    const data = {
+    const data: Record<string, unknown> = {
       matId: scope.matId,
       academyId: scope.academyId ?? null,
       matterId: suggestion.matterId,
@@ -101,6 +105,7 @@ export class AppwriteRedactionSuggestionRepository implements RedactionSuggestio
       reviewerRationale: suggestion.reviewerRationale ?? null,
       finalTreatment: suggestion.finalTreatment ?? null,
     };
+    packOverflow(data, OVERFLOW_KEYS);
 
     const doc = await this.databases.createDocument(
       this.databaseId,
@@ -117,13 +122,14 @@ export class AppwriteRedactionSuggestionRepository implements RedactionSuggestio
       throw new Error("Redaction suggestion is outside the authorised scope");
     }
 
-    const data = {
+    const data: Record<string, unknown> = {
       decision: suggestion.decision,
       decidedByUserId: suggestion.decidedByUserId ?? null,
       decidedAt: suggestion.decidedAt ?? null,
       reviewerRationale: suggestion.reviewerRationale ?? null,
       finalTreatment: suggestion.finalTreatment ?? null,
     };
+    packOverflow(data, OVERFLOW_KEYS);
 
     const doc = await this.databases.updateDocument(
       this.databaseId,
