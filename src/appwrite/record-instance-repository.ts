@@ -101,11 +101,11 @@ export class AppwriteRecordInstanceRepository implements RecordInstanceRepositor
     const data = {
       matId: scope.matId,
       academyId: scope.academyId ?? null,
-      assetId: record.assetId,
-      retentionRuleId: record.retentionRuleId,
-      triggerAt: record.triggerAt,
-      dispositionDueAt: record.dispositionDueAt,
-      status: record.status,
+      assetId: record.assetId || "pending",
+      retentionRuleId: record.retentionRuleId || "pending",
+      triggerAt: record.triggerAt || new Date().toISOString(),
+      dispositionDueAt: record.dispositionDueAt || new Date(Date.now() + 365 * 86400000).toISOString(),
+      status: record.status || "active",
       disposalEvidenceDocumentId: record.disposalEvidenceDocumentId ?? null,
     };
 

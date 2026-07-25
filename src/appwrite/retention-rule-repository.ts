@@ -76,14 +76,14 @@ export class AppwriteRetentionRuleRepository implements RetentionRuleRepository 
 
     const data = {
       matId: scope.matId,
-      name: rule.name,
-      recordCategory: rule.recordCategory,
-      trigger: rule.trigger,
-      periodMonths: rule.periodMonths,
-      disposition: rule.disposition,
-      authority: rule.authority,
-      approvedByUserId: rule.approvedByUserId,
-      effectiveAt: rule.effectiveAt,
+      name: rule.name || "Untitled rule",
+      recordCategory: rule.recordCategory || "general",
+      trigger: rule.trigger || "creation",
+      periodMonths: rule.periodMonths ?? 84,
+      disposition: rule.disposition || "review",
+      authority: rule.authority || "To be confirmed",
+      approvedByUserId: rule.approvedByUserId || "unassigned",
+      effectiveAt: rule.effectiveAt || new Date().toISOString(),
     };
 
     if (found) {
