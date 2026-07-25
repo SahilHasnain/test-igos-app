@@ -229,23 +229,27 @@ Status defaults to `"planned"`.
 
 ## Phase 7: Redaction + DPIA Fixes
 
+**Status: ✅ Complete**
+
 ### Redaction (`redaction-workspace.tsx`)
 
-- Accept `matterId` prop instead of hardcoding `"SAR-2026-0178"` (line 36)
-- Remove hardcoded fallback suggestions display header (line 71)
+- ~~Accept `matterId` prop instead of hardcoding `"SAR-2026-0178"` (line 36)~~ ✅ Done
+- ~~Remove hardcoded fallback suggestions display header (line 71)~~ ✅ Done — header now shows `matId` prop, removed hardcoded "12 documents" count and person name
 
 ### DPIA (`governance-panels.tsx`)
 
-- Remove hardcoded dummy sections fallback (lines 36-43) — show "No sections" empty state instead
-- Remove hardcoded risk score display (line 67)
+- ~~Remove hardcoded dummy sections fallback (lines 36-43) — show "No sections" empty state instead~~ ✅ Done
+- ~~Remove hardcoded risk score display (line 67)~~ ✅ Done
 
 ---
 
 ## Phase 8: Edit Flow for All Entities
 
-Each panel's table/card row becomes clickable, opening the same modal pre-filled with item data.
+**Status: ✅ Complete**
 
-Pattern:
+Each panel's table/card row is clickable, opening the same modal pre-filled with item data.
+
+Pattern implemented across all panels:
 
 ```tsx
 const [editing, setEditing] = useState<Entity | null>(null);
@@ -263,7 +267,7 @@ const [editing, setEditing] = useState<Entity | null>(null);
 )}
 ```
 
-Applies to: AI Systems, Assets, Suppliers, Risks, ROPA, Policy, Contracts, Records, Audit Programme.
+Applies to: AI Systems, Assets, Suppliers, Risks, ROPA, Policy, Contracts, Records, Audit Programme — all done.
 
 ---
 
