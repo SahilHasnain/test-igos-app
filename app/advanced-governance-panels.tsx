@@ -273,9 +273,18 @@ function AssetForm({ matId, item, onSave, onClose }: { matId: string; item?: Ass
         </div>
         <TagInputField label="Hosting locations" value={draft.hostingLocations as string[]} onChange={v => set("hostingLocations", v)} placeholder="e.g. UK data centre, AWS eu-west-2" />
       </fieldset>
+      {(draft.classification === "restricted" || draft.criticality === "critical") && (
+        <fieldset>
+          <legend>Recovery</legend>
+          <div className="field-row">
+            <NumberField label="Recovery time hours" value={draft.recoveryTimeHours ?? 1} onChange={v => set("recoveryTimeHours", v)} min={1} required />
+            <NumberField label="Recovery point hours" value={draft.recoveryPointHours ?? 1} onChange={v => set("recoveryPointHours", v)} min={0} />
+          </div>
+        </fieldset>
+      )}
       <fieldset>
         <legend>Links</legend>
-        <TagInputField label="ROPA activity IDs" value={draft.ropaActivityIds as string[]} onChange={v => set("ropaActivityIds", v)} placeholder="Comma-separated ROPA IDs" />
+        <TagInputField label="ROPA activity IDs" value={draft.ropaActivityIds as string[]} onChange={v => set("ropaActivityIds", v)} placeholder="Comma-separated ROPA IDs" required={draft.containsSpecialCategoryData} />
         <TagInputField label="DPIA IDs" value={draft.dpiaIds as string[]} onChange={v => set("dpiaIds", v)} placeholder="Comma-separated DPIA IDs" />
         <TagInputField label="Supplier IDs" value={draft.supplierIds as string[]} onChange={v => set("supplierIds", v)} placeholder="Comma-separated supplier IDs" />
         <TagInputField label="Retention rule IDs" value={draft.retentionRuleIds as string[]} onChange={v => set("retentionRuleIds", v)} placeholder="Comma-separated rule IDs" />
