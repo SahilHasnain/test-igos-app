@@ -146,7 +146,7 @@ export function RopaPanel({ academy, role, matId }: { academy: string; role: Gov
               <tr key={activity.id}>
                 <td><code>{activity.id}</code></td>
                 <td><strong>{activity.name}</strong><small>{activity.status}</small></td>
-                <td>{activity.academy.replace(" Academy", "")}</td>
+                <td>{activity.academy?.replace(" Academy", "") ?? "—"}</td>
                 <td>{activity.basis}</td>
                 <td>{activity.owner}</td>
                 <td>{activity.review}</td>

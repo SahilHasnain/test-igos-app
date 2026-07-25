@@ -1,25 +1,28 @@
-import { NextResponse } from "next/server";
-import { z } from "zod";
+import { apiError, apiOk } from "@/src/lib/api-handler";
 import { resolveRuntimeContext } from "@/src/services/runtime";
 import { governanceRuntime } from "@/src/services/governance-runtime";
-
-const scopeSchema = z.object({ matId: z.string().min(1), academyId: z.string().min(1).optional() });
-const error = (value: unknown) => NextResponse.json({ error: value instanceof Error ? value.message : "Unexpected error" }, { status: 400 });
 
 export async function GET(request: Request) {
   try {
     const url = new URL(request.url);
-    const scope = scopeSchema.parse({ matId: url.searchParams.get("matId"), academyId: url.searchParams.get("academyId") ?? undefined });
-    const context = await resolveRuntimeContext(request, scope.matId);
-    return NextResponse.json({ activities: await governanceRuntime().ropa.list(context, scope) });
-  } catch (cause) { return error(cause); }
+    const matId = url.searchParams.get("matId");
+    if (!matId) return apiOk({ error: "matId is required" }, 400);
+    const academyId = url.searchParams.get("academyId") ?? undefined;
+    const context = await resolveRuntimeContext(request, matId);
+    return apiOk({ activities: await governanceRuntime().ropa.list(context, { matId, academyId }) });
+  } catch (cause) {
+    return apiError("GET", "/api/governance/ropa", cause);
+  }
 }
 
 export async function POST(request: Request) {
   try {
     const input = await request.json();
-    const scope = scopeSchema.parse(input);
-    const context = await resolveRuntimeContext(request, scope.matId);
-    return NextResponse.json({ activity: await governanceRuntime().ropa.save(context, scope, input) }, { status: 201 });
-  } catch (cause) { return error(cause); }
+    const matId = input.matId;
+    if (!matId) return apiOk({ error: "matId is required" }, 400);
+    const context = await resolveRuntimeContext(request, matId);
+    return apiOk({ activity: await governanceRuntime().ropa.save(context, { matId }, input) }, 201);
+  } catch (cause) {
+    return apiError("POST", "/api/governance/ropa", cause);
+  }
 }
