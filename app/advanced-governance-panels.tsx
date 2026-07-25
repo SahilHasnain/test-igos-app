@@ -56,12 +56,12 @@ export function AiGovernancePanel({ role, matId }: { role: Role; matId: string }
   }, [matId]);
 
   const handleSave = useCallback(async (draft: AiSystemRecord) => {
-    const toSave = { ...draft, matId };
+    const toSave = { ...draft, matId, id: draft.id || `AI-${String(Date.now()).slice(-6)}`, ownerUserId: draft.ownerUserId || "unassigned", status: draft.status || "proposed" as const };
     await api.advancedGovernance.aiSystems.save(toSave);
     if (draft.id && items.some(i => i.id === draft.id)) {
       setItems(prev => prev.map(i => i.id === draft.id ? toSave : i));
     } else {
-      setItems(prev => [{ ...toSave, id: `AI-${String(Date.now()).slice(-6)}` }, ...prev]);
+      setItems(prev => [{ ...toSave }, ...prev]);
     }
   }, [matId, items, api]);
 
@@ -205,12 +205,12 @@ export function AssetRegisterPanel({ role, matId }: { role: Role; matId: string 
   }, [matId]);
 
   const handleSave = useCallback(async (draft: Asset) => {
-    const toSave = { ...draft, matId };
+    const toSave = { ...draft, matId, id: draft.id || `IAR-${String(Date.now()).slice(-6)}`, ownerUserId: draft.ownerUserId || "unassigned" };
     await api.advancedGovernance.assets.save(toSave);
     if (draft.id && items.some(i => i.id === draft.id)) {
       setItems(prev => prev.map(i => i.id === draft.id ? toSave : i));
     } else {
-      setItems(prev => [{ ...toSave, id: `IAR-${String(Date.now()).slice(-6)}` }, ...prev]);
+      setItems(prev => [{ ...toSave }, ...prev]);
     }
   }, [matId, items, api]);
 
@@ -319,12 +319,12 @@ export function RecordsManagementPanel({ role, matId }: { role: Role; matId: str
   }, [matId]);
 
   const handleSave = useCallback(async (draft: RecordItem) => {
-    const toSave = { ...draft, matId };
+    const toSave = { ...draft, matId, id: draft.id || `REC-${String(Date.now()).slice(-6)}` };
     await api.advancedGovernance.records.save(toSave);
     if (draft.id && items.some(i => i.id === draft.id)) {
       setItems(prev => prev.map(i => i.id === draft.id ? toSave : i));
     } else {
-      setItems(prev => [{ ...toSave, id: `REC-${String(Date.now()).slice(-6)}`, count: 0, hold: "None", action: "Review" }, ...prev]);
+      setItems(prev => [{ ...toSave, count: 0, hold: "None", action: "Review" }, ...prev]);
     }
   }, [matId, items, api]);
 
@@ -411,12 +411,12 @@ export function ContractGovernancePanel({ matId }: { matId: string }) {
   }, [matId]);
 
   const handleSave = useCallback(async (draft: Contract) => {
-    const toSave = { ...draft, matId };
+    const toSave = { ...draft, matId, id: draft.id || `CTR-${String(Date.now()).slice(-6)}`, ownerUserId: draft.ownerUserId || "unassigned" };
     await api.advancedGovernance.contracts.save(toSave);
     if (draft.id && items.some(i => i.id === draft.id)) {
       setItems(prev => prev.map(i => i.id === draft.id ? toSave : i));
     } else {
-      setItems(prev => [{ ...toSave, id: `CTR-${String(Date.now()).slice(-6)}`, supplier: draft.supplierId, owner: draft.ownerUserId, expiry: draft.expiresAt, notice: draft.renewalNoticeAt, compliance: 0 }, ...prev]);
+      setItems(prev => [{ ...toSave, supplier: draft.supplierId, owner: draft.ownerUserId, expiry: draft.expiresAt, notice: draft.renewalNoticeAt, compliance: 0 }, ...prev]);
     }
   }, [matId, items, api]);
 

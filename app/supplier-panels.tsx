@@ -44,12 +44,12 @@ export function SupplierRegisterPanel({ role, matId }: { role: Role; matId: stri
   }, [matId]);
 
   const handleSave = useCallback(async (draft: SupplierAssessment) => {
-    const toSave = { ...draft, matId };
+    const toSave = { ...draft, matId, id: draft.id || `SUP-${String(Date.now()).slice(-6)}`, ownerUserId: draft.ownerUserId || "unassigned" };
     await api.suppliers.save(toSave);
     if (draft.id && items.some(i => i.id === draft.id)) {
       setItems(prev => prev.map(i => i.id === draft.id ? toSave : i));
     } else {
-      setItems(prev => [{ ...toSave, id: `SUP-${String(Date.now()).slice(-6)}` }, ...prev]);
+      setItems(prev => [{ ...toSave }, ...prev]);
     }
   }, [matId, items, api]);
 

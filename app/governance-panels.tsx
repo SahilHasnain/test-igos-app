@@ -14,6 +14,7 @@ interface RopaActivity {
   dataSubjectCategories: readonly string[]; personalDataCategories: readonly string[];
   specialCategoryData: boolean; criminalOffenceData: boolean;
   lawfulBasis: string; recipients: readonly string[]; processors: readonly string[];
+  internationalTransfers: readonly { destination: string; mechanism: string; transferRiskAssessmentId?: string }[];
   retentionRule: string; securityMeasures: readonly string[];
   sourceSystems: readonly string[]; destinationSystems: readonly string[];
   status: string; nextReviewAt: string; academyIds: readonly string[];
@@ -29,7 +30,7 @@ const emptyRopa = (matId: string, academy: string): RopaActivity => ({
   dataSubjectCategories: [], personalDataCategories: [],
   specialCategoryData: false, criminalOffenceData: false,
   lawfulBasis: "public-task", recipients: [], processors: [],
-  retentionRule: "", securityMeasures: [], sourceSystems: [], destinationSystems: [],
+  internationalTransfers: [], retentionRule: "", securityMeasures: [], sourceSystems: [], destinationSystems: [],
   status: "draft", nextReviewAt: new Date(Date.now() + 90 * 86400000).toISOString(),
   academyIds: academy === "Federation-wide" ? ["all"] : [academy],
 });
@@ -99,6 +100,7 @@ export function DpiaProgressPanel({ role, matId }: { role: GovernanceRole; matId
 
 export function RopaPanel({ academy, role, matId }: { academy: string; role: GovernanceRole; matId: string }) {
   const api = useApi();
+  const { auth } = useAuth();
   const [items, setItems] = useState<RopaActivity[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState("");
@@ -113,14 +115,14 @@ export function RopaPanel({ academy, role, matId }: { academy: string; role: Gov
   }, [matId, api]);
 
   const handleSave = useCallback(async (draft: RopaActivity) => {
-    const toSave = { ...draft, matId };
+    const toSave = { ...draft, matId, ownerUserId: auth.userId || draft.ownerUserId || "unassigned", id: draft.id || `ROPA-${String(Date.now()).slice(-6)}` };
     await api.governance.ropa.save(matId, toSave);
     if (draft.id && items.some(i => i.id === draft.id)) {
       setItems(prev => prev.map(i => i.id === draft.id ? toSave : i));
     } else {
-      setItems(prev => [{ ...toSave, id: `ROPA-${String(Date.now()).slice(-6)}` }, ...prev]);
+      setItems(prev => [{ ...toSave }, ...prev]);
     }
-  }, [matId, items, api]);
+  }, [matId, auth.userId, items, api]);
 
   const rows = useMemo(() =>
     items.filter(a => (academy === "Federation-wide" || a.academyIds?.includes(academy) || a.academyIds?.includes("all")) && a.name.toLowerCase().includes(filter.toLowerCase())),
@@ -171,7 +173,7 @@ function RopaForm({ matId, academy, item, onSave, onClose }: { matId: string; ac
       <fieldset>
         <legend>Core</legend>
         <TextField label="Activity name" value={draft.name} onChange={v => set("name", v)} required placeholder="e.g. Educational visits" />
-        <TextAreaField label="Purpose" value={draft.purpose} onChange={v => set("purpose", v)} required placeholder="What is the purpose of this processing?" />
+        <TextAreaField label="Purpose" value={draft.purpose} onChange={v => set("purpose", v)} required placeholder="What is the purpose of this processing?" minLength={10} />
       </fieldset>
       <fieldset>
         <legend>Data subjects &amp; categories</legend>

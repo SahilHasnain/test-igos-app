@@ -205,6 +205,7 @@ export function TextAreaField({
   required,
   placeholder,
   rows = 3,
+  minLength,
 }: {
   label: string;
   value: string;
@@ -212,6 +213,7 @@ export function TextAreaField({
   required?: boolean;
   placeholder?: string;
   rows?: number;
+  minLength?: number;
 }) {
   return (
     <Field label={label} required={required}>
@@ -221,6 +223,7 @@ export function TextAreaField({
         onChange={e => onChange(e.target.value)}
         placeholder={placeholder}
         rows={rows}
+        minLength={minLength}
       />
     </Field>
   );

@@ -150,12 +150,12 @@ export function RiskRegisterPanel({ role, matId }: { role: Role; matId: string }
   }, [matId]);
 
   const handleSave = useCallback(async (draft: Risk) => {
-    const toSave = { ...draft, matId };
+    const toSave = { ...draft, matId, id: draft.id || `RSK-${String(Date.now()).slice(-6)}`, ownerUserId: draft.ownerUserId || "unassigned" };
     await api.assurance.risks.save(toSave);
     if (draft.id && items.some(i => i.id === draft.id)) {
       setItems(prev => prev.map(i => i.id === draft.id ? toSave : i));
     } else {
-      setItems(prev => [{ ...toSave, id: `RSK-${String(Date.now()).slice(-6)}` }, ...prev]);
+      setItems(prev => [{ ...toSave }, ...prev]);
     }
   }, [matId, items, api]);
 
@@ -244,7 +244,7 @@ export function AuditProgrammePanel({ matId }: { matId: string }) {
   }, [matId]);
 
   const handleSave = useCallback(async (draft: AuditProgramme) => {
-    const toSave = { ...draft, matId };
+    const toSave = { ...draft, matId, id: draft.id || `AUD-${String(Date.now()).slice(-6)}`, leadAuditorUserId: draft.leadAuditorUserId || "unassigned" };
     await api.assurance.programmes.save(toSave);
     setShowCreate(false);
   }, [matId, api]);
