@@ -129,7 +129,7 @@ export function RedactionWorkspace({ role, matId, matters }: { role: Role; matId
 
     <section className="panel register">
       <div className="field-row">
-        <label>Matter<select value={matterId} onChange={(e) => setMatterId(e.target.value)}>{reviewMatters.map((matter) => <option key={matter._serverId ?? matter.id} value={matter._serverId ?? matter.id}>{matter.id} - {matter.title}</option>)}</select></label>
+        <label>Matter<select value={matterId} onChange={(e) => setMatterId(e.target.value)} disabled={!reviewMatters.length}><option value="">{reviewMatters.length ? "Select a SAR/FOI matter" : "No SAR/FOI matters available"}</option>{reviewMatters.map((matter) => <option key={matter._serverId ?? matter.id} value={matter._serverId ?? matter.id}>{matter.id} - {matter.title}</option>)}</select></label>
         <label>Document ID<input value={documentId} onChange={(e) => setDocumentId(e.target.value)} placeholder="Appwrite document/file ID" /></label>
       </div>
       {selectedMatter && <p className="notice"><span>{selectedMatter.type}</span> {selectedMatter.title} · {selectedMatter.academy}</p>}
