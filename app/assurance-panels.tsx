@@ -233,20 +233,27 @@ function RiskForm({ matId, item, onSave, onClose }: { matId: string; item?: Risk
 
 export function AuditProgrammePanel({ matId }: { matId: string }) {
   const api = useApi();
-  const [findings, setFindings] = useState<Finding[]>([]);
+  const [programmes, setProgrammes] = useState<AuditProgramme[]>([]);
   const [loading, setLoading] = useState(true);
   const [showCreate, setShowCreate] = useState(false);
+  const [editing, setEditing] = useState<AuditProgramme | null>(null);
 
   useEffect(() => {
-    api.assurance.findings.list(matId)
-      .then(f => { setFindings(f.findings as Finding[]); setLoading(false); })
+    api.assurance.programmes.list(matId)
+      .then(r => { setProgrammes(r.programmes as AuditProgramme[]); setLoading(false); })
       .catch(() => setLoading(false));
   }, [matId]);
 
   const handleSave = useCallback(async (draft: AuditProgramme) => {
     const toSave = { ...draft, matId, id: draft.id || `AUD-${String(Date.now()).slice(-6)}`, leadAuditorUserId: draft.leadAuditorUserId || "unassigned" };
-    await api.assurance.programmes.save(toSave);
+    const res = await api.assurance.programmes.save(toSave);
+    const saved = res.programme as AuditProgramme;
+    setProgrammes(prev => {
+      const idx = prev.findIndex(p => p.id === saved.id);
+      return idx >= 0 ? prev.map(p => p.id === saved.id ? saved : p) : [saved, ...prev];
+    });
     setShowCreate(false);
+    setEditing(null);
   }, [matId, api]);
 
   if (loading) return <div className="panel"><p>Loading...</p></div>;
@@ -254,21 +261,41 @@ export function AuditProgrammePanel({ matId }: { matId: string }) {
   return (
     <section className="panel register">
       <div className="register-toolbar">
-        <div><p className="eyebrow">Assurance programme</p><h2>Audit findings and verification</h2></div>
+        <div><p className="eyebrow">Assurance programme</p><h2>{programmes.length} audit programmes</h2></div>
         <button className="primary" onClick={() => setShowCreate(true)}>＋ Plan audit</button>
       </div>
-      <FindingTable findings={findings} />
+      <div className="table-wrap">
+        <table>
+          <thead><tr><th>Ref</th><th>Title</th><th>Scope</th><th>Lead auditor</th><th>Academies</th><th>Start</th><th>End</th><th>Status</th></tr></thead>
+          <tbody>
+            {programmes.map(p => (
+              <tr key={p.id} onClick={() => setEditing(p)}>
+                <td><code>{p.id}</code></td>
+                <td><strong>{p.title}</strong></td>
+                <td>{p.scope}</td>
+                <td>{p.leadAuditorUserId}</td>
+                <td>{(p.academyIds as string[]).join(", ") || "Federation-wide"}</td>
+                <td>{new Date(p.plannedStartAt).toLocaleDateString("en-GB")}</td>
+                <td>{new Date(p.plannedEndAt).toLocaleDateString("en-GB")}</td>
+                <td><span className="stage">{p.status}</span></td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
       {showCreate && <ProgrammeForm matId={matId} onSave={handleSave} onClose={() => setShowCreate(false)} />}
+      {editing && <ProgrammeForm matId={matId} item={editing} onSave={handleSave} onClose={() => setEditing(null)} />}
     </section>
   );
 }
 
-function ProgrammeForm({ matId, onSave, onClose }: { matId: string; onSave: (d: AuditProgramme) => Promise<void>; onClose: () => void }) {
-  const [draft, setDraft] = useState(emptyProgramme(matId));
+function ProgrammeForm({ matId, item, onSave, onClose }: { matId: string; item?: AuditProgramme; onSave: (d: AuditProgramme) => Promise<void>; onClose: () => void }) {
+  const base = item ?? emptyProgramme(matId);
+  const [draft, setDraft] = useState(base);
   const set = <K extends keyof AuditProgramme>(key: K, value: AuditProgramme[K]) => setDraft(prev => ({ ...prev, [key]: value }));
 
   return (
-    <EntityFormModal title="Plan audit programme" onClose={onClose} onSubmit={() => onSave(draft)} submitLabel="Create">
+    <EntityFormModal title={item ? `Edit ${item.title || item.id}` : "Plan audit programme"} onClose={onClose} onSubmit={() => onSave(draft)} submitLabel={item ? "Update" : "Create"}>
       <fieldset>
         <legend>Core</legend>
         <TextField label="Audit title" value={draft.title} onChange={v => set("title", v)} required placeholder="e.g. Annual IG audit 2026" />
@@ -287,6 +314,41 @@ function ProgrammeForm({ matId, onSave, onClose }: { matId: string; onSave: (d: 
         </div>
       </fieldset>
     </EntityFormModal>
+  );
+}
+
+export function ActionsPanel({ matId }: { matId: string }) {
+  const api = useApi();
+  const [actions, setActions] = useState<Action[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    api.assurance.actions.list(matId)
+      .then(r => { setActions(r.actions as Action[]); setLoading(false); })
+      .catch(() => setLoading(false));
+  }, [matId]);
+
+  const complete = useCallback(async (id: string) => {
+    await api.assurance.actions.save({ matId, id, status: "Complete" });
+    setActions(prev => prev.map(a => a.id === id ? { ...a, status: "Complete" } : a));
+  }, [matId, api]);
+
+  if (loading) return <div className="panel"><p>Loading...</p></div>;
+
+  return (
+    <section className="panel register">
+      <div className="panel-head"><div><p className="eyebrow">Cross-module tracking</p><h2>{actions.length} open actions</h2></div></div>
+      <div className="actions-list">
+        {actions.map(action => (
+          <button key={action.id} disabled={action.status === "Complete"}>
+            <span className="check" />
+            <div><strong>{action.title}</strong><small>{action.id} · {action.owner}</small></div>
+            <span className={`badge risk-${action.priority === "Critical" || action.priority === "High" ? "high" : "medium"}`}>{action.priority}</span>
+            <time>{action.due}</time>
+          </button>
+        ))}
+      </div>
+    </section>
   );
 }
 

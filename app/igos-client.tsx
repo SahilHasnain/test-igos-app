@@ -3,7 +3,7 @@
 import { FormEvent, useCallback, useEffect, useMemo, useState } from "react";
 import { academies, type DemoMatter, type MatterType, workflowStages } from "../src/demo/ui-data";
 import { DpiaProgressPanel, PolicyPanel, RopaPanel } from "./governance-panels";
-import { AssuranceOverviewPanel, AuditProgrammePanel, RiskRegisterPanel } from "./assurance-panels";
+import { AssuranceOverviewPanel, AuditProgrammePanel, RiskRegisterPanel, ActionsPanel } from "./assurance-panels";
 import { RedactionWorkspace } from "./redaction-workspace";
 import { AiGovernancePanel, AssetRegisterPanel, ContractGovernancePanel, RecordsManagementPanel } from "./advanced-governance-panels";
 import { useAuth } from "../src/client/auth-context";
@@ -220,7 +220,7 @@ export default function IgosClient() {
         {view === "Assurance" && <AssuranceOverviewPanel role={role} matId={governanceMatId} />}
         {view === "Risks" && <RiskRegisterPanel role={role} matId={governanceMatId} />}
         {view === "Audits" && <AuditProgrammePanel matId={governanceMatId} />}
-        {view === "Actions" && <section className="panel register"><div className="panel-head"><div><p className="eyebrow">Cross-module tracking</p><h2>Open actions</h2></div></div><div className="actions-list">{filtered.flatMap((matter) => matter.tasks.map((task, index) => <button key={`${matter.id}-${index}`} onClick={() => setSelected(matter)}><span className="check"/><div><strong>{task}</strong><small>{matter.id} · {matter.owner}</small></div><RiskBadge risk={matter.risk}/><time>{matter.due}</time></button>))}</div></section>}
+        {view === "Actions" && <ActionsPanel matId={governanceMatId} />}
         {view === "Audit" && <section className="panel register"><div className="panel-head"><div><p className="eyebrow">Immutable evidence</p><h2>Audit activity</h2></div></div><div className="timeline large">{matters.flatMap((matter) => matter.activity.slice(0, 2).map((event, index) => <button key={`${matter.id}-${index}`} onClick={() => setSelected(matter)}><span>{index ? "SYS" : matter.type}</span><div><strong>{event}</strong><small>{matter.id} · {matter.owner} · {matter.academy}</small></div><time>{index ? "Yesterday" : "Today"}</time></button>))}</div></section>}
       </section>
     </main>
